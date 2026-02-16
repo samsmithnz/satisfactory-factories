@@ -33,6 +33,21 @@
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Typography sizes - desktop defaults */
+  --text-h1-size: 2.4rem;
+  --text-h1-line-height: 3rem;
+  --text-h2-size: 2.2rem;
+  --text-h2-line-height: 3.4rem;
+  --text-h3-size: 2.0rem;
+  --text-h3-line-height: 3.2rem;
+  --text-h4-size: 1.75rem;
+  --text-h4-line-height: 3rem;
+  --text-h5-size: 1.5rem;
+  --text-h5-line-height: 2.8rem;
+  --text-h6-size: 1.25rem;
+  --text-h6-line-height: 2.4rem;
   
   /* Border Radius */
   --radius-sm: 4px;
