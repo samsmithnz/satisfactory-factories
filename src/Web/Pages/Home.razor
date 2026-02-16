@@ -129,8 +129,8 @@
         // This will be used by child components in the future
         
         // Check for setupDemo query parameter
-        Uri uri = new Uri(NavManager.Uri);
-        if (uri.Query.Contains("setupDemo=true"))
+        string currentUrl = NavManager.Uri;
+        if (currentUrl.Contains("setupDemo=true", StringComparison.OrdinalIgnoreCase))
         {
             // Load the demo plan automatically
             await LoadDemoPlan();

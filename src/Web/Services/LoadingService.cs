@@ -70,10 +70,18 @@ public class LoadingService
         if (_currentStep >= _totalSteps || isFinalStep)
         {
             // Complete after a short delay to show the final message
-            Task.Run(async () =>
+            _ = Task.Run(async () =>
             {
-                await Task.Delay(100);
-                Complete();
+                try
+                {
+                    await Task.Delay(100);
+                    Complete();
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Error during loading completion: {ex.Message}");
+                    Complete(); // Ensure we complete even if there's an error
+                }
             });
         }
         
