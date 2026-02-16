@@ -1,0 +1,77 @@
+@using Web.Services
+@inject IToastService ToastService
+@implements IDisposable
+
+@if (_toasts.Any())
+{
+    <div class="toast-container">
+        @foreach (ToastMessage toast in _toasts)
+        {
+            <div class="toast @GetToastClass(toast.Type)" @key="toast.Id">
+                <div class="toast-content">
+                    @((MarkupString)toast.Message)
+                </div>
+                <button class="toast-close" @onclick="() => RemoveToast(toast.Id)">&times;</button>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<ToastMessage> _toasts = new List<ToastMessage>();
+    private const int DefaultTimeout = 3000;
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShowToast += HandleShowToast;
+    }
+
+    private void HandleShowToast(string message, ToastType type)
+    {
+        string id = Guid.NewGuid().ToString();
+        _toasts.Add(new ToastMessage
+        {
+            Id = id,
+            Message = message,
+            Type = type
+        });
+
+        StateHasChanged();
+
+        // Auto-remove toast after timeout - marshal to UI thread
+        _ = Task.Delay(DefaultTimeout).ContinueWith(async task => await InvokeAsync(() => RemoveToast(id)));
+    }
+
+    private void RemoveToast(string id)
+    {
+        ToastMessage? toast = _toasts.FirstOrDefault(t => t.Id == id);
+        if (toast != null)
+        {
+            _toasts.Remove(toast);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string GetToastClass(ToastType type)
+    {
+        return type switch
+        {
+            ToastType.Success => "toast-success",
+            ToastType.Error => "toast-error",
+            ToastType.Info => "toast-info",
+            _ => "toast-info"
+        };
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShowToast -= HandleShowToast;
+    }
+
+    private class ToastMessage
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public ToastType Type { get; set; }
+    }
+}

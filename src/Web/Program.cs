@@ -11,5 +11,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 
 builder.Services.AddScoped<GameDataService>();
 builder.Services.AddScoped<IAppStateService, AppStateService>();
+builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+builder.Services.AddSingleton<IToastService, ToastService>();
 
 await builder.Build().RunAsync();

@@ -56,4 +56,26 @@ public interface IAppStateService
     /// </summary>
     /// <param name="shown">True to show help text.</param>
     void SetHelpTextShown(bool shown);
+
+    /// <summary>
+    /// Gets all factory tabs.
+    /// </summary>
+    List<FactoryTab> GetFactoryTabs();
+
+    /// <summary>
+    /// Adds a new factory tab.
+    /// </summary>
+    /// <param name="tab">The factory tab to add.</param>
+    void AddFactoryTab(FactoryTab tab);
+
+    /// <summary>
+    /// Gets the current factory tab index.
+    /// </summary>
+    int GetCurrentFactoryTabIndex();
+
+    /// <summary>
+    /// Sets the current factory tab index.
+    /// </summary>
+    /// <param name="index">The index to set.</param>
+    void SetCurrentFactoryTabIndex(int index);
 }
