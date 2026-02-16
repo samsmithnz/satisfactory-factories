@@ -1,0 +1,61 @@
+name: .NET Parser Checks
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/Parser/**'
+      - 'src/Parser.Tests/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'src/Parser/**'
+      - 'src/Parser.Tests/**'
+jobs:
+  build-dotnet-parser:
+    name: Build & Test .NET Parser
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: src
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore Parser/Parser.csproj
+
+      - name: Build Parser
+        run: dotnet build Parser/Parser.csproj --no-restore --configuration Release
+
+      - name: Run Parser
+        run: dotnet run --project Parser/Parser.csproj --no-build --configuration Release
+
+      - name: Verify gameData.json output
+        run: |
+          if [ ! -f Parser/gameData.json ]; then
+            echo "Error: gameData.json was not generated"
+            exit 1
+          fi
+          echo "gameData.json successfully generated"
+          ls -lh Parser/gameData.json
+
+      - name: Build Parser Tests
+        run: dotnet build Parser.Tests/Parser.Tests.csproj --no-restore --configuration Release
+
+      - name: Run Parser Tests
+        run: dotnet test Parser.Tests/Parser.Tests.csproj --no-build --configuration Release --verbosity normal
+
+      - name: Upload gameData.json artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: parser-gameData
+          path: src/Parser/gameData.json
+          retention-days: 7

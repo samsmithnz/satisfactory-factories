@@ -5,6 +5,14 @@ The tool highlights bottlenecks in the production chain, and visually tells the 
 
 The player can scale up end product factories as they see fit, and check if their production chain can handle the increased load.
 
+## Build Status
+
+[![Web Checks](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-web.yml/badge.svg)](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-web.yml)
+[![Parsing Checks](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-parsing.yml/badge.svg)](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-parsing.yml)
+[![Backend Checks](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-backend.yml/badge.svg)](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-backend.yml)
+[![.NET Parser Checks](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-dotnet-parser.yml/badge.svg)](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-dotnet-parser.yml)
+[![.NET Web Checks](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-dotnet-web.yml/badge.svg)](https://github.com/samsmithnz/satisfactory-factories/actions/workflows/build-dotnet-web.yml)
+
 ## Contributing
 Since this is an open source project, all PR requests will be welcomed, as long as proper intent and communication with the project maintainers is maintained.
 
