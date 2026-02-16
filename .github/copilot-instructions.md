@@ -4,10 +4,17 @@ Always follow these instructions precisely and only fallback to additional searc
 
 ## Project Overview
 
-Satisfactory Factories is a Vue 3 + TypeScript web application for planning production chains in the game Satisfactory. The project has three main components:
+Satisfactory Factories is a web application for planning production chains in the game Satisfactory. The project is currently migrating from Vue 3 to .NET Blazor WebAssembly. During the migration, both technology stacks coexist:
+
+**Current (Vue 3 + TypeScript):**
 - **Web**: Vue 3 frontend with Pinia state management and Vitest testing
 - **Parsing**: TypeScript tool to process game data from Satisfactory
 - **Backend**: Express.js API for authentication and data synchronization
+
+**Migration Target (.NET 10 Blazor):**
+- **Web**: .NET 10 Blazor WebAssembly application (`/src/Web`)
+- **Parser**: .NET 10 parser library (`/src/Parser` - planned)
+- **Test Projects**: MSTest projects for Web.Tests and Parser.Tests
 
 ## Build & Development Requirements
 
@@ -57,6 +64,8 @@ pnpm lint-check # Takes ~2 seconds (has 3 warnings about 'any' usage - acceptabl
 3. **Manual testing**: Always test actual functionality - load the demo plan to validate core features
 
 ### Code Standards & Conventions
+
+#### TypeScript/Vue Standards
 - **TypeScript Only**: All new files must use `.ts` or `.vue` with `<script setup lang="ts">`
 - **Package Manager**: Use `pnpm` ONLY - never use `npm install`
   - Do not, under **ANY** circumstances, create a `package-lock.json` file in your final code. We use `pnpm` here, we do not use `npm`. Add a step to ensure you are not introducing this file, or your PR will be rejected.
@@ -64,6 +73,18 @@ pnpm lint-check # Takes ~2 seconds (has 3 warnings about 'any' usage - acceptabl
 - **Testing**: New code should have tests, especially in parsing component (mandatory 90%+ coverage)
 - **Code Style**: 2 spaces indentation, LF line endings, newline at EOF
 - **Commits**: Use conventional commit structure (e.g., `feat:`, `fix:`, `docs:`) with issue references
+
+#### .NET Code Standards
+- **Explicit Types**: ALWAYS use explicit types in .NET code - NEVER use `var` keyword
+  - ✅ `string name = "example";`
+  - ✅ `int count = 42;`
+  - ✅ `List<string> items = new List<string>();`
+  - ❌ `var name = "example";`
+  - ❌ `var count = 42;`
+  - ❌ `var items = new List<string>();`
+- **Nullable Reference Types**: Keep `<Nullable>enable</Nullable>` in all .NET projects
+- **ImplicitUsings**: Keep `<ImplicitUsings>enable</ImplicitUsings>` for cleaner code
+- **Testing**: Use MSTest for all .NET test projects with explicit, descriptive test names
 
 ### Manual Validation Requirements
 After making changes, ALWAYS validate by:
@@ -118,6 +139,15 @@ cd backend && pnpm lint-check && pnpm build
 - **Optional**: Not required for local development  
 - **Stack**: Express.js + TypeScript + MongoDB
 - **Docker**: Use `./start.sh` after starting Docker service
+
+### .NET Projects (`/src`)
+- **Web**: .NET 10 Blazor WebAssembly project at `/src/Web`
+- **Web.Tests**: MSTest project for Web application at `/src/Web.Tests`
+- **Parser.Tests**: MSTest project for Parser at `/src/Parser.Tests`
+- **Solution**: All projects organized in `/src/SatisfactoryFactories.slnx`
+- **Build**: Run `dotnet build` from `/src` directory
+- **Test**: Run `dotnet test` from `/src` directory (must pass for PRs)
+- **Key Convention**: Use explicit types only - NEVER use `var` keyword
 
 ### GitHub Actions & CI
 - **Web**: `.github/workflows/build-web.yml` - Runs lint, build, test

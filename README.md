@@ -59,6 +59,37 @@ API will be available on http://localhost:3001.
 
 There are no tests currently available for the backend project.
 
+### .NET Projects
+The project includes .NET 10 Blazor WebAssembly projects for the Web application and Parser, along with their corresponding MSTest test projects.
+
+#### Requirements
+- .NET 10 SDK or later
+
+#### Building and Testing
+To build all .NET projects:
+```sh
+cd src
+dotnet build
+```
+
+To run all .NET tests:
+```sh
+cd src
+dotnet test
+```
+
+To run tests for a specific project:
+```sh
+cd src/Web.Tests
+dotnet test
+
+# Or for Parser tests
+cd src/Parser.Tests
+dotnet test
+```
+
+All tests must pass for PRs to be accepted.
+
 ### Deployment
 New versions are trunked to `main` branch. Once `main` has been pushed, GitHub Actions will create a release then deploy the frontend to Vercel, and create a docker image of the backend to deploy to my personal server.
 ___
