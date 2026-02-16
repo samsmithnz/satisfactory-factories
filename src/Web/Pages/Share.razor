@@ -1,0 +1,115 @@
+@page "/share/{id}"
+@using System.Text.Json
+@using Web.Models.Factory
+@using Web.Models.Share
+@using Web.Services
+@inject NavigationManager NavManager
+@inject IAppStateService AppState
+@inject IConfigurationService Config
+@inject IToastService Toast
+@inject HttpClient Http
+
+<PageTitle>Loading Share Data - Satisfactory Factories</PageTitle>
+
+<div class="d-flex justify-center ma-12">
+    <h1 class="text-center">Loading share data...</h1>
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadShareData();
+    }
+
+    private async Task LoadShareData()
+    {
+        if (string.IsNullOrEmpty(Id))
+        {
+            Toast.ShowToast("No share ID provided.", ToastType.Error);
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        FactoryTab? loadedFactoryTab = await GetDataFromShare(Id);
+
+        if (loadedFactoryTab != null)
+        {
+            // Change the title of the tab to denote it's the shared one
+            loadedFactoryTab.Name = $"{loadedFactoryTab.Name} (shared)";
+            AppState.AddFactoryTab(loadedFactoryTab);
+        }
+
+        // Navigate to home page
+        NavManager.NavigateTo("/");
+    }
+
+    private async Task<FactoryTab?> GetDataFromShare(string shareId)
+    {
+        string apiUrl = Config.GetApiUrl();
+
+        try
+        {
+            HttpResponseMessage response = await Http.GetAsync($"{apiUrl}/share/{shareId}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                string jsonContent = await response.Content.ReadAsStringAsync();
+                
+                // First, try to deserialize to get the raw data structure
+                JsonElement jsonData = JsonSerializer.Deserialize<JsonElement>(jsonContent);
+                
+                if (!jsonData.TryGetProperty("data", out JsonElement dataElement))
+                {
+                    Toast.ShowToast("Failed to load share link, it contained invalid data.", ToastType.Error);
+                    return null;
+                }
+
+                // Check if data is an array (legacy format) or an object (new format)
+                if (dataElement.ValueKind == JsonValueKind.Array)
+                {
+                    // Legacy format: array of factories
+                    List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(dataElement.GetRawText());
+                    if (factories != null)
+                    {
+                        return new FactoryTab
+                        {
+                            Id = Guid.NewGuid().ToString(),
+                            Name = "Shared Data",
+                            Factories = factories
+                        };
+                    }
+                }
+                else if (dataElement.ValueKind == JsonValueKind.Object)
+                {
+                    // New format: FactoryTab object
+                    FactoryTab? factoryTab = JsonSerializer.Deserialize<FactoryTab>(dataElement.GetRawText());
+                    return factoryTab;
+                }
+
+                Toast.ShowToast("Failed to load share link, unexpected data format.", ToastType.Error);
+                return null;
+            }
+            else
+            {
+                Console.Error.WriteLine($"Loading share data failed: {response.StatusCode}");
+                Toast.ShowToast($"Failed to load share link. Please report this error to GitHub! Status: {response.StatusCode}", ToastType.Error);
+                return null;
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.Error.WriteLine($"Error loading share data: {ex.Message}");
+            Toast.ShowToast($"Failed to load share link. Please report this error to GitHub! \"{ex.Message}\"", ToastType.Error);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Unexpected error: {ex.Message}");
+            Toast.ShowToast($"Failed to load share link due to unexpected error. Please report this error to GitHub!", ToastType.Error);
+            return null;
+        }
+    }
+}

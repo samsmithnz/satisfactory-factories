@@ -580,3 +580,71 @@
   background-color: #303f9f !important;
   text-decoration: none;
 }
+
+/* Share dialog styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: grid;
+  place-items: center;
+  z-index: 2000;
+}
+
+.modal-dialog {
+  background: #2d2d2d;
+  border-radius: 12px;
+  max-width: 580px;
+  width: 88%;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 2px solid #484848;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: 0;
+  font-size: 2rem;
+  color: #a0a0a0;
+  cursor: pointer;
+  padding: 0;
+  line-height: 0.9;
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.close-btn:hover {
+  color: #ffffff;
+}
+
+.modal-body {
+  padding: 1.75rem 1.5rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background: #1a1a1a;
+  border: 1.5px solid #505050;
+  border-radius: 6px;
+  color: #f5f5f5;
+  font-size: 0.9375rem;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: 0;
+  border-color: #66bb6a;
+}
