@@ -373,3 +373,76 @@
 .factory-list-item:hover {
   background-color: rgba(255, 255, 255, 0.03);
 }
+
+/* Game Asset */
+.game-asset-clickable {
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.game-asset-clickable:hover {
+  transform: scale(1.05);
+  opacity: 0.8;
+}
+
+.game-asset-clickable:focus {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.game-asset-clickable:active {
+  transform: scale(0.95);
+}
+
+/* Expansion Panels */
+.expansion-panels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.expansion-panel {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: var(--bg-card);
+}
+
+.expansion-panel-title {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  background-color: var(--bg-card);
+  transition: background-color 0.2s;
+  border: none;
+  width: 100%;
+  text-align: left;
+}
+
+.expansion-panel-title:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.expansion-panel-content {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Recipe specific styles */
+.recipe-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.recipe-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.recipe-label {
+  font-weight: bold;
+  margin-right: 8px;
+}

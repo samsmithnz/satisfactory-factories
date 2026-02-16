@@ -1,0 +1,32 @@
+@using Web.Models
+
+<div class="expansion-panel">
+    <button class="expansion-panel-title" @onclick="ToggleExpanded">
+        <GameAsset 
+            Subject="@Recipe.Products[0].Part" 
+            Type="item" 
+            Clickable="false"
+            Height="48"
+            Width="48" />
+        <span style="margin-left: 12px; font-size: 1.25rem; font-weight: 500;">@Recipe.DisplayName</span>
+    </button>
+    
+    @if (_isExpanded)
+    {
+        <div class="expansion-panel-content">
+            <RecipeDetails Recipe="@Recipe" />
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Recipe Recipe { get; set; } = null!;
+
+    private bool _isExpanded = false;
+
+    private void ToggleExpanded()
+    {
+        _isExpanded = !_isExpanded;
+    }
+}

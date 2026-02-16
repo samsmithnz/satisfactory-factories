@@ -1,0 +1,159 @@
+@using Web.Models
+@using Web.Services
+@inject GameDataService GameDataService
+
+@if (!string.IsNullOrEmpty(_imageUrl))
+{
+    if (Clickable && (Type == "item" || Type == "item_id" || Type == "building"))
+    {
+        <a href="@_wikiUrl" 
+           target="_blank" 
+           rel="noopener noreferrer" 
+           class="game-asset-clickable" 
+           style="cursor: pointer; display: inline-block; text-decoration: none;"
+           title="Open @_displayName on Satisfactory Wiki">
+            <img src="@_imageUrl" 
+                 alt="@Subject" 
+                 style="width: @(_widthPx)px; height: @(_heightPx)px; aspect-ratio: 1/1;"
+                 loading="lazy" />
+        </a>
+    }
+    else
+    {
+        <img src="@_imageUrl" 
+             alt="@Subject" 
+             style="width: @(_widthPx)px; height: @(_heightPx)px; aspect-ratio: 1/1;"
+             loading="lazy" />
+    }
+}
+else if (_isFicsmas)
+{
+    <i class="fas fa-snowflake" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
+}
+else if (_isUnknown)
+{
+    <i class="fas fa-question" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
+}
+
+@code {
+    [Parameter]
+    public string Subject { get; set; } = string.Empty;
+
+    [Parameter]
+    public int? Height { get; set; }
+
+    [Parameter]
+    public int? Width { get; set; }
+
+    [Parameter]
+    public string Type { get; set; } = "item";
+
+    [Parameter]
+    public bool Clickable { get; set; } = false;
+
+    private int _widthPx;
+    private int _heightPx;
+    private string _imageUrl = string.Empty;
+    private string _displayName = string.Empty;
+    private string _wikiUrl = string.Empty;
+    private bool _isFicsmas = false;
+    private bool _isUnknown = false;
+
+    protected override void OnParametersSet()
+    {
+        _widthPx = Width ?? 32;
+        _heightPx = Height ?? 32;
+
+        _displayName = GetDisplayName();
+        _wikiUrl = GetWikiUrl(_displayName);
+        
+        string imgSize = (_widthPx > 64 || _heightPx > 64) ? "big" : "small";
+        _imageUrl = GetIcon(Subject, Type, imgSize);
+    }
+
+    private string GetDisplayName()
+    {
+        if (Type == "item" || Type == "item_id")
+        {
+            return GameDataService.GetPartDisplayName(Subject);
+        }
+        else if (Type == "building")
+        {
+            return GameDataService.GetBuildingDisplayName(Subject);
+        }
+        return Subject;
+    }
+
+    private string GetWikiUrl(string displayName)
+    {
+        if (string.IsNullOrEmpty(displayName))
+        {
+            return string.Empty;
+        }
+
+        string wikiName = Uri.EscapeDataString(displayName.Replace(" ", "_"));
+        return $"https://satisfactory.wiki.gg/wiki/{wikiName}";
+    }
+
+    private string GetIcon(string subject, string type, string size)
+    {
+        if (string.IsNullOrEmpty(subject))
+        {
+            return string.Empty;
+        }
+
+        if (type == "building")
+        {
+            return GetImageUrl(subject, "building", size);
+        }
+        else if (type == "item_id")
+        {
+            return GetImageUrl(subject, "item", size);
+        }
+        else if (type == "vehicle")
+        {
+            return GetImageUrl(subject, "vehicle", size);
+        }
+        else
+        {
+            GameData gameData = GameDataService.GetGameData();
+            
+            // Check if part exists
+            bool partExists = gameData.Items.Parts.TryGetValue(subject, out Part? partItem);
+            bool rawExists = gameData.Items.RawResources.TryGetValue(subject, out RawResource? rawItem);
+
+            // Freight cars are not in the items list
+            if (!partExists && !rawExists && subject != "freight-car")
+            {
+                _isUnknown = true;
+                return string.Empty;
+            }
+
+            // If a FICSMAS item, we don't have images for it
+            if (partItem?.IsFicsmas == true)
+            {
+                _isFicsmas = true;
+                return string.Empty;
+            }
+
+            string itemName = partItem?.Name ?? rawItem?.Name ?? subject;
+            string sluggifiedName = Sluggify(itemName);
+
+            return GetImageUrl(sluggifiedName, "item", size);
+        }
+    }
+
+    private string GetImageUrl(string name, string type, string size)
+    {
+        int pxSize = size == "small" ? 64 : 256;
+        return $"/assets/game/{type}/{name}_{pxSize}.png";
+    }
+
+    private string Sluggify(string subject)
+    {
+        // Converts CamelCase to kebab-case without adding dash at the beginning
+        string result = System.Text.RegularExpressions.Regex.Replace(subject, @"([a-z0-9])([A-Z])", "$1-$2");
+        result = System.Text.RegularExpressions.Regex.Replace(result, @"\s+", "-");
+        return result.ToLower();
+    }
+}

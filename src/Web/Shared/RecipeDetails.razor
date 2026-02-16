@@ -1,0 +1,54 @@
+@using Web.Models
+@using Web.Services
+@inject GameDataService GameDataService
+
+<div>
+    @if (Recipe.Ingredients.Count > 0)
+    {
+        <div class="recipe-section">
+            <span class="recipe-label">Inputs:</span>
+            @foreach (Web.Models.RecipeItem ingredient in Recipe.Ingredients)
+            {
+                <span class="sf-chip">
+                    <GameAsset Subject="@ingredient.Part" Type="item" Clickable="true" />
+                    <span style="margin-left: 8px;">
+                        <b>@GameDataService.GetPartDisplayName(ingredient.Part):</b> x@ingredient.Amount
+                    </span>
+                </span>
+            }
+        </div>
+    }
+    
+    <div>
+        <span class="recipe-label">Products:</span>
+        @if (Recipe.Byproduct != null && Recipe.Byproduct.Count > 0)
+        {
+            @foreach (Web.Models.RecipeItem product in Recipe.Byproduct)
+            {
+                <span class="sf-chip">
+                    <GameAsset Subject="@product.Part" Type="item" Clickable="true" />
+                    <span style="margin-left: 8px;">
+                        <b>@GameDataService.GetPartDisplayName(product.Part):</b> x@product.Amount
+                    </span>
+                </span>
+            }
+        }
+        else
+        {
+            @foreach (Web.Models.RecipeItem product in Recipe.Products)
+            {
+                <span class="sf-chip">
+                    <GameAsset Subject="@product.Part" Type="item" Clickable="true" />
+                    <span style="margin-left: 8px;">
+                        <b>@GameDataService.GetPartDisplayName(product.Part):</b> x@product.Amount
+                    </span>
+                </span>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public Recipe Recipe { get; set; } = null!;
+}
