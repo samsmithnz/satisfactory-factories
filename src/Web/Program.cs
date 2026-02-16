@@ -10,5 +10,6 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
 builder.Services.AddScoped<GameDataService>();
+builder.Services.AddScoped<IAppStateService, AppStateService>();
 
 await builder.Build().RunAsync();
