@@ -13,3 +13,9 @@ obj/
 *.pdb
 // Game assets (copied from web/public/assets/game)
 src/Web/wwwroot/assets/game/
+
+// Test output files from Parser
+src/Parser/*gameData*.json
+src/Parser/test-output.json
+src/Parser/fixed-energy.json
+!src/Parser/game-docs.json

@@ -52,8 +52,8 @@ public class LoadingServiceTests
         service.IncrementStep("Step 1");
         service.IncrementStep("Step 2");
         
-        // Wait a bit for the async completion
-        System.Threading.Thread.Sleep(200);
+        // Wait for the async completion (100ms delay + buffer)
+        System.Threading.Thread.Sleep(300);
 
         // Assert
         Assert.IsFalse(service.IsLoading);
@@ -70,8 +70,8 @@ public class LoadingServiceTests
         // Act
         service.IncrementStep("Final step", isFinalStep: true);
         
-        // Wait a bit for the async completion
-        System.Threading.Thread.Sleep(200);
+        // Wait for the async completion (100ms delay + buffer)
+        System.Threading.Thread.Sleep(300);
 
         // Assert
         Assert.IsFalse(service.IsLoading);
