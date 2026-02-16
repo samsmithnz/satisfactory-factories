@@ -10,13 +10,49 @@ Since this is an open source project, all PR requests will be welcomed, as long 
 
 ___
 ## Local Development
-This project has the following requirements. We highly recommend you use `nvm` to manage your node and p(npm) versions.
-- Node.js version >20.17.0 `nvm install 20.17 && nvm use 20.17`
-  - You may want to make 20.17 the default version with `nvm alias default 20.17`
-- pnpm version >9.14.4 `npm install -g pnpm`
-- Docker (for the backend) [Docker install docs](https://docs.docker.com/engine/install/)
 
-### Frontend
+### Technology Migration
+This project is currently transitioning from **Vue 3 + TypeScript** to **.NET 10 Blazor WebAssembly**. Both technology stacks currently coexist in the repository:
+- **Current (Vue 3)**: Production web application (`/web`), parser (`/parsing`), and backend API (`/backend`)
+- **New (.NET 10)**: Blazor WebAssembly application (`/src/Web`), Parser console app (`/src/Parser`), and MSTest test projects
+
+The .NET version is actively under development and will eventually replace the Vue implementation.
+
+### Requirements
+
+#### For .NET Development (New)
+- **.NET 10 SDK or later** - [Download .NET SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+  - Verify installation: `dotnet --version` (should show 10.0.x or later)
+
+#### For Vue Development (Current)
+- **Node.js** version >20.17.0 `nvm install 20.17 && nvm use 20.17`
+  - You may want to make 20.17 the default version with `nvm alias default 20.17`
+  - We highly recommend you use `nvm` to manage your node versions
+- **pnpm** version >9.14.4 `npm install -g pnpm`
+- **Docker** (for the backend) - [Docker install docs](https://docs.docker.com/engine/install/)
+
+### .NET Web Application (Blazor WebAssembly - New)
+The new .NET 10 Blazor WebAssembly application is under active development and will eventually replace the Vue frontend.
+
+#### Running the Blazor Web Application
+```sh
+cd src/Web
+dotnet run
+```
+
+Visit http://localhost:5000 (or the URL shown in the console) to view the Blazor application.
+
+#### Testing the Blazor Web Application
+```sh
+cd src/Web.Tests
+dotnet test
+```
+
+All tests must pass for PRs to be accepted.
+
+### Frontend (Vue 3 - Current Production)
+The Vue 3 application is the current production version deployed at [satisfactory-factories.app](https://satisfactory-factories.app/).
+
 ```sh
 cd web
 pnpm install
@@ -28,8 +64,36 @@ Visit http://localhost:3000 to view the project. You may need to load it twice.
 #### Testing
 There are tests for the frontend project, run them with `pnpm test`. Tests must pass for PRs to be accepted. Note as of writing the coverage isn't 100%.
 
-### Parsing
-The parser is responsible for processing the `Docs.json` from the game and reconstructing a more readable version for our use, since the game's docs file is overwhelmingly large and not very human-readable. The file is located under `X\steamapps\common\Satisfactory\CommunityResources\Docs` on Windows. Replace X with where you have installed your steam library (usually `C:\Program Files (x86)\Steam`)
+### .NET Parser (Console Application - New)
+The .NET parser is a console application that processes the `Docs.json` from the game and outputs a more readable format.
+
+#### Running the .NET Parser
+The parser requires two command-line arguments: an input file path and an output file path.
+
+```sh
+cd src/Parser
+dotnet run -- path/to/Docs.json path/to/output/gameData.json
+```
+
+**Example:**
+```sh
+# Windows example (assuming Steam library at C:\Program Files (x86)\Steam)
+cd src/Parser
+dotnet run -- "C:\Program Files (x86)\Steam\steamapps\common\Satisfactory\CommunityResources\Docs\Docs.json" "../../web/public/gameData_v1.0-12.json"
+```
+
+The `Docs.json` file is located under `X\steamapps\common\Satisfactory\CommunityResources\Docs` on Windows. Replace X with where you have installed your steam library (usually `C:\Program Files (x86)\Steam`).
+
+#### Testing the .NET Parser
+```sh
+cd src/Parser.Tests
+dotnet test
+```
+
+All tests must pass for PRs to be accepted.
+
+### Parsing (TypeScript - Current Production)
+The TypeScript parser is responsible for processing the `Docs.json` from the game and reconstructing a more readable version for our use, since the game's docs file is overwhelmingly large and not very human-readable. The file is located under `X\steamapps\common\Satisfactory\CommunityResources\Docs` on Windows. Replace X with where you have installed your steam library (usually `C:\Program Files (x86)\Steam`)
 
 #### Running the parser and updating the gameData
 To run the parser:
@@ -59,39 +123,53 @@ API will be available on http://localhost:3001.
 
 There are no tests currently available for the backend project.
 
-### .NET Projects
-The project includes .NET 10 Blazor WebAssembly projects for the Web application and Parser, along with their corresponding MSTest test projects.
+### Building and Testing All .NET Projects
+The repository includes a .NET solution file at `/src/SatisfactoryFactories.slnx` that contains all .NET projects (Web, Parser, and their test projects).
 
-#### Requirements
-- .NET 10 SDK or later
-
-#### Building and Testing
-To build all .NET projects:
+#### Build All .NET Projects
 ```sh
 cd src
 dotnet build
 ```
 
-To run all .NET tests:
+This will build:
+- `Web` - Blazor WebAssembly application
+- `Parser` - Console application for processing game data
+- `Web.Tests` - MSTest tests for the Web application
+- `Parser.Tests` - MSTest tests for the Parser
+
+#### Run All .NET Tests
 ```sh
 cd src
 dotnet test
 ```
 
-To run tests for a specific project:
+All tests must pass for PRs to be accepted.
+
+#### Run Tests for a Specific Project
 ```sh
+# Web tests
 cd src/Web.Tests
 dotnet test
 
-# Or for Parser tests
+# Parser tests
 cd src/Parser.Tests
 dotnet test
 ```
 
-All tests must pass for PRs to be accepted.
+#### Run Tests with Coverage
+```sh
+cd src
+dotnet test --collect:"XPlat Code Coverage"
+```
 
 ### Deployment
+
+#### Current Deployment (Vue 3)
 New versions are trunked to `main` branch. Once `main` has been pushed, GitHub Actions will create a release then deploy the frontend to Vercel, and create a docker image of the backend to deploy to my personal server.
+
+#### Future Deployment (.NET Blazor)
+The .NET Blazor WebAssembly application is planned to be deployed to Azure Static Web Apps or Azure App Service once development is complete. This will replace the current Vercel deployment.
 ___
 
 ## License
