@@ -1,0 +1,221 @@
+/* Global Styles for Satisfactory Factories - Blazor Migration
+ * Converted from Vue/SCSS global.scss
+ * Maintains Material Design look and feel with dark color scheme
+ */
+
+:root {
+  color-scheme: dark;
+}
+
+/* Chip Component Styles */
+.sf-chip {
+  padding: 20px 12px !important;
+  border: 2px solid #7f7f7f !important;
+  margin-right: 8px;
+  margin-bottom: 4px;
+  margin-top: 4px;
+  color: white !important;
+}
+
+.sf-chip.small {
+  padding: 12px 10px !important;
+}
+
+.sf-chip.x-small {
+  height: 26px !important;
+  padding: 0 8px !important;
+  font-size: 12px !important;
+}
+
+.sf-chip.no-margin {
+  margin: 0 !important;
+}
+
+.sf-chip.red {
+  color: #f44336 !important;
+  border-color: #f44336 !important;
+}
+
+.sf-chip.blue {
+  color: rgb(33, 150, 243) !important;
+  border-color: rgb(1, 111, 204) !important;
+}
+
+.sf-chip.cyan {
+  color: rgb(163, 206, 255) !important;
+  border-color: rgb(75, 151, 223) !important;
+}
+
+.sf-chip.orange {
+  color: #f57f17 !important;
+  border-color: rgb(167, 86, 0) !important;
+}
+
+.sf-chip.yellow {
+  color: #fbc02d !important;
+  border-color: rgb(172, 153, 2) !important;
+}
+
+.sf-chip.green {
+  color: #4caf50 !important;
+  border-color: #4caf50 !important;
+}
+
+.sf-chip.no-border {
+  border: 0 !important;
+}
+
+/* Selector Styles */
+.selectors:last-of-type {
+  margin-bottom: 12px !important;
+}
+
+.selectors .v-input__prepend {
+  margin-right: 10px;
+}
+
+.v-list-item__prepend {
+  padding-right: 10px;
+}
+
+/* Utility Classes */
+.last-child-no-margin :last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Sub Card Styles */
+.sub-card {
+  background-color: rgb(50, 50, 50) !important;
+}
+
+.sub-card:last-of-type {
+  border-bottom: 0;
+  box-shadow: 0 0 0 0;
+}
+
+/* No Bottom Margin Utility */
+.no-bottom.border-md:last-of-type {
+  margin-bottom: 0 !important;
+  box-shadow: 0 0 0 0;
+}
+
+.no-bottom:last-of-type {
+  border-bottom: 0;
+  margin-bottom: 0 !important;
+  box-shadow: 0 0 0 0;
+}
+
+/* Factory Card Styles */
+.factory-card {
+  transition: all 0.3s;
+  border: 2px solid rgb(108, 108, 108) !important;
+}
+
+.factory-card .header {
+  padding: 12px 16px 0 !important;
+  margin-bottom: 0;
+  border-bottom: 1px solid rgb(108, 108, 108) !important;
+  align-items: center;
+  transition: background-color 0.3s;
+  background-color: rgba(43, 43, 43, 0.4);
+}
+
+.factory-card .header.list {
+  padding: 0 !important;
+  border-bottom: 0;
+}
+
+.factory-card.problem {
+  border: 2px solid #a00 !important;
+}
+
+.factory-card.problem .header {
+  background-color: rgba(140, 9, 21, 0.4);
+}
+
+.factory-card.needsSync {
+  border: 2px solid rgb(167, 86, 0) !important;
+}
+
+.factory-card.needsSync .header {
+  background-color: rgba(255, 136, 0, 0.16);
+}
+
+.factory-card.inSync {
+  border: 2px solid #4caf50 !important;
+}
+
+.factory-card.inSync .header {
+  background-color: rgba(76, 175, 80, 0.16);
+}
+
+/* Card Title */
+.v-card-title {
+  padding: 1rem;
+}
+
+/* Icon Styles */
+.fa-bolt {
+  font-size: 20px;
+  margin-right: 2px;
+}
+
+/* Border Utilities */
+.border-gray {
+  border-color: rgb(129, 129, 129) !important;
+}
+
+.border-light-gray {
+  border-color: rgb(186, 186, 186) !important;
+}
+
+/* Inline Input Styles */
+.inline-inputs {
+  margin-left: 5px;
+}
+
+.inline-inputs input {
+  padding: 0;
+  text-align: center;
+}
+
+/* Overlay Styles */
+.v-overlay__scrim {
+  background-color: rgba(119, 119, 119, 0.7) !important;
+}
+
+/* Typography - Adjusted from Vuetify defaults */
+.text-h1 {
+  font-size: 2.4rem !important;
+  line-height: 3rem !important;
+}
+
+.text-h2 {
+  font-size: 2.2rem !important;
+  line-height: 3.4rem !important;
+}
+
+.text-h3 {
+  font-size: 2.0rem !important;
+  line-height: 3.2rem !important;
+}
+
+.text-h4 {
+  font-size: 1.75rem !important;
+  line-height: 3rem !important;
+}
+
+.text-h5 {
+  font-size: 1.5rem !important;
+  line-height: 2.8rem !important;
+}
+
+.text-h6 {
+  font-size: 1.25rem !important;
+  line-height: 2.4rem !important;
+}
+
+/* Standardize font weights */
+.text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
+  font-weight: 400 !important;
+}

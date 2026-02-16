@@ -1,0 +1,203 @@
+/* Responsive Design Breakpoints
+ * Based on Material Design responsive breakpoints
+ * Matching Vuetify's responsive system
+ */
+
+/* Breakpoint definitions:
+ * xs: 0-599px (mobile)
+ * sm: 600-959px (tablet)
+ * md: 960-1279px (small desktop)
+ * lg: 1280-1919px (desktop)
+ * xl: 1920px+ (large desktop)
+ */
+
+/* Mobile First - Base styles for xs */
+.container {
+  width: 100%;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
+  margin: 0 auto;
+}
+
+/* Small devices (tablets, 600px and up) */
+@media (min-width: 600px) {
+  .container {
+    max-width: 600px;
+  }
+  
+  .sm-and-down {
+    display: block;
+  }
+  
+  .sm-and-up {
+    display: block;
+  }
+}
+
+/* Medium devices (small desktops, 960px and up) */
+@media (min-width: 960px) {
+  .container {
+    max-width: 900px;
+  }
+  
+  .md-and-down {
+    display: block;
+  }
+  
+  .md-and-up {
+    display: block;
+  }
+  
+  /* Factory card adjustments for desktop */
+  .factory-card {
+    margin-bottom: var(--spacing-md);
+  }
+}
+
+/* Large devices (desktops, 1280px and up) */
+@media (min-width: 1280px) {
+  .container {
+    max-width: 1200px;
+  }
+  
+  .lg-and-down {
+    display: block;
+  }
+  
+  .lg-and-up {
+    display: block;
+  }
+}
+
+/* Extra large devices (large desktops, 1920px and up) */
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1800px;
+  }
+  
+  .xl-and-down {
+    display: block;
+  }
+  
+  .xl-and-up {
+    display: block;
+  }
+}
+
+/* Mobile-specific styles (xs only) */
+@media (max-width: 599px) {
+  .xs-only {
+    display: block;
+  }
+  
+  .sm-and-up {
+    display: none;
+  }
+  
+  /* Adjust typography for mobile */
+  .text-h1 { font-size: 1.8rem !important; }
+  .text-h2 { font-size: 1.6rem !important; }
+  .text-h3 { font-size: 1.4rem !important; }
+  .text-h4 { font-size: 1.2rem !important; }
+  .text-h5 { font-size: 1.1rem !important; }
+  .text-h6 { font-size: 1.0rem !important; }
+  
+  /* Stack factory cards on mobile */
+  .factory-card {
+    margin-bottom: var(--spacing-sm);
+  }
+  
+  /* Adjust graph notice for mobile */
+  .graph-notice {
+    width: 90%;
+    left: 5%;
+  }
+  
+  /* Reduce padding on mobile */
+  .planner-container {
+    padding: var(--spacing-sm);
+  }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 600px) and (max-width: 959px) {
+  .sm-only {
+    display: block;
+  }
+  
+  .graph-notice {
+    width: 90%;
+    left: 5%;
+  }
+}
+
+/* Hide on small screens */
+@media (max-width: 959px) {
+  .md-and-up {
+    display: none;
+  }
+}
+
+/* Hide on medium and larger screens */
+@media (min-width: 960px) {
+  .sm-and-down {
+    display: none;
+  }
+}
+
+/* Responsive Grid System */
+.grid {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+@media (min-width: 600px) {
+  .grid-sm-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 960px) {
+  .grid-md-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .grid-md-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-lg-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .grid-lg-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Responsive Flex Utilities */
+.flex-column-mobile {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 960px) {
+  .flex-column-mobile {
+    flex-direction: row;
+  }
+}
+
+/* Touch-friendly sizing for mobile */
+@media (max-width: 599px) {
+  button, .btn, .md-btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input, select, textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}

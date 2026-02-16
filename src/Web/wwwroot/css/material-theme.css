@@ -1,0 +1,46 @@
+/* Material Design Theme Variables for Satisfactory Factories
+ * Custom dark theme matching Vue application design
+ */
+
+:root {
+  /* Primary Palette */
+  --primary-color: #1976d2;
+  --primary-light: #42a5f5;
+  --primary-dark: #1565c0;
+  
+  /* Status Colors */
+  --error-color: #f44336;
+  --warning-color: #f57f17;
+  --success-color: #4caf50;
+  --info-color: rgb(33, 150, 243);
+  
+  /* Background - Dark Theme */
+  --bg-primary: #121212;
+  --bg-surface: #1e1e1e;
+  --bg-card: rgb(50, 50, 50);
+  --bg-header: rgba(43, 43, 43, 0.4);
+  
+  /* Text Colors */
+  --text-primary: rgba(255, 255, 255, 0.87);
+  --text-secondary: rgba(255, 255, 255, 0.60);
+  
+  /* Borders */
+  --border-color: rgb(108, 108, 108);
+  --border-light: rgb(129, 129, 129);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
