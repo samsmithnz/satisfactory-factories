@@ -19,7 +19,7 @@ public sealed class FactoryCommonServiceTests
     public void CreateNewPart_ShouldCreateNewPart()
     {
         // Arrange
-        Factory factory = CreateTestFactory("Test Factory");
+        Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         string partId = "NewPart";
 
         // Act
@@ -39,7 +39,7 @@ public sealed class FactoryCommonServiceTests
     public void CreateNewPart_ShouldNotOverwriteExistingPart()
     {
         // Arrange
-        Factory factory = CreateTestFactory("Test Factory");
+        Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         string partId = "CompactedCoal";
 
         // Create the part first time
@@ -57,7 +57,7 @@ public sealed class FactoryCommonServiceTests
     public void GetRecipe_ShouldReturnRecipeWhenFound()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string recipeId = "IronIngot";
 
         // Act
@@ -72,7 +72,7 @@ public sealed class FactoryCommonServiceTests
     public void GetRecipe_ShouldReturnNullWhenNotFound()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string recipeId = "NonExistentRecipe";
 
         // Act
@@ -86,7 +86,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPartDisplayName_ShouldReturnNameForRawResource()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string partId = "OreIron";
 
         // Act
@@ -100,7 +100,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPartDisplayName_ShouldReturnNameForPart()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string partId = "IronIngot";
 
         // Act
@@ -114,7 +114,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPartDisplayName_ShouldReturnErrorMessageWhenPartIsEmpty()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string partId = "";
 
         // Act
@@ -128,7 +128,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPartDisplayName_ShouldReturnUnknownWhenPartNotFound()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string partId = "UnknownPart";
 
         // Act
@@ -168,7 +168,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPowerRecipeById_ShouldReturnRecipeWhenFound()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string recipeId = "GeneratorCoal";
 
         // Act
@@ -183,7 +183,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPowerRecipeById_ShouldReturnNullWhenNotFound()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string recipeId = "NonExistent";
 
         // Act
@@ -197,7 +197,7 @@ public sealed class FactoryCommonServiceTests
     public void GetPowerRecipeById_ShouldReturnNullWhenRecipeIdIsEmpty()
     {
         // Arrange
-        GameData gameData = CreateTestGameData();
+        GameData gameData = TestDataHelper.CreateTestGameData();
         string recipeId = "";
 
         // Act
@@ -207,86 +207,4 @@ public sealed class FactoryCommonServiceTests
         Assert.IsNull(recipe);
     }
 
-    // Helper methods
-    private static Factory CreateTestFactory(string name)
-    {
-        return new Factory
-        {
-            Id = Random.Shared.Next(1, 10000),
-            Name = name,
-            Products = new List<FactoryItem>(),
-            ByProducts = new List<ByProductItem>(),
-            PowerProducers = new List<FactoryPowerProducer>(),
-            Inputs = new List<FactoryInput>(),
-            PreviousInputs = new List<FactoryInput>(),
-            Parts = new Dictionary<string, PartMetrics>(),
-            BuildingRequirements = new Dictionary<string, BuildingRequirement>(),
-            Dependencies = new FactoryDependency(),
-            ExportCalculator = new Dictionary<string, ExportCalculatorSettings>(),
-            RawResources = new Dictionary<string, WorldRawResource>(),
-            Power = new FactoryPower(),
-            RequirementsSatisfied = true,
-            UsingRawResourcesOnly = false,
-            Hidden = false,
-            HasProblem = false,
-            InSync = null,
-            SyncState = new Dictionary<string, FactorySyncState>(),
-            SyncStatePower = new Dictionary<string, FactoryPowerSyncState>(),
-            DisplayOrder = -1,
-            Tasks = new List<FactoryTask>(),
-            Notes = "",
-            DataVersion = "2025-01-03"
-        };
-    }
-
-    private static GameData CreateTestGameData()
-    {
-        return new GameData
-        {
-            Buildings = new Dictionary<string, double>(),
-            Items = new GameDataItems
-            {
-                Parts = new Dictionary<string, Part>
-                {
-                    { "IronIngot", new Part { Name = "Iron Ingot", StackSize = 100, IsFluid = false, IsFicsmas = false, EnergyGeneratedInMJ = 0 } }
-                },
-                RawResources = new Dictionary<string, RawResource>
-                {
-                    { "OreIron", new RawResource { Name = "Iron Ore", Limit = 70380 } }
-                }
-            },
-            Recipes = new List<Recipe>
-            {
-                new Recipe
-                {
-                    Id = "IronIngot",
-                    DisplayName = "Iron Ingot",
-                    Ingredients = new List<RecipeItem>
-                    {
-                        new RecipeItem { Part = "OreIron", Amount = 1, PerMin = 30 }
-                    },
-                    Products = new List<RecipeItem>
-                    {
-                        new RecipeItem { Part = "IronIngot", Amount = 1, PerMin = 30, IsByProduct = false }
-                    },
-                    Building = new RecipeBuilding { Name = "smeltermk1", Power = 4 },
-                    IsAlternate = false,
-                    IsFicsmas = false
-                }
-            },
-            PowerGenerationRecipes = new List<PowerRecipe>
-            {
-                new PowerRecipe
-                {
-                    Id = "GeneratorCoal",
-                    DisplayName = "Coal Generator",
-                    Ingredients = new List<Web.Models.PowerItem>
-                    {
-                        new Web.Models.PowerItem { Part = "Coal", PerMin = 15 }
-                    },
-                    Building = new RecipeBuilding { Name = "generatorcoal", Power = 75 }
-                }
-            }
-        };
-    }
 }
