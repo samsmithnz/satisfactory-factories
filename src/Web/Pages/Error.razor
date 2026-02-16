@@ -1,0 +1,119 @@
+@page "/error"
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
+
+<PageTitle>Error - Satisfactory Factories</PageTitle>
+
+<div class="d-flex justify-center">
+    <div class="error-card rounded-md ma-12">
+        <div class="v-card-title text-h5">Error Initializing Planner!</div>
+        <div class="error-card-content">
+            <p class="mb-4">
+                Unfortunately it appears that your data is somehow corrupted.
+            </p>
+            <p class="mb-4">
+                The error is: <span class="text-red">@_errorMessage</span>.
+            </p>
+            <p class="mb-4">
+                Please press: 
+                @if (!_copied)
+                {
+                    <button class="btn btn-primary border ml-2" @onclick="CopyData">
+                        <i class="fas fa-files-medical"></i>
+                        <span>Copy Data</span>
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-primary border ml-2" disabled>
+                        <i class="fas fa-files-medical"></i>
+                        <span>Copied!</span>
+                    </button>
+                }
+                which then you can paste into a message to us on 
+                <a class="btn bg-indigo-darken-2 border ml-2" href="https://discord.gg/zge68PrGJ7" target="_blank">
+                    <i class="fab fa-discord"></i>
+                    <span>Discord</span>
+                </a>.
+            </p>
+            <p class="mb-4">
+                The chances of us being able to fix this for you are unfortunately slim. 
+                The project is still in an <b>ALPHA</b> state, unfortunately these things will happen.
+            </p>
+            <div class="text-center">
+                <button class="btn btn-danger mr-2" @onclick="WipeAndReload">
+                    <i class="fas fa-trash"></i>
+                    Reset factory data
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private bool _copied = false;
+    private string _errorMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _errorMessage = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "error") ?? "";
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading error message: {ex.Message}");
+            _errorMessage = "Unknown error";
+        }
+    }
+
+    private async Task CopyData()
+    {
+        try
+        {
+            Console.WriteLine("Copying data to clipboard");
+            
+            // We can't use AppStateService here as that's likely where it's erroring
+            // We need to pull the data out directly from localStorage
+            string? factoryTabsData = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "factoryTabs");
+            string? factoriesData = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "factories");
+            string data = factoryTabsData ?? factoriesData ?? "";
+            
+            if (string.IsNullOrEmpty(data))
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No data to copy!!");
+                return;
+            }
+
+            string discordMessage = $"Hello, I have encountered an error: `{_errorMessage}`. Here is the data:\n```json\n{data}\n```";
+
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", discordMessage);
+            _copied = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error copying data: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "Failed to copy data to clipboard");
+        }
+    }
+
+    private async Task WipeAndReload()
+    {
+        try
+        {
+            // Remove factory data
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "factoryTabs");
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "factories");
+            
+            // Wipe the error so we don't keep showing this error
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "error");
+            
+            // Send back to homepage
+            NavManager.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error wiping data: {ex.Message}");
+        }
+    }
+}
