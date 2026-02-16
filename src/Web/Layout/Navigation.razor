@@ -1,0 +1,105 @@
+@using Microsoft.AspNetCore.Components.Routing
+@inject NavigationManager NavigationManager
+
+<div class="v-toolbar">
+    @if (IsMobile)
+    {
+        <button class="toolbar-btn" @onclick="ToggleDrawer">
+            <i class="fa fa-bars"></i>
+        </button>
+    }
+    else
+    {
+        <div class="toolbar-brand">
+            <img alt="Site logo" src="/assets/img/SF.png" class="toolbar-logo">
+            <h1 class="toolbar-title">Satisfactory Factories</h1>
+            <span class="toolbar-version">
+                <span class="sf-chip blue small">ALPHA v0.4</span>
+            </span>
+        </div>
+    }
+    
+    <div class="toolbar-tabs">
+        @foreach (TabItem tab in _tabItems)
+        {
+            <NavLink href="@tab.Href" class="toolbar-tab" Match="@(tab.Href == "/" ? NavLinkMatch.All : NavLinkMatch.Prefix)">
+                <i class="@tab.Icon"></i>
+                @if (!IsMobile)
+                {
+                    <span class="tab-text">@tab.Title</span>
+                }
+            </NavLink>
+        }
+    </div>
+
+    @if (!IsMobile)
+    {
+        <div class="toolbar-actions">
+            @ChildContent
+        </div>
+    }
+</div>
+
+@if (IsMobile && _isDrawerOpen)
+{
+    <div class="v-navigation-drawer" @onclick:stopPropagation="true">
+        <div class="drawer-content">
+            <div id="navigationDrawer"></div>
+            <div class="drawer-footer">
+                <hr class="drawer-divider" />
+                @ChildContent
+            </div>
+        </div>
+    </div>
+    <div class="drawer-overlay" @onclick="CloseDrawer"></div>
+}
+
+@code {
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    private bool _isDrawerOpen = false;
+    private bool IsMobile => _windowWidth < 960; // md breakpoint
+    private int _windowWidth = 1920;
+
+    private readonly List<TabItem> _tabItems = new()
+    {
+        new TabItem { Title = "Planner", Icon = "fas fa-ruler-triangle", Href = "/" },
+        new TabItem { Title = "Graph (WIP)", Icon = "fas fa-project-diagram", Href = "/graph" },
+        new TabItem { Title = "Recipes", Icon = "fas fa-hat-chef", Href = "/recipes" },
+        new TabItem { Title = "Change Log", Icon = "fas fa-scroll", Href = "/changelog" }
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await UpdateWindowSize();
+        }
+    }
+
+    private async Task UpdateWindowSize()
+    {
+        // For now, default to desktop size
+        // In a real implementation, we'd use JS interop to get window size
+        _windowWidth = 1920;
+        StateHasChanged();
+    }
+
+    private void ToggleDrawer()
+    {
+        _isDrawerOpen = !_isDrawerOpen;
+    }
+
+    private void CloseDrawer()
+    {
+        _isDrawerOpen = false;
+    }
+
+    private class TabItem
+    {
+        public string Title { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+        public string Href { get; set; } = string.Empty;
+    }
+}

@@ -1,16 +1,28 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+@inherits LayoutComponentBase
+@inject NavigationManager NavManager
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<div class="layout-container">
+    <Navigation>
+    </Navigation>
 
-        <article class="content px-4">
-            @Body
-        </article>
+    @if (IsFactoryPage())
+    {
+        <TabNavigation />
+    }
+
+    <main class="content-area">
+        @Body
     </main>
+
+    <AppFooter />
 </div>
+
+@code {
+    private bool IsFactoryPage()
+    {
+        string relativePath = NavManager.ToBaseRelativePath(NavManager.Uri);
+        bool isRootPath = string.IsNullOrEmpty(relativePath);
+        bool isGraphPath = relativePath.StartsWith("graph");
+        return isRootPath || isGraphPath;
+    }
+}

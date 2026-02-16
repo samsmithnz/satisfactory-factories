@@ -1,0 +1,24 @@
+@* AppFooter Component - Footer with copyright and attribution *@
+
+<footer class="v-footer">
+    <div class="footer-content">
+        <div class="footer-links">
+            @foreach (string link in _links)
+            {
+                <a href="#" class="footer-link">@link</a>
+            }
+        </div>
+        <div class="footer-copyright">
+            &copy;@DateTime.Now.Year Matt Cavanagh<br />
+            All assets (images, recipe data etc) are the sole property of Coffee Stain Studios, who are the owners of the Satisfactory&trade; video game.<br />
+            This project is not affiliated with Coffee Stain Studios in any way.
+        </div>
+    </div>
+</footer>
+
+@code {
+    private readonly List<string> _links = new()
+    {
+        "GitHub"
+    };
+}
