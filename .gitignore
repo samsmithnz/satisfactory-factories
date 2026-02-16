@@ -3,3 +3,11 @@ node_modules
 
 // for Visual Studio Code users
 .vs/*
+
+// .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+*.dll
+*.pdb
