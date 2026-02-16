@@ -56,38 +56,46 @@
         _creating = true;
         StateHasChanged();
 
-        // Create a FactoryTab from current factories
-        FactoryTab currentTab = new FactoryTab
-        {
-            Id = Guid.NewGuid().ToString(),
-            Name = "Shared Factories",
-            Factories = factories
-        };
-
-        _link = await HandleCreation(currentTab) ?? string.Empty;
-        _creating = false;
-        StateHasChanged();
-
-        // If no link was returned assume server errors
-        if (string.IsNullOrEmpty(_link))
-        {
-            return;
-        }
-
-        Console.WriteLine($"ShareButton: Link created {_link}");
-
         try
         {
-            await CopyLink(_link);
-        }
-        catch (Exception ex)
-        {
-            if (ex.Message.Contains("not allowed") || ex.Message.Contains("permission"))
+            // Create a FactoryTab from current factories
+            FactoryTab currentTab = new FactoryTab
             {
-                Console.Error.WriteLine($"Failed to copy link to clipboard, showing share dialog: {ex.Message}");
+                Id = Guid.NewGuid().ToString(),
+                Name = "Shared Factories",
+                Factories = factories
+            };
+
+            _link = await HandleCreation(currentTab) ?? string.Empty;
+            _creating = false;
+            StateHasChanged();
+
+            // If no link was returned assume server errors
+            if (string.IsNullOrEmpty(_link))
+            {
+                return;
+            }
+
+            Console.WriteLine($"ShareButton: Link created {_link}");
+
+            try
+            {
+                await CopyLink(_link);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Failed to copy link to clipboard: {ex.Message}");
+                // Show the dialog as fallback
                 _showCopyDialog = true;
                 StateHasChanged();
             }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error creating share link: {ex.Message}");
+            Toast.ShowToast("Failed to create share link due to an error.", ToastType.Error);
+            _creating = false;
+            StateHasChanged();
         }
     }
 
@@ -157,18 +165,9 @@
 
     private async Task CopyLink(string url)
     {
-        try
-        {
-            // Use JavaScript interop to copy to clipboard
-            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
-            Toast.ShowToast("Link copied to clipboard!", ToastType.Success);
-            _showCopyDialog = false;
-            StateHasChanged();
-        }
-        catch
-        {
-            // If copy fails, rethrow so caller can handle
-            throw;
-        }
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", url);
+        Toast.ShowToast("Link copied to clipboard!", ToastType.Success);
+        _showCopyDialog = false;
+        StateHasChanged();
     }
 }

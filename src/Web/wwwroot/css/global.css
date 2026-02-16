@@ -260,3 +260,12 @@
 .rounded-md {
   border-radius: var(--radius-md) !important;
 }
+
+/* Additional utility classes for flex layout */
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.flex-1 {
+  flex: 1;
+}
