@@ -1,0 +1,61 @@
+/* Material Design Theme Variables for Satisfactory Factories
+ * Custom dark theme matching Vue application design
+ */
+
+:root {
+  /* Primary Palette */
+  --primary-color: #1976d2;
+  --primary-light: #42a5f5;
+  --primary-dark: #1565c0;
+  
+  /* Status Colors */
+  --error-color: #f44336;
+  --warning-color: #f57f17;
+  --success-color: #4caf50;
+  --info-color: rgb(33, 150, 243);
+  
+  /* Background - Dark Theme */
+  --bg-primary: #121212;
+  --bg-surface: #1e1e1e;
+  --bg-card: rgb(50, 50, 50);
+  --bg-header: rgba(43, 43, 43, 0.4);
+  
+  /* Text Colors */
+  --text-primary: rgba(255, 255, 255, 0.87);
+  --text-secondary: rgba(255, 255, 255, 0.60);
+  
+  /* Borders */
+  --border-color: rgb(108, 108, 108);
+  --border-light: rgb(129, 129, 129);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  /* Typography sizes - desktop defaults */
+  --text-h1-size: 2.4rem;
+  --text-h1-line-height: 3.2rem;
+  --text-h2-size: 2.2rem;
+  --text-h2-line-height: 3.0rem;
+  --text-h3-size: 2.0rem;
+  --text-h3-line-height: 2.8rem;
+  --text-h4-size: 1.75rem;
+  --text-h4-line-height: 2.6rem;
+  --text-h5-size: 1.5rem;
+  --text-h5-line-height: 2.4rem;
+  --text-h6-size: 1.25rem;
+  --text-h6-line-height: 2.0rem;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}

@@ -1,0 +1,196 @@
+/* Component-Specific Styles
+ * Extracted from Vue single-file components
+ * Converted to global CSS for Blazor application
+ */
+
+/* Factory Name Component */
+.factory-name {
+  width: 85%;
+  padding: 6px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.factory-name:hover {
+  cursor: pointer;
+  background-color: #323232;
+}
+
+.factory-link:hover {
+  cursor: pointer;
+  background-color: #323232;
+}
+
+/* Graph/Node Styles */
+.node {
+  position: relative;
+  max-width: 300px;
+  min-width: 300px;
+  background: dimgray;
+  color: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px dimgray;
+}
+
+.handle {
+  width: 6px;
+  height: 18px;
+  border-radius: 2px;
+}
+
+.handle-source {
+  background-color: green;
+  right: -15px;
+}
+
+.handle-target {
+  background-color: red;
+  left: -15px;
+}
+
+.graph-notice {
+  width: 1000px;
+  position: absolute;
+  top: 12vh;
+  left: calc(50% - 500px);
+  z-index: 100;
+}
+
+/* SaveLoader Styles */
+.save-loader-card {
+  border-radius: 16px;
+  box-shadow: #0094e6 0 0 10px 0;
+}
+
+/* Introduction Dialog */
+.introduction-dialog p {
+  margin-bottom: 16px;
+}
+
+.introduction-dialog p:last-child {
+  margin-bottom: 0;
+}
+
+/* Product Component */
+.product {
+  border-left: 5px solid #2196f3 !important;
+}
+
+.product-secondary-input input {
+  font-size: 0.875rem;
+}
+
+/* Factory Satisfaction Table */
+.satisfaction-table tbody tr td {
+  padding: 0.5rem 1rem !important;
+  transition: background 0.5s ease-out !important;
+  border-block: thin solid #4b4b4b !important;
+}
+
+.satisfaction-table tbody tr td.border-red {
+  background: rgba(128, 0, 0, 0.50) !important;
+  border-block: thin solid #b50000 !important;
+}
+
+.satisfaction-table tbody tr td.name {
+  height: 78px !important;
+  width: 500px;
+}
+
+.satisfaction-table tbody tr td.calculator-row {
+  padding: 0 !important;
+  height: 0 !important;
+}
+
+.satisfaction-table tbody tr td.satisfaction {
+  width: 300px;
+}
+
+/* Calculator Tray */
+.calculator-tray {
+  overflow: hidden;
+  height: 0;
+  transition: height 0.25s ease-in;
+}
+
+.calculator-tray.expanded {
+  height: 250px;
+}
+
+/* Imports Component */
+.imports-card .imports-content {
+  padding: 0 !important;
+}
+
+.imports-card .imports-entry {
+  padding: 12px 24px !important;
+  background-color: rgb(42, 42, 42) !important;
+}
+
+.imports-card .imports-entry:hover {
+  background-color: #383838 !important;
+}
+
+/* World Data Component */
+.world-data-section .section-divider {
+  margin: 24px 0;
+  border-top: 1px solid rgb(108, 108, 108);
+}
+
+/* Planner Component */
+.planner-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+/* Factory Tasks */
+.factory-tasks .task-item {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.factory-tasks .task-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Statistics Summary */
+.statistics-summary {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.stat-card {
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-card);
+}
+
+/* Power Producer */
+.power-producer {
+  border-left: 5px solid #fbc02d !important;
+}
+
+/* Placeholder Components */
+.placeholder-text {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Factory List */
+.factory-list-item {
+  padding: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.factory-list-item:last-child {
+  border-bottom: none;
+}
+
+.factory-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
