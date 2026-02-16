@@ -1,0 +1,122 @@
+@* TabNavigation Component - Factory tab management *@
+
+<div class="tab-navigation">
+    <div class="tab-navigation-content">
+        <div class="tab-list">
+            <div class="tabs-container">
+                @foreach ((FactoryTab tab, int index) in _factoryTabs.Select((t, i) => (t, i)))
+                {
+                    <button class="tab @(IsCurrentTab(index) ? "active" : "")" 
+                            @onclick="() => SelectTab(index)">
+                        @if (IsCurrentTab(index) && _isEditingName)
+                        {
+                            <input type="text" 
+                                   class="tab-name-input" 
+                                   @bind="_currentTabName" 
+                                   @onkeyup="HandleKeyPress"
+                                   @onclick:stopPropagation="true" />
+                        }
+                        else
+                        {
+                            <span class="tab-name">@tab.Name</span>
+                        }
+                        
+                        @if (IsCurrentTab(index))
+                        {
+                            <button class="tab-edit-btn" 
+                                    @onclick="ToggleEditName" 
+                                    @onclick:stopPropagation="true">
+                                <i class="fas @(_isEditingName ? "fa-check" : "fa-pen")"></i>
+                            </button>
+                        }
+                    </button>
+                }
+            </div>
+            
+            <button class="tab-add-btn" @onclick="AddTab">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
+        <div class="tab-actions">
+            @if (_factoryTabs.Count > 1)
+            {
+                <button class="tab-delete-btn" @onclick="DeleteCurrentTab">
+                    <i class="fas fa-trash"></i>
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<FactoryTab> _factoryTabs = new()
+    {
+        new FactoryTab { Id = Guid.NewGuid().ToString(), Name = "Factory 1" }
+    };
+    
+    private int _currentTabIndex = 0;
+    private bool _isEditingName = false;
+    private string _currentTabName = "Factory 1";
+
+    private bool IsCurrentTab(int index) => index == _currentTabIndex;
+
+    private void SelectTab(int index)
+    {
+        if (!_isEditingName)
+        {
+            _currentTabIndex = index;
+            _currentTabName = _factoryTabs[index].Name;
+        }
+    }
+
+    private void ToggleEditName()
+    {
+        _isEditingName = !_isEditingName;
+        if (!_isEditingName)
+        {
+            _factoryTabs[_currentTabIndex].Name = _currentTabName;
+        }
+    }
+
+    private void HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            ToggleEditName();
+        }
+    }
+
+    private void AddTab()
+    {
+        int newTabNumber = _factoryTabs.Count + 1;
+        FactoryTab newTab = new()
+        {
+            Id = Guid.NewGuid().ToString(),
+            Name = $"Factory {newTabNumber}"
+        };
+        _factoryTabs.Add(newTab);
+        _currentTabIndex = _factoryTabs.Count - 1;
+        _currentTabName = newTab.Name;
+    }
+
+    private void DeleteCurrentTab()
+    {
+        if (_factoryTabs.Count <= 1)
+            return;
+
+        // Simple confirmation - in production, use JS confirm
+        _factoryTabs.RemoveAt(_currentTabIndex);
+        if (_currentTabIndex >= _factoryTabs.Count)
+        {
+            _currentTabIndex = _factoryTabs.Count - 1;
+        }
+        _currentTabName = _factoryTabs[_currentTabIndex].Name;
+    }
+
+    private class FactoryTab
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+    }
+}
