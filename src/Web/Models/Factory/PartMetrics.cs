@@ -58,7 +58,7 @@ public class PartMetrics
     public bool IsRaw { get; set; }
 
     /// <summary>
-    /// Use of use flag for templating.
+    /// Ease of use flag for templating.
     /// </summary>
     public bool Satisfied { get; set; }
 
