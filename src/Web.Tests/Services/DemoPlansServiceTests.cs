@@ -7,11 +7,21 @@ namespace Web.Tests.Services;
 [TestClass]
 public class DemoPlansServiceTests
 {
+    private TestAppStateService _testAppState = null!;
+    private LoadingService _loadingService = null!;
+
+    [TestInitialize]
+    public void Setup()
+    {
+        _testAppState = new TestAppStateService();
+        _loadingService = new LoadingService();
+    }
+
     [TestMethod]
     public void GetSimpleDemoPlanShouldReturnFactories()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -25,7 +35,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanShouldHaveCorrectFactoryNames()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -39,7 +49,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanShouldHaveCorrectFactoryIds()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -53,7 +63,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanFirstFactoryShouldHaveProduct()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -69,7 +79,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanSecondFactoryShouldHaveInputAndProduct()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -93,7 +103,7 @@ public class DemoPlansServiceTests
     public void GetAvailableTemplatesShouldReturnTemplateList()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
@@ -107,7 +117,7 @@ public class DemoPlansServiceTests
     public void GetAvailableTemplatesShouldIncludeSimpleTemplate()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
@@ -123,7 +133,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanShouldReturnNewInstancesEachTime()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService();
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
 
         // Act
         List<Factory> factories1 = service.GetSimpleDemoPlan();
@@ -131,5 +141,27 @@ public class DemoPlansServiceTests
 
         // Assert
         Assert.AreNotSame(factories1, factories2);
+    }
+
+    /// <summary>
+    /// Test implementation of IAppStateService for unit testing.
+    /// </summary>
+    private class TestAppStateService : IAppStateService
+    {
+        private List<Factory> _factories = new List<Factory>();
+        public event Action? OnChange;
+
+        public List<Factory> GetFactories() => _factories;
+        public void SetFactories(List<Factory> factories) => _factories = factories;
+        public void AddFactory(Factory factory) => _factories.Add(factory);
+        public void ClearFactories() => _factories.Clear();
+        public Task<bool> LoadFactoriesAsync() => Task.FromResult(true);
+        public Task SaveFactoriesAsync() => Task.CompletedTask;
+        public bool GetHelpTextShown() => false;
+        public void SetHelpTextShown(bool shown) { }
+        public List<FactoryTab> GetFactoryTabs() => new List<FactoryTab>();
+        public void AddFactoryTab(FactoryTab tab) { }
+        public int GetCurrentFactoryTabIndex() => 0;
+        public void SetCurrentFactoryTabIndex(int index) { }
     }
 }

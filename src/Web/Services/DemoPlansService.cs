@@ -9,6 +9,15 @@ namespace Web.Services;
 /// </summary>
 public class DemoPlansService
 {
+    private readonly IAppStateService _appState;
+    private readonly LoadingService _loadingService;
+
+    public DemoPlansService(IAppStateService appState, LoadingService loadingService)
+    {
+        _appState = appState;
+        _loadingService = loadingService;
+    }
+
     /// <summary>
     /// Gets a simple demo plan with basic iron production.
     /// </summary>
@@ -110,6 +119,54 @@ public class DemoPlansService
                 Description = "Very simple Iron Ingot and Iron Plate factory setup, with a single dependency link.",
                 IsDebug = false
             }
+        };
+    }
+
+    /// <summary>
+    /// Loads a demo plan template asynchronously with loading progress.
+    /// </summary>
+    /// <param name="templateName">Name of the template to load.</param>
+    public async Task LoadDemoPlanAsync(string templateName)
+    {
+        // Get the demo plan data based on template name
+        List<Factory> factories = GetDemoPlanByName(templateName);
+        
+        // Initialize loading overlay
+        _loadingService.Initialize($"Loading {templateName}", factories.Count + 2);
+        
+        // Small delay to let UI update
+        await Task.Delay(50);
+        
+        // Clear existing factories
+        _loadingService.IncrementStep("Clearing existing factories...");
+        _appState.ClearFactories();
+        await Task.Delay(100);
+        
+        // Load factories one by one
+        foreach (Factory factory in factories)
+        {
+            _loadingService.IncrementStep($"Loading {factory.Name}...");
+            _appState.AddFactory(factory);
+            await Task.Delay(75);
+        }
+        
+        // Save to localStorage
+        _loadingService.IncrementStep("Saving to local storage...", isFinalStep: true);
+        await _appState.SaveFactoriesAsync();
+        await Task.Delay(100);
+    }
+
+    /// <summary>
+    /// Gets a demo plan by template name.
+    /// </summary>
+    /// <param name="templateName">Name of the template.</param>
+    /// <returns>List of factories for the demo plan.</returns>
+    private List<Factory> GetDemoPlanByName(string templateName)
+    {
+        return templateName switch
+        {
+            "Simple" => GetSimpleDemoPlan(),
+            _ => GetSimpleDemoPlan() // Default to simple
         };
     }
 }

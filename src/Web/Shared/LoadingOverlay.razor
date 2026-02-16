@@ -13,10 +13,7 @@
             <div class="sf-progress-track">
                 <div class="sf-progress-fill" style="width: @CalculateProgress()%"></div>
             </div>
-            @if (LoadingService.IsLoading)
-            {
-                <div class="sf-step-info">@LoadingService.CurrentStep / @LoadingService.TotalSteps</div>
-            }
+            <div class="sf-step-info">@LoadingService.CurrentStep / @LoadingService.TotalSteps</div>
             <div class="sf-status-text">@LoadingService.Message</div>
         </div>
     </div>

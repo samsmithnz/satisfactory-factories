@@ -143,32 +143,8 @@
     {
         Console.WriteLine("Loading demo plan from query parameter");
         
-        // Get the demo plan data
-        List<Factory> factories = DemoPlansService.GetSimpleDemoPlan();
-        
-        // Initialize loading overlay
-        LoadingService.Initialize("Loading Demo Plan", factories.Count + 2);
-        
-        // Small delay to let UI update
-        await Task.Delay(50);
-        
-        // Clear existing factories
-        LoadingService.IncrementStep("Clearing existing factories...");
-        AppState.ClearFactories();
-        await Task.Delay(100);
-        
-        // Load factories one by one
-        foreach (Factory factory in factories)
-        {
-            LoadingService.IncrementStep($"Loading {factory.Name}...");
-            AppState.AddFactory(factory);
-            await Task.Delay(75);
-        }
-        
-        // Save to localStorage
-        LoadingService.IncrementStep("Saving to local storage...", isFinalStep: true);
-        await AppState.SaveFactoriesAsync();
-        await Task.Delay(100);
+        // Load the simple demo plan using the service
+        await DemoPlansService.LoadDemoPlanAsync("Simple");
         
         // Refresh factories list
         _factories = AppState.GetFactories();

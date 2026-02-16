@@ -70,7 +70,11 @@ public class LoadingService
         if (_currentStep >= _totalSteps || isFinalStep)
         {
             // Complete after a short delay to show the final message
-            Task.Delay(100).ContinueWith(_ => Complete());
+            Task.Run(async () =>
+            {
+                await Task.Delay(100);
+                Complete();
+            });
         }
         
         NotifyStateChanged();
