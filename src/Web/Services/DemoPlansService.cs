@@ -16,80 +16,80 @@ public class DemoPlansService
     {
         string jsonData = @"[
   {
-    ""id"": 0,
-    ""name"": ""Iron Ingots"",
-    ""inputs"": [],
-    ""previousInputs"": [],
-    ""products"": [
+    ""Id"": 0,
+    ""Name"": ""Iron Ingots"",
+    ""Inputs"": [],
+    ""PreviousInputs"": [],
+    ""Products"": [
       {
-        ""id"": ""IronIngot"",
-        ""recipe"": ""IngotIron"",
-        ""amount"": 100,
-        ""displayOrder"": 0,
-        ""requirements"": {},
-        ""buildingRequirements"": { ""building"": """", ""amount"": 0 }
+        ""Id"": ""IronIngot"",
+        ""Recipe"": ""IngotIron"",
+        ""Amount"": 100,
+        ""DisplayOrder"": 0,
+        ""Requirements"": {},
+        ""BuildingRequirements"": { ""Building"": """", ""Amount"": 0 }
       }
     ],
-    ""byProducts"": [],
-    ""powerProducers"": [],
-    ""parts"": {},
-    ""buildingRequirements"": {},
-    ""requirementsSatisfied"": false,
-    ""exportCalculator"": {},
-    ""dependencies"": { ""suppliers"": {}, ""requests"": {} },
-    ""rawResources"": {},
-    ""power"": { ""consumed"": 0, ""produced"": 0, ""net"": 0 },
-    ""usingRawResourcesOnly"": false,
-    ""hidden"": false,
-    ""hasProblem"": false,
-    ""inSync"": null,
-    ""syncState"": {},
-    ""syncStatePower"": {},
-    ""displayOrder"": 1,
-    ""tasks"": [],
-    ""notes"": """",
-    ""dataVersion"": ""2025-01-03""
+    ""ByProducts"": [],
+    ""PowerProducers"": [],
+    ""Parts"": {},
+    ""BuildingRequirements"": {},
+    ""RequirementsSatisfied"": false,
+    ""ExportCalculator"": {},
+    ""Dependencies"": { ""Suppliers"": {}, ""Requests"": {} },
+    ""RawResources"": {},
+    ""Power"": { ""Consumed"": 0, ""Produced"": 0, ""Net"": 0 },
+    ""UsingRawResourcesOnly"": false,
+    ""Hidden"": false,
+    ""HasProblem"": false,
+    ""InSync"": null,
+    ""SyncState"": {},
+    ""SyncStatePower"": {},
+    ""DisplayOrder"": 1,
+    ""Tasks"": [],
+    ""Notes"": """",
+    ""DataVersion"": ""2025-01-03""
   },
   {
-    ""id"": 1,
-    ""name"": ""Iron Plates"",
-    ""inputs"": [
+    ""Id"": 1,
+    ""Name"": ""Iron Plates"",
+    ""Inputs"": [
       {
-        ""factoryId"": 0,
-        ""outputPart"": ""IronIngot"",
-        ""amount"": 100
+        ""FactoryId"": 0,
+        ""OutputPart"": ""IronIngot"",
+        ""Amount"": 100
       }
     ],
-    ""previousInputs"": [],
-    ""products"": [
+    ""PreviousInputs"": [],
+    ""Products"": [
       {
-        ""id"": ""IronPlate"",
-        ""recipe"": ""IronPlate"",
-        ""amount"": 100,
-        ""displayOrder"": 0,
-        ""requirements"": {},
-        ""buildingRequirements"": { ""building"": """", ""amount"": 0 }
+        ""Id"": ""IronPlate"",
+        ""Recipe"": ""IronPlate"",
+        ""Amount"": 100,
+        ""DisplayOrder"": 0,
+        ""Requirements"": {},
+        ""BuildingRequirements"": { ""Building"": """", ""Amount"": 0 }
       }
     ],
-    ""byProducts"": [],
-    ""powerProducers"": [],
-    ""parts"": {},
-    ""buildingRequirements"": {},
-    ""requirementsSatisfied"": false,
-    ""exportCalculator"": {},
-    ""dependencies"": { ""suppliers"": {}, ""requests"": {} },
-    ""rawResources"": {},
-    ""power"": { ""consumed"": 0, ""produced"": 0, ""net"": 0 },
-    ""usingRawResourcesOnly"": false,
-    ""hidden"": false,
-    ""hasProblem"": false,
-    ""inSync"": null,
-    ""syncState"": {},
-    ""syncStatePower"": {},
-    ""displayOrder"": 2,
-    ""tasks"": [],
-    ""notes"": """",
-    ""dataVersion"": ""2025-01-03""
+    ""ByProducts"": [],
+    ""PowerProducers"": [],
+    ""Parts"": {},
+    ""BuildingRequirements"": {},
+    ""RequirementsSatisfied"": false,
+    ""ExportCalculator"": {},
+    ""Dependencies"": { ""Suppliers"": {}, ""Requests"": {} },
+    ""RawResources"": {},
+    ""Power"": { ""Consumed"": 0, ""Produced"": 0, ""Net"": 0 },
+    ""UsingRawResourcesOnly"": false,
+    ""Hidden"": false,
+    ""HasProblem"": false,
+    ""InSync"": null,
+    ""SyncState"": {},
+    ""SyncStatePower"": {},
+    ""DisplayOrder"": 2,
+    ""Tasks"": [],
+    ""Notes"": """",
+    ""DataVersion"": ""2025-01-03""
   }
 ]";
 

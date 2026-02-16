@@ -4,6 +4,9 @@
 @using Web.Services
 @inject IAppStateService AppState
 @inject GameDataService GameDataService
+@inject NavigationManager NavManager
+@inject LoadingService LoadingService
+@inject DemoPlansService DemoPlansService
 @implements IDisposable
 
 <PageTitle>Satisfactory Factories - Production Planner</PageTitle>
@@ -125,7 +128,52 @@
         // Load help text preference
         // This will be used by child components in the future
         
+        // Check for setupDemo query parameter
+        Uri uri = new Uri(NavManager.Uri);
+        if (uri.Query.Contains("setupDemo=true"))
+        {
+            // Load the demo plan automatically
+            await LoadDemoPlan();
+        }
+        
         _isLoaded = true;
+    }
+
+    private async Task LoadDemoPlan()
+    {
+        Console.WriteLine("Loading demo plan from query parameter");
+        
+        // Get the demo plan data
+        List<Factory> factories = DemoPlansService.GetSimpleDemoPlan();
+        
+        // Initialize loading overlay
+        LoadingService.Initialize("Loading Demo Plan", factories.Count + 2);
+        
+        // Small delay to let UI update
+        await Task.Delay(50);
+        
+        // Clear existing factories
+        LoadingService.IncrementStep("Clearing existing factories...");
+        AppState.ClearFactories();
+        await Task.Delay(100);
+        
+        // Load factories one by one
+        foreach (Factory factory in factories)
+        {
+            LoadingService.IncrementStep($"Loading {factory.Name}...");
+            AppState.AddFactory(factory);
+            await Task.Delay(75);
+        }
+        
+        // Save to localStorage
+        LoadingService.IncrementStep("Saving to local storage...", isFinalStep: true);
+        await AppState.SaveFactoriesAsync();
+        await Task.Delay(100);
+        
+        // Refresh factories list
+        _factories = AppState.GetFactories();
+        
+        Console.WriteLine("Demo plan loaded successfully");
     }
 
     private void CreateFactory()
