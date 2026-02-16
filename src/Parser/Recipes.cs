@@ -226,7 +226,7 @@ public static class Recipes
 
             recipes.Add(new ParserRecipe
             {
-                Id = className.Replace("Recipe_", "").Replace("_C", ""),
+                Id = Regex.Replace(className.Replace("Recipe_", ""), @"_C$", ""),
                 DisplayName = displayName,
                 Ingredients = ingredients,
                 Products = products,

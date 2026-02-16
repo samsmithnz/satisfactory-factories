@@ -64,12 +64,14 @@ public static class Common
 
     public static string GetRecipeName(string name)
     {
-        return name.Replace("Build_", "").Replace("_C", "");
+        // Only replace _C at the end of the string, not everywhere
+        return Regex.Replace(name.Replace("Build_", ""), @"_C$", "");
     }
 
     public static string GetPartName(string name)
     {
-        name = name.Replace("Desc_", "").Replace("_C", "");
+        // Only replace _C at the end of the string, not everywhere
+        name = Regex.Replace(name.Replace("Desc_", ""), @"_C$", "");
         return name;
     }
 
