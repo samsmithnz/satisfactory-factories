@@ -41,11 +41,11 @@ else if (gameData != null)
             </tr>
         </thead>
         <tbody>
-            @foreach (KeyValuePair<string, double> building in gameData.Buildings.Take(5))
+            @foreach (KeyValuePair<string, double> buildingEntry in gameData.Buildings.Take(5))
             {
                 <tr>
-                    <td>@building.Key</td>
-                    <td>@building.Value</td>
+                    <td>@buildingEntry.Key</td>
+                    <td>@buildingEntry.Value</td>
                 </tr>
             }
         </tbody>
@@ -62,13 +62,13 @@ else if (gameData != null)
             </tr>
         </thead>
         <tbody>
-            @foreach (KeyValuePair<string, Part> part in gameData.Items.Parts.Take(5))
+            @foreach (KeyValuePair<string, Part> partEntry in gameData.Items.Parts.Take(5))
             {
                 <tr>
-                    <td>@part.Key</td>
-                    <td>@part.Value.Name</td>
-                    <td>@part.Value.StackSize</td>
-                    <td>@part.Value.IsFluid</td>
+                    <td>@partEntry.Key</td>
+                    <td>@partEntry.Value.Name</td>
+                    <td>@partEntry.Value.StackSize</td>
+                    <td>@partEntry.Value.IsFluid</td>
                 </tr>
             }
         </tbody>
