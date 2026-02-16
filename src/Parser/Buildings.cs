@@ -71,8 +71,8 @@ public static class Buildings
                 if (building.TryGetProperty("ClassName", out JsonElement className) &&
                     building.TryGetProperty("mPowerConsumption", out JsonElement powerConsumption))
                 {
-                    // Normalize the building name by removing "_C" and lowercasing it
-                    string buildingName = className.GetString()?.Replace("_C", "").ToLower() ?? "";
+                    // Normalize the building name by removing "_C" at the end only and lowercasing it
+                    string buildingName = Regex.Replace(className.GetString() ?? "", @"_C$", "").ToLower();
                     buildingName = buildingName.Replace("build_", "");
                     buildingName = buildingName.Replace("_automated", "");
 

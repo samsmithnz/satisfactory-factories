@@ -30,13 +30,15 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
-        run: dotnet restore Parser/Parser.csproj
+        run: |
+          dotnet restore Parser/Parser.csproj
+          dotnet restore Parser.Tests/Parser.Tests.csproj
 
       - name: Build Parser
         run: dotnet build Parser/Parser.csproj --no-restore --configuration Release
 
       - name: Run Parser
-        run: dotnet run --project Parser/Parser.csproj --no-build --configuration Release
+        run: dotnet run --project Parser/Parser.csproj --no-build --configuration Release -- Parser/game-docs.json Parser/gameData.json
 
       - name: Verify gameData.json output
         run: |
