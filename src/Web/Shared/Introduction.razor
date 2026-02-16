@@ -1,0 +1,64 @@
+@* Introduction component - Displays welcome information and demo button *@
+
+<div style="background-color: var(--bg-card); border-radius: 4px; padding: 16px; border: 1px solid var(--border-color); margin-bottom: 16px;">
+    <div style="text-align: center; padding-bottom: 0;">
+        <h1 style="font-size: 2.5rem; margin: 0 0 8px 0;">Welcome to Satisfactory Factories!</h1>
+    </div>
+    <div style="text-align: center;">
+        <h6 style="font-size: 1.25rem; margin: 0 0 16px 0; opacity: 0.7;">Bringing sanity to the production chain!</h6>
+    </div>
+    <div style="padding: 0 16px;">
+        <div style="position: relative; width: 100%; padding-bottom: 56.25%; margin-bottom: 16px;">
+            <iframe
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowfullscreen
+                frameborder="0"
+                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+                referrerpolicy="strict-origin-when-cross-origin"
+                src="https://www.youtube.com/embed/cKuWEKwxX5c?si=mEVI0mJoiNbIwzkG"
+                title="YouTube video player">
+            </iframe>
+        </div>
+        <p style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Why does this tool exist?</p>
+        <p style="margin-bottom: 16px;">TL;DR: Create production goals for each factory, create and manage dependencies between factories, visualise the flow of items and highlight bottlenecks / gaps in supply as you scale your industrial prowess!</p>
+        <p style="margin-bottom: 16px;"><b>Satisfactory Factories</b> helps plan and manage modular factory (or levels in mega-factories) production chains. Tracking interconnected factories and their dependencies can be overwhelming, leading to overlooked areas and bottlenecks when demands change. This tool automates calculations, ensuring proper scaling for new demands and saving time. Unlike other planners that focus on "what is needed to make X part", SF focuses on per-factory demand rather than <i>just</i> per-part demand. You can use it to determine part quantities and import requirements for future changes, maintaining the production chain and highlighting issues / bottlenecks.</p>
+        <div style="padding: 16px 0; margin-bottom: 16px; border-top: 2px solid var(--border-color); border-bottom: 2px solid var(--border-color); border-radius: 4px;">
+            <p style="font-size: 1.25rem; font-weight: 500; margin-bottom: 16px;">Enough yapping, how does it work?</p>
+            <ul style="margin-left: 16px; margin-bottom: 16px;">
+                <li style="margin-bottom: 8px;">Firstly you create a <i class="fas fa-industry" style="margin-right: 8px; width: 1em;"></i><b>Factory</b> (and give it a name!).</li>
+                <li style="margin-bottom: 8px;"><i class="fas fa-conveyor-belt-alt" style="margin-right: 8px; width: 1em;"></i><b>Products</b>: is what the factory is intending to produce (or to produce internally, these will be marked as <span class="sf-chip small" style="background-color: green; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">internal</span>).</li>
+                <li style="margin-bottom: 8px;"><i class="fas fa-arrow-to-right" style="margin-right: 8px; width: 1em;"></i><b>Imports</b>: is where you are bringing in items needed for production. These use the <i class="fa fa-truck-container" style="margin-right: 8px;"></i><b>Exports</b> of other factories.</li>
+                <li style="margin-bottom: 8px;"><i class="fas fa-check" style="margin-right: 8px; width: 1em;"></i><b>Satisfaction</b>: informs you if you're short of inputs or <span class="sf-chip small" style="background-color: green; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;">internal</span> production to satisfy the factory's production requirements.</li>
+                <li style="margin-bottom: 8px;"><i class="fa fa-truck-container" style="margin-right: 8px;"></i><b>Exports</b>: any items after internal production is factored in, are listed as Exports ready to be shipped to other factories.</li>
+            </ul>
+            <p style="margin-bottom: 8px;">Factories that are:</p>
+            <ul style="margin-left: 16px; margin-bottom: 8px;">
+                <li style="margin-bottom: 4px;">Unsatisfied (missing imports, not enough internal production) etc</li>
+                <li style="margin-bottom: 4px;">Not producing enough to meet export demands</li>
+            </ul>
+            <p style="margin-bottom: 16px;">will be marked in <span style="color: #f44336;">red</span> on both the main factory view and the list to the left.</p>
+            <p style="margin-bottom: 0;">My suggestion would be to start from "Goal first". Define a factory producing end products, then work your way back from there to the very base level products. But you can plan however you like!</p>
+        </div>
+        <div style="padding: 16px; margin-bottom: 16px; background-color: #37474f; border-radius: 4px;">
+            <p style="margin-bottom: 16px;">
+                Please note - this project is in an <span style="color: #ff9800; font-weight: bold;">alpha</span> state, it is very hot out of the oven and there may <i>(will)</i> be some bugs. Please report any bugs to the project's <a href="https://github.com/Maelstromeous/satisfactory-factories/issues" style="color: var(--link-color);">GitHub Issues page</a> for now.
+            </p>
+            <p style="margin-bottom: 0;">Each page has a Todo section with what I plan to add. Please offer any suggestions at the GitHub link above for any improvements you'd like to see.</p>
+        </div>
+        <p style="margin-bottom: 0;">Happy planning! - Maelstromeous</p>
+    </div>
+    @if (Source == "changelog")
+    {
+        <div style="display: flex; gap: 8px; padding: 16px; border-top: 1px solid var(--border-color); margin-top: 16px;">
+            <a href="/?setupDemo=true" class="btn btn-primary" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fas fa-list"></i>
+                <span>Open Demo</span>
+            </a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Source { get; set; } = "changelog";
+}
