@@ -105,18 +105,20 @@ public class AppStateService : IAppStateService
     {
         _helpTextShown = shown;
         NotifyStateChanged();
-        // Save to localStorage
-        Task.Run(async () =>
+        // Save to localStorage - fire and forget
+        _ = SaveHelpTextAsync(shown);
+    }
+
+    private async Task SaveHelpTextAsync(bool shown)
+    {
+        try
         {
-            try
-            {
-                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", HelpTextKey, shown.ToString().ToLower());
-            }
-            catch (Exception ex)
-            {
-                Console.Error.WriteLine($"Error saving help text setting: {ex.Message}");
-            }
-        });
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", HelpTextKey, shown.ToString().ToLower());
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error saving help text setting: {ex.Message}");
+        }
     }
 
     /// <inheritdoc/>
@@ -131,7 +133,7 @@ public class AppStateService : IAppStateService
         _factoryTabs.Add(tab);
         _currentFactoryTabIndex = _factoryTabs.Count - 1;
         NotifyStateChanged();
-        SaveFactoryTabsAsync();
+        _ = SaveFactoryTabsAsync();
     }
 
     /// <inheritdoc/>
@@ -147,21 +149,23 @@ public class AppStateService : IAppStateService
         {
             _currentFactoryTabIndex = index;
             NotifyStateChanged();
-            Task.Run(async () =>
-            {
-                try
-                {
-                    await _jsRuntime.InvokeVoidAsync("localStorage.setItem", CurrentTabIndexKey, index.ToString());
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"Error saving current tab index: {ex.Message}");
-                }
-            });
+            _ = SaveCurrentTabIndexAsync(index);
         }
     }
 
-    private async void SaveFactoryTabsAsync()
+    private async Task SaveCurrentTabIndexAsync(int index)
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync("localStorage.setItem", CurrentTabIndexKey, index.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error saving current tab index: {ex.Message}");
+        }
+    }
+
+    private async Task SaveFactoryTabsAsync()
     {
         try
         {

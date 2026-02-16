@@ -95,20 +95,20 @@
             else
             {
                 Console.Error.WriteLine($"Loading share data failed: {response.StatusCode}");
-                Toast.ShowToast($"Failed to load share link. Please report this error to GitHub! Status: {response.StatusCode}", ToastType.Error);
+                Toast.ShowToast("Failed to load share link. Please report this error on our Discord server!", ToastType.Error);
                 return null;
             }
         }
         catch (HttpRequestException ex)
         {
             Console.Error.WriteLine($"Error loading share data: {ex.Message}");
-            Toast.ShowToast($"Failed to load share link. Please report this error to GitHub! \"{ex.Message}\"", ToastType.Error);
+            Toast.ShowToast("Failed to load share link. Please check your connection and try again.", ToastType.Error);
             return null;
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Unexpected error: {ex.Message}");
-            Toast.ShowToast($"Failed to load share link due to unexpected error. Please report this error to GitHub!", ToastType.Error);
+            Toast.ShowToast("Failed to load share link due to an unexpected error. Please try again.", ToastType.Error);
             return null;
         }
     }

@@ -38,11 +38,8 @@
 
         StateHasChanged();
 
-        // Auto-remove toast after timeout
-        Task.Delay(DefaultTimeout).ContinueWith(_ =>
-        {
-            RemoveToast(id);
-        });
+        // Auto-remove toast after timeout - marshal to UI thread
+        _ = Task.Delay(DefaultTimeout).ContinueWith(async _ => await InvokeAsync(() => RemoveToast(id)));
     }
 
     private void RemoveToast(string id)
