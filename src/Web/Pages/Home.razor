@@ -1,7 +1,173 @@
 ﻿@page "/"
+@using Web.Models
+@using Web.Models.Factory
+@using Web.Services
+@inject IAppStateService AppState
+@inject GameDataService GameDataService
+@implements IDisposable
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Satisfactory Factories - Production Planner</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="planner-page">
+    @if (!_isLoaded)
+    {
+        <div class="loading-container">
+            <div class="loading-message">Loading Planner...</div>
+        </div>
+    }
+    else
+    {
+        <div class="planner-container">
+            <div class="two-pane-container">
+                <!-- Sidebar (Desktop only) -->
+                <div class="sticky-sidebar d-none d-lg-flex">
+                    <div class="sidebar-content">
+                        <h3>Factories</h3>
+                        @if (_factories.Count == 0)
+                        {
+                            <p class="text-grey">No factories yet. Create one to get started!</p>
+                        }
+                        else
+                        {
+                            <ul class="factory-list">
+                                @foreach (Factory factory in _factories)
+                                {
+                                    <li>@factory.Name</li>
+                                }
+                            </ul>
+                        }
+                        <div class="sidebar-actions mt-4">
+                            <button class="btn btn-primary" @onclick="CreateFactory">
+                                <i class="fas fa-plus"></i> Add Factory
+                            </button>
+                            @if (_factories.Count > 0)
+                            {
+                                <button class="btn btn-secondary mt-2" @onclick="ClearAll">
+                                    <i class="fas fa-trash"></i> Clear All
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
 
-Welcome to your new app.
+                <!-- Main Content Area -->
+                <div class="main-content">
+                    @if (_factories.Count == 0)
+                    {
+                        <div class="welcome-message">
+                            <h2>Welcome to Satisfactory Factories!</h2>
+                            <p>This is a production planning tool for the game Satisfactory.</p>
+                            <p>Get started by creating your first factory.</p>
+                            <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
+                                <i class="fas fa-plus"></i> Create Your First Factory
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="factories-content">
+                            @foreach (Factory factory in _factories)
+                            {
+                                <div class="factory-card" id="factory-@factory.Id">
+                                    <div class="factory-header">
+                                        <h3>@factory.Name</h3>
+                                        <div class="factory-actions">
+                                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteFactory(factory)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="factory-body">
+                                        <p>Factory ID: @factory.Id</p>
+                                        <p>Products: @factory.Products.Count</p>
+                                        <p>Inputs: @factory.Inputs.Count</p>
+                                    </div>
+                                </div>
+                            }
+                            <div class="text-center mt-4">
+                                <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
+                                    <i class="fas fa-plus"></i> Add Factory
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _isLoaded = false;
+    private List<Factory> _factories = new List<Factory>();
+    private GameData? _gameData;
+    private int _nextFactoryId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to state changes
+        AppState.OnChange += StateHasChanged;
+
+        // Load game data
+        _gameData = await GameDataService.LoadGameDataAsync();
+
+        // Load factories from local storage
+        await AppState.LoadFactoriesAsync();
+        _factories = AppState.GetFactories();
+
+        // Load help text preference
+        // This will be used by child components in the future
+        
+        _isLoaded = true;
+    }
+
+    private void CreateFactory()
+    {
+        Factory factory = new Factory
+        {
+            Id = _nextFactoryId++,
+            Name = $"Factory {_nextFactoryId - 1}",
+            DisplayOrder = _factories.Count,
+            Hidden = false,
+            Products = new List<FactoryItem>(),
+            Inputs = new List<FactoryInput>(),
+            Parts = new Dictionary<string, PartMetrics>(),
+            BuildingRequirements = new Dictionary<string, BuildingRequirement>(),
+            PowerProducers = new List<FactoryPowerProducer>(),
+            Power = new FactoryPower(),
+            Tasks = new List<FactoryTask>(),
+            Dependencies = new FactoryDependency(),
+            SyncState = new Dictionary<string, FactorySyncState>(),
+            SyncStatePower = new Dictionary<string, FactoryPowerSyncState>()
+        };
+
+        AppState.AddFactory(factory);
+        _factories = AppState.GetFactories();
+        
+        // Save to local storage
+        Task.Run(async () => await AppState.SaveFactoriesAsync());
+    }
+
+    private void DeleteFactory(Factory factory)
+    {
+        _factories.Remove(factory);
+        AppState.SetFactories(_factories);
+        
+        // Save to local storage
+        Task.Run(async () => await AppState.SaveFactoriesAsync());
+    }
+
+    private void ClearAll()
+    {
+        AppState.ClearFactories();
+        _factories = AppState.GetFactories();
+        
+        // Save to local storage
+        Task.Run(async () => await AppState.SaveFactoriesAsync());
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+}
