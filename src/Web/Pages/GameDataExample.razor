@@ -1,0 +1,121 @@
+@page "/gamedata"
+@using Web.Models
+@using Web.Services
+@inject GameDataService GameDataService
+
+<PageTitle>Game Data Example</PageTitle>
+
+<h1>Game Data Loading Example</h1>
+
+@if (isLoading)
+{
+    <p><em>Loading game data...</em></p>
+}
+else if (loadError != null)
+{
+    <div class="alert alert-danger">
+        <strong>Error loading game data:</strong> @loadError
+    </div>
+}
+else if (gameData != null)
+{
+    <div class="alert alert-success">
+        <strong>Game data loaded successfully!</strong>
+    </div>
+
+    <h2>Summary</h2>
+    <ul>
+        <li><strong>Buildings:</strong> @gameData.Buildings.Count</li>
+        <li><strong>Parts:</strong> @gameData.Items.Parts.Count</li>
+        <li><strong>Raw Resources:</strong> @gameData.Items.RawResources.Count</li>
+        <li><strong>Recipes:</strong> @gameData.Recipes.Count</li>
+        <li><strong>Power Generation Recipes:</strong> @gameData.PowerGenerationRecipes.Count</li>
+    </ul>
+
+    <h2>Sample Buildings (first 5)</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Building ID</th>
+                <th>Power Consumption (MW)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (KeyValuePair<string, double> buildingEntry in gameData.Buildings.Take(5))
+            {
+                <tr>
+                    <td>@buildingEntry.Key</td>
+                    <td>@buildingEntry.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>Sample Parts (first 5)</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Stack Size</th>
+                <th>Is Fluid</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (KeyValuePair<string, Part> partEntry in gameData.Items.Parts.Take(5))
+            {
+                <tr>
+                    <td>@partEntry.Key</td>
+                    <td>@partEntry.Value.Name</td>
+                    <td>@partEntry.Value.StackSize</td>
+                    <td>@partEntry.Value.IsFluid</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h2>Sample Recipes (first 5)</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Display Name</th>
+                <th>Building</th>
+                <th>Is Alternate</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (Recipe recipe in gameData.Recipes.Take(5))
+            {
+                <tr>
+                    <td>@recipe.Id</td>
+                    <td>@recipe.DisplayName</td>
+                    <td>@recipe.Building.Name</td>
+                    <td>@recipe.IsAlternate</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private GameData? gameData;
+    private bool isLoading = true;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            gameData = await GameDataService.LoadGameDataAsync();
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
