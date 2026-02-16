@@ -1,0 +1,91 @@
+@using Web.Services
+@using Web.Models.Factory
+@inject DemoPlansService DemoPlansService
+
+<button class="btn btn-primary" @onclick="OpenDialog">
+    <i class="fas fa-file-medical"></i>
+    Templates
+</button>
+
+@if (_showDialog)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <div class="modal-dialog templates-dialog" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Load a template plan</h3>
+                <button class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="template-warning">
+                    <p>
+                        Clicking on a button below will load a template plan into the planner.
+                        <span class="warning-text">This will overwrite any existing plan WITHOUT warning.</span>
+                        You may wish to save your plan first by creating a share link.
+                    </p>
+                </div>
+                <div class="templates-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="name-column">Name</th>
+                                <th class="desc-column">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (DemoPlanTemplate template in _templates)
+                            {
+                                <tr>
+                                    <td class="template-name-cell">
+                                        <button
+                                            class="btn template-btn"
+                                            @onclick="() => LoadTemplate(template)">
+                                            <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
+                                            @template.Name
+                                        </button>
+                                    </td>
+                                    <td class="template-desc">@template.Description</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseDialog">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _showDialog = false;
+    private List<DemoPlanTemplate> _templates = new();
+
+    protected override void OnInitialized()
+    {
+        _templates = DemoPlansService.GetAvailableTemplates();
+    }
+
+    private void OpenDialog()
+    {
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+    }
+
+    private async Task LoadTemplate(DemoPlanTemplate template)
+    {
+        Console.WriteLine($"Loading template: {template.Name}");
+        
+        // Close dialog first
+        _showDialog = false;
+        
+        // Load the demo plan using the service
+        await DemoPlansService.LoadDemoPlanAsync(template.Name);
+        
+        Console.WriteLine($"Template {template.Name} loaded successfully");
+    }
+}

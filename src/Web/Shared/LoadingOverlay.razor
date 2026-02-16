@@ -1,0 +1,43 @@
+@using Web.Services
+@inject LoadingService LoadingService
+@implements IDisposable
+
+@if (LoadingService.IsLoading)
+{
+    <div class="sf-loading-wrapper">
+        <div class="sf-loading-content">
+            @if (LoadingService.TotalSteps > 0)
+            {
+                <h3 class="sf-loading-header">@LoadingService.Title</h3>
+            }
+            <div class="sf-progress-track">
+                <div class="sf-progress-fill" style="width: @CalculateProgress()%"></div>
+            </div>
+            <div class="sf-step-info">@LoadingService.CurrentStep / @LoadingService.TotalSteps</div>
+            <div class="sf-status-text">@LoadingService.Message</div>
+        </div>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        LoadingService.OnChange += StateHasChanged;
+    }
+
+    private double CalculateProgress()
+    {
+        if (LoadingService.TotalSteps == 0)
+        {
+            return 0;
+        }
+
+        double percent = (double)LoadingService.CurrentStep / LoadingService.TotalSteps * 100;
+        return Math.Min(percent, 100);
+    }
+
+    public void Dispose()
+    {
+        LoadingService.OnChange -= StateHasChanged;
+    }
+}

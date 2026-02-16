@@ -4,6 +4,9 @@
 @using Web.Services
 @inject IAppStateService AppState
 @inject GameDataService GameDataService
+@inject NavigationManager NavManager
+@inject LoadingService LoadingService
+@inject DemoPlansService DemoPlansService
 @implements IDisposable
 
 <PageTitle>Satisfactory Factories - Production Planner</PageTitle>
@@ -40,6 +43,7 @@
                             <button class="btn btn-primary" @onclick="CreateFactory">
                                 <i class="fas fa-plus"></i> Add Factory
                             </button>
+                            <TemplatesDialog />
                             @if (_factories.Count > 0)
                             {
                                 <div class="d-flex gap-2 mt-2">
@@ -60,10 +64,13 @@
                         <div class="welcome-message">
                             <h2>Welcome to Satisfactory Factories!</h2>
                             <p>This is a production planning tool for the game Satisfactory.</p>
-                            <p>Get started by creating your first factory.</p>
-                            <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
-                                <i class="fas fa-plus"></i> Create Your First Factory
-                            </button>
+                            <p>Get started by creating your first factory or load a demo plan.</p>
+                            <div class="welcome-actions">
+                                <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
+                                    <i class="fas fa-plus"></i> Create Your First Factory
+                                </button>
+                                <TemplatesDialog />
+                            </div>
                         </div>
                     }
                     else
@@ -121,7 +128,28 @@
         // Load help text preference
         // This will be used by child components in the future
         
+        // Check for setupDemo query parameter
+        string currentUrl = NavManager.Uri;
+        if (currentUrl.Contains("setupDemo=true", StringComparison.OrdinalIgnoreCase))
+        {
+            // Load the demo plan automatically
+            await LoadDemoPlan();
+        }
+        
         _isLoaded = true;
+    }
+
+    private async Task LoadDemoPlan()
+    {
+        Console.WriteLine("Loading demo plan from query parameter");
+        
+        // Load the simple demo plan using the service
+        await DemoPlansService.LoadDemoPlanAsync("Simple");
+        
+        // Refresh factories list
+        _factories = AppState.GetFactories();
+        
+        Console.WriteLine("Demo plan loaded successfully");
     }
 
     private void CreateFactory()

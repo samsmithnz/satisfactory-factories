@@ -13,5 +13,7 @@ builder.Services.AddScoped<GameDataService>();
 builder.Services.AddScoped<IAppStateService, AppStateService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddSingleton<IToastService, ToastService>();
+builder.Services.AddSingleton<LoadingService>();
+builder.Services.AddScoped<DemoPlansService>();
 
 await builder.Build().RunAsync();
