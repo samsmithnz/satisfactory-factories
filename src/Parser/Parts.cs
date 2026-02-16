@@ -285,7 +285,7 @@ public static class Parts
                     // Extract stack size
                     int stackSize = StackSizeConvert(classDescriptor?.TryGetProperty("mStackSize", out JsonElement ss) == true ? ss.GetString() ?? "SS_UNKNOWN" : "SS_UNKNOWN");
                     
-                    // Extract the energy value
+                    // Extract the energy value (defaults to 0 if not present in game data)
                     double energyValue = 0;
                     if (classDescriptor?.TryGetProperty("mEnergyValue", out JsonElement energyVal) == true)
                     {
