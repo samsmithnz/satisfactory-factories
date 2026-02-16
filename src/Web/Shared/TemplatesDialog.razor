@@ -1,0 +1,118 @@
+@using Web.Services
+@using Web.Models.Factory
+@inject DemoPlansService DemoPlansService
+@inject IAppStateService AppState
+@inject LoadingService LoadingService
+
+<button class="btn btn-primary" @onclick="OpenDialog">
+    <i class="fas fa-file-medical"></i>
+    Templates
+</button>
+
+@if (_showDialog)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <div class="modal-dialog templates-dialog" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Load a template plan</h3>
+                <button class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="template-warning">
+                    <p>
+                        Clicking on a button below will load a template plan into the planner.
+                        <span class="warning-text">This will overwrite any existing plan WITHOUT warning.</span>
+                        You may wish to save your plan first by creating a share link.
+                    </p>
+                </div>
+                <div class="templates-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th class="name-column">Name</th>
+                                <th class="desc-column">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (DemoPlanTemplate template in _templates)
+                            {
+                                <tr>
+                                    <td class="template-name-cell">
+                                        <button
+                                            class="btn template-btn"
+                                            @onclick="() => LoadTemplate(template)">
+                                            <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
+                                            @template.Name
+                                        </button>
+                                    </td>
+                                    <td class="template-desc">@template.Description</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseDialog">Close</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _showDialog = false;
+    private List<DemoPlanTemplate> _templates = new();
+
+    protected override void OnInitialized()
+    {
+        _templates = DemoPlansService.GetAvailableTemplates();
+    }
+
+    private void OpenDialog()
+    {
+        _showDialog = true;
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+    }
+
+    private async Task LoadTemplate(DemoPlanTemplate template)
+    {
+        Console.WriteLine($"Loading template: {template.Name}");
+        
+        // Get the demo plan data
+        List<Factory> factories = DemoPlansService.GetSimpleDemoPlan();
+        
+        // Initialize loading overlay
+        LoadingService.Initialize($"Loading {template.Name}", factories.Count + 2);
+        
+        // Close dialog
+        _showDialog = false;
+        
+        // Small delay to let UI update
+        await Task.Delay(50);
+        
+        // Clear existing factories
+        LoadingService.IncrementStep("Clearing existing factories...");
+        AppState.ClearFactories();
+        await Task.Delay(100);
+        
+        // Load factories one by one
+        foreach (Factory factory in factories)
+        {
+            LoadingService.IncrementStep($"Loading {factory.Name}...");
+            AppState.AddFactory(factory);
+            await Task.Delay(75);
+        }
+        
+        // Save to localStorage
+        LoadingService.IncrementStep("Saving to local storage...", isFinalStep: true);
+        await AppState.SaveFactoriesAsync();
+        await Task.Delay(100);
+        
+        // Loading will auto-complete
+        Console.WriteLine($"Template {template.Name} loaded successfully");
+    }
+}

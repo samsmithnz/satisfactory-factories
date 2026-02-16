@@ -40,6 +40,7 @@
                             <button class="btn btn-primary" @onclick="CreateFactory">
                                 <i class="fas fa-plus"></i> Add Factory
                             </button>
+                            <TemplatesDialog />
                             @if (_factories.Count > 0)
                             {
                                 <div class="d-flex gap-2 mt-2">
@@ -60,10 +61,13 @@
                         <div class="welcome-message">
                             <h2>Welcome to Satisfactory Factories!</h2>
                             <p>This is a production planning tool for the game Satisfactory.</p>
-                            <p>Get started by creating your first factory.</p>
-                            <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
-                                <i class="fas fa-plus"></i> Create Your First Factory
-                            </button>
+                            <p>Get started by creating your first factory or load a demo plan.</p>
+                            <div class="welcome-actions">
+                                <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
+                                    <i class="fas fa-plus"></i> Create Your First Factory
+                                </button>
+                                <TemplatesDialog />
+                            </div>
                         </div>
                     }
                     else
