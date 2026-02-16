@@ -163,5 +163,6 @@ public class DemoPlansServiceTests
         public void AddFactoryTab(FactoryTab tab) { }
         public int GetCurrentFactoryTabIndex() => 0;
         public void SetCurrentFactoryTabIndex(int index) { }
+        public DateTime? GetLastEdit() => null;
     }
 }

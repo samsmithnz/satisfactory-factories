@@ -12,6 +12,7 @@ builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.
 builder.Services.AddScoped<GameDataService>();
 builder.Services.AddScoped<IAppStateService, AppStateService>();
 builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
+builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddSingleton<IToastService, ToastService>();
 builder.Services.AddSingleton<LoadingService>();
 builder.Services.AddScoped<DemoPlansService>();

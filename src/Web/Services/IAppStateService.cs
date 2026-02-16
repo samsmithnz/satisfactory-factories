@@ -78,4 +78,10 @@ public interface IAppStateService
     /// </summary>
     /// <param name="index">The index to set.</param>
     void SetCurrentFactoryTabIndex(int index);
+
+    /// <summary>
+    /// Gets the last edit timestamp for sync purposes.
+    /// </summary>
+    /// <returns>The last edit timestamp, or null if not set.</returns>
+    DateTime? GetLastEdit();
 }
