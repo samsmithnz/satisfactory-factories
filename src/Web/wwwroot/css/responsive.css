@@ -89,11 +89,17 @@
   :root {
     /* Override typography sizes for mobile */
     --text-h1-size: 1.8rem;
+    --text-h1-line-height: 2.4rem;
     --text-h2-size: 1.6rem;
+    --text-h2-line-height: 2.2rem;
     --text-h3-size: 1.4rem;
+    --text-h3-line-height: 2.0rem;
     --text-h4-size: 1.2rem;
+    --text-h4-line-height: 1.8rem;
     --text-h5-size: 1.1rem;
+    --text-h5-line-height: 1.6rem;
     --text-h6-size: 1.0rem;
+    --text-h6-line-height: 1.5rem;
   }
   
   .xs-only {

@@ -65,6 +65,12 @@
   border: 0 !important;
 }
 
+/* Vuetify-compatible Class Names
+ * These class names are preserved from the Vue/Vuetify implementation
+ * to facilitate component migration. They will be used in Blazor components
+ * that replace Vue components with similar structure.
+ */
+
 /* Selector Styles */
 .selectors:last-of-type {
   margin-bottom: 12px !important;
@@ -179,7 +185,7 @@
   text-align: center;
 }
 
-/* Overlay Styles */
+/* Overlay Styles (Vuetify-compatible class preserved for migration) */
 .v-overlay__scrim {
   background-color: rgba(119, 119, 119, 0.7) !important;
 }
