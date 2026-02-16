@@ -5,16 +5,46 @@
 
 set -e
 
-echo "======================================"
-echo "E2E Acceptance Testing"
-echo "======================================"
-echo ""
-
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
+
+# Check for required dependencies
+echo "Checking dependencies..."
+MISSING_DEPS=0
+
+if ! command -v pnpm &> /dev/null; then
+    echo -e "${RED}ERROR: pnpm is not installed${NC}"
+    echo "Install with: npm install -g pnpm"
+    MISSING_DEPS=1
+fi
+
+if ! command -v dotnet &> /dev/null; then
+    echo -e "${RED}ERROR: dotnet is not installed${NC}"
+    echo "Install from: https://dotnet.microsoft.com/download"
+    MISSING_DEPS=1
+fi
+
+if ! command -v jq &> /dev/null; then
+    echo -e "${RED}ERROR: jq is not installed${NC}"
+    echo "Install with: apt-get install jq (Ubuntu) or brew install jq (macOS)"
+    MISSING_DEPS=1
+fi
+
+if [ $MISSING_DEPS -eq 1 ]; then
+    echo -e "${RED}Missing required dependencies. Please install them and try again.${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}All dependencies found${NC}"
+echo ""
+
+echo "======================================"
+echo "E2E Acceptance Testing"
+echo "======================================"
+echo ""
 
 # Test results
 PASS_COUNT=0
