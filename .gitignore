@@ -11,3 +11,5 @@ obj/
 *.suo
 *.dll
 *.pdb
+// Game assets (copied from web/public/assets/game)
+src/Web/wwwroot/assets/game/

@@ -1,0 +1,145 @@
+@page "/recipes"
+@using Web.Models
+@using Web.Services
+@using Web.Shared
+@inject GameDataService GameDataService
+
+<PageTitle>Recipes - Satisfactory Factories</PageTitle>
+
+@if (!_isLoaded)
+{
+    <div class="loading-container">
+        <div class="loading-message">Loading Recipes...</div>
+    </div>
+}
+else
+{
+    <!-- Todo Card -->
+    <div style="margin-bottom: 16px;">
+        <div style="background-color: var(--bg-card); border-radius: 4px; padding: 16px; border: 1px solid var(--border-color);">
+            <h3 style="margin-top: 0;">Todo</h3>
+            <div style="font-size: 1rem;">
+                <ul style="margin-left: 16px;">
+                    <li>Feat: Turn search into a fuzzy search for recipes and items, split results into both recipes and items.</li>
+                    <li>Feat: Add button to create a factory of the selected recipe / item in the planner.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Recipes Card -->
+    <div style="background-color: var(--bg-card); border-radius: 4px; border: 1px solid var(--border-color);">
+        <div class="v-card-title" style="padding: 16px; border-bottom: 1px solid var(--border-color);">
+            <h1 style="font-size: 2rem; margin: 0;">Recipes</h1>
+        </div>
+        
+        <div style="padding: 16px;">
+            <!-- Search Field -->
+            <div style="margin-bottom: 16px;">
+                <input 
+                    type="text" 
+                    @bind="_searchTerm" 
+                    @bind:event="oninput"
+                    placeholder="Recipe name" 
+                    style="width: 100%; padding: 12px; background-color: var(--bg-input); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 1rem;" />
+            </div>
+
+            <!-- Filter Chips -->
+            <div style="margin-bottom: 16px;">
+                <button 
+                    class="sf-chip @(_showAltRecipes ? "" : "no-border")" 
+                    style="@(_showAltRecipes ? "background-color: #1976d2;" : "background-color: transparent;")"
+                    @onclick="ToggleAltRecipes">
+                    Show Alt Recipes
+                </button>
+                <button 
+                    class="sf-chip @(_showFicsmas ? "" : "no-border")" 
+                    style="@(_showFicsmas ? "background-color: #1976d2;" : "background-color: transparent;")"
+                    @onclick="ToggleFicsmas">
+                    Show FICSMAS
+                </button>
+            </div>
+
+            <!-- Recipe List -->
+            <div class="expansion-panels">
+                @foreach (Recipe recipe in FilteredRecipes)
+                {
+                    <RecipeSearchItem Recipe="@recipe" />
+                }
+            </div>
+
+            @if (FilteredRecipes.Count == 0)
+            {
+                <div style="padding: 32px; text-align: center; color: var(--text-secondary);">
+                    No recipes found matching your criteria.
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isLoaded = false;
+    private GameData _gameData = null!;
+    private string _searchTerm = string.Empty;
+    private bool _showAltRecipes = false;
+    private bool _showFicsmas = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _gameData = await GameDataService.LoadGameDataAsync();
+            _isLoaded = true;
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading game data: {ex.Message}");
+        }
+    }
+
+    private List<Recipe> FilteredRecipes
+    {
+        get
+        {
+            if (_gameData == null)
+            {
+                return new List<Recipe>();
+            }
+
+            List<Recipe> filtered = _gameData.Recipes;
+
+            // Apply search filter
+            if (!string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                filtered = filtered
+                    .Where(recipe => recipe.DisplayName.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            // Apply alternate recipes filter
+            if (!_showAltRecipes)
+            {
+                filtered = filtered.Where(recipe => !recipe.IsAlternate).ToList();
+            }
+
+            // Apply FICSMAS filter
+            if (!_showFicsmas)
+            {
+                filtered = filtered.Where(recipe => !recipe.IsFicsmas).ToList();
+            }
+
+            return filtered;
+        }
+    }
+
+    private void ToggleAltRecipes()
+    {
+        _showAltRecipes = !_showAltRecipes;
+    }
+
+    private void ToggleFicsmas()
+    {
+        _showFicsmas = !_showFicsmas;
+    }
+}

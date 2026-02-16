@@ -157,4 +157,66 @@ public class GameDataService
 
         return recipes[0];
     }
+
+    public string GetPartDisplayName(string part)
+    {
+        if (string.IsNullOrEmpty(part))
+        {
+            return "NO PART!!!";
+        }
+
+        if (!_isLoaded || _gameData == null)
+        {
+            return "NO DATA!!!";
+        }
+
+        // Check raw resources first
+        if (_gameData.Items.RawResources.TryGetValue(part, out RawResource? rawResource))
+        {
+            return rawResource.Name;
+        }
+
+        // Then check parts
+        if (_gameData.Items.Parts.TryGetValue(part, out Part? partItem))
+        {
+            return partItem.Name;
+        }
+
+        return $"UNKNOWN PART {part}!";
+    }
+
+    public string GetBuildingDisplayName(string building)
+    {
+        if (string.IsNullOrEmpty(building))
+        {
+            return "NO BUILDING!!!";
+        }
+
+        Dictionary<string, string> buildingFriendlyNames = new Dictionary<string, string>
+        {
+            { "assemblermk1", "Assembler" },
+            { "blender", "Blender" },
+            { "constructormk1", "Constructor" },
+            { "converter", "Converter" },
+            { "foundrymk1", "Foundry" },
+            { "hadroncollider", "Particle Accelerator" },
+            { "generatorbiomass", "Biomass Burner" },
+            { "generatorcoal", "Coal-Powered Generator" },
+            { "generatorfuel", "Fuel-Powered Generator" },
+            { "generatornuclear", "Nuclear Power Plant" },
+            { "manufacturermk1", "Manufacturer" },
+            { "oilrefinery", "Oil Refinery" },
+            { "packager", "Packager" },
+            { "quantumencoder", "Quantum Encoder" },
+            { "smeltermk1", "Smelter" },
+            { "waterExtractor", "Water Extractor" }
+        };
+
+        if (buildingFriendlyNames.TryGetValue(building, out string? displayName))
+        {
+            return displayName;
+        }
+
+        return $"UNKNOWN BUILDING: {building}";
+    }
 }
