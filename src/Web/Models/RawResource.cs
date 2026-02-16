@@ -8,5 +8,5 @@ public class RawResource
     public string Name { get; set; } = string.Empty;
 
     [JsonPropertyName("limit")]
-    public int Limit { get; set; }
+    public long Limit { get; set; }
 }
