@@ -6,6 +6,13 @@ namespace Parser;
 
 public static class Recipes
 {
+    private static double SafeParseDouble(string? value, double defaultValue = 0)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return defaultValue;
+        return double.TryParse(value, out double result) ? result : defaultValue;
+    }
+
     // If you can read this, you are a wizard. ChatGPT made this, it works, so I won't question it!
     public static List<ParserRecipe> GetProductionRecipes(
         JsonElement[] data,
@@ -65,7 +72,7 @@ public static class Recipes
                     }
 
                     double manufacturingDuration = recipe.TryGetProperty("mManufactoringDuration", out JsonElement durationElement)
-                        ? double.Parse(durationElement.GetString() ?? "0")
+                        ? SafeParseDouble(durationElement.GetString())
                         : 0;
                     double perMin = manufacturingDuration > 0 && amount > 0
                         ? (60 / manufacturingDuration) * amount
@@ -111,7 +118,7 @@ public static class Recipes
                 }
 
                 double manufacturingDuration = recipe.TryGetProperty("mManufactoringDuration", out JsonElement durationElement)
-                    ? double.Parse(durationElement.GetString() ?? "0")
+                    ? SafeParseDouble(durationElement.GetString())
                     : 0;
                 double perMin = manufacturingDuration > 0 && amount > 0
                     ? (60 / manufacturingDuration) * amount
@@ -180,13 +187,13 @@ public static class Recipes
                 if (recipe.TryGetProperty("mVariablePowerConsumptionConstant", out JsonElement lowPowerElement))
                 {
                     string lowPowerStr = lowPowerElement.GetString() ?? "0";
-                    lowPower = double.Parse(lowPowerStr);
+                    lowPower = SafeParseDouble(lowPowerStr);
                 }
 
                 if (recipe.TryGetProperty("mVariablePowerConsumptionFactor", out JsonElement highPowerElement))
                 {
                     string highPowerStr = highPowerElement.GetString() ?? "0";
-                    highPower = double.Parse(highPowerStr);
+                    highPower = SafeParseDouble(highPowerStr);
                 }
 
                 // calculate the average power: Note that because low power can be 0, (and often is), we can't use truthy checks to validate these values
@@ -291,7 +298,7 @@ public static class Recipes
 
             double powerProduction = recipe.TryGetProperty("mPowerProduction", out JsonElement powerProductionElement)
                 ? (powerProductionElement.ValueKind == JsonValueKind.String
-                    ? double.Parse(powerProductionElement.GetString() ?? "0")
+                    ? SafeParseDouble(powerProductionElement.GetString())
                     : powerProductionElement.GetDouble())
                 : 0;
 
@@ -303,7 +310,7 @@ public static class Recipes
 
             double supplementalRatio = recipe.TryGetProperty("mSupplementalToPowerRatio", out JsonElement supplementalRatioElement)
                 ? (supplementalRatioElement.ValueKind == JsonValueKind.String
-                    ? double.Parse(supplementalRatioElement.GetString() ?? "0")
+                    ? SafeParseDouble(supplementalRatioElement.GetString())
                     : supplementalRatioElement.GetDouble())
                 : 0;
 
@@ -332,6 +339,13 @@ public static class Recipes
                     : "";
 
                 string primaryFuel = Common.GetPartName(mFuelClass);
+                
+                // Skip if the part doesn't exist in the parts dictionary
+                if (!parts.Parts.ContainsKey(primaryFuel))
+                {
+                    continue;
+                }
+                
                 ParserPart primaryFuelPart = parts.Parts[primaryFuel];
 
                 double burnDurationInMins = primaryFuelPart.EnergyGeneratedInMJ / burnRateMJ;
@@ -347,7 +361,7 @@ public static class Recipes
 
                 double byproductAmount = fuel.TryGetProperty("mByproductAmount", out JsonElement byproductAmountElement)
                     ? (byproductAmountElement.ValueKind == JsonValueKind.String
-                        ? double.Parse(byproductAmountElement.GetString() ?? "0")
+                        ? SafeParseDouble(byproductAmountElement.GetString())
                         : byproductAmountElement.GetDouble())
                     : 0;
 

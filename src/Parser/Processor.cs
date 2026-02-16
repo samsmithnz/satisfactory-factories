@@ -24,6 +24,13 @@ public static class Processor
         {
             byte[] buffer = await File.ReadAllBytesAsync(Path.GetFullPath(inputFile));
             string content = Encoding.Unicode.GetString(buffer);
+            
+            // Remove BOM character if present (U+FEFF)
+            if (content.Length > 0 && content[0] == '\uFEFF')
+            {
+                content = content.Substring(1);
+            }
+            
             return NormalizeLineEndings(content);
         }
         else
@@ -133,7 +140,8 @@ public static class Processor
             string json = JsonSerializer.Serialize(finalData, new JsonSerializerOptions
             {
                 WriteIndented = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals
             });
             await File.WriteAllTextAsync(Path.GetFullPath(outputFile), json);
             
@@ -144,6 +152,7 @@ public static class Processor
         catch (Exception error)
         {
             Console.Error.WriteLine($"Error processing file: {error.Message}");
+            Console.Error.WriteLine($"Stack trace: {error.StackTrace}");
             return null;
         }
     }
