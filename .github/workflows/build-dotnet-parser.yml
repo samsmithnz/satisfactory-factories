@@ -36,7 +36,7 @@ jobs:
         run: dotnet build Parser/Parser.csproj --no-restore --configuration Release
 
       - name: Run Parser
-        run: dotnet run --project Parser/Parser.csproj --no-build --configuration Release
+        run: dotnet run --project Parser/Parser.csproj --no-build --configuration Release -- Parser/game-docs.json Parser/gameData.json
 
       - name: Verify gameData.json output
         run: |
