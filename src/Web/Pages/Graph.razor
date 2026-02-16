@@ -1,0 +1,188 @@
+@page "/graph"
+@using Web.Services
+@using Web.Models.Factory
+@using Web.Models
+@using Web.Shared
+@inject IAppStateService AppState
+@inject GameDataService GameData
+@implements IDisposable
+
+<div class="graph-page">
+    <div class="notice">
+        <h1 class="text-h4 text-center mt-4">Work in progress!</h1>
+        <p class="text-center">
+            While the graph is mostly functional (in testing, or it may be totally broken in certain circumstances), many features are missing. Expect overlapping lines and nodes out of place.
+        </p>
+    </div>
+
+    <div class="graph-container" @ref="_graphContainer">
+        <div class="graph-canvas">
+            @foreach (GraphNode node in _nodes)
+            {
+                <div class="graph-node" 
+                     style="left: @(node.X)px; top: @(node.Y)px;">
+                    <div class="node-card">
+                        <div class="node-card-title">
+                            <h1 class="text-h5">
+                                <i class="fas fa-industry"></i>
+                                <span class="ml-2">@node.Factory.Name</span>
+                            </h1>
+                        </div>
+                        <div class="node-card-content">
+                            @if (node.Factory.Inputs.Any())
+                            {
+                                <div class="node-section">
+                                    <p class="section-title">Importing:</p>
+                                    @foreach (FactoryInput input in node.Factory.Inputs)
+                                    {
+                                        <div class="node-chip">
+                                            <GameAsset Subject="@input.OutputPart" Type="item" Height="24" Width="24" Clickable="true" />
+                                            <span class="ml-2">@GameData.GetPartDisplayName(input.OutputPart): @FormatNumber(input.Amount)/min</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            
+                            @if (node.Factory.Products.Any())
+                            {
+                                <div class="node-section">
+                                    <p class="section-title">Producing:</p>
+                                    @foreach (FactoryItem product in node.Factory.Products)
+                                    {
+                                        <div class="node-chip">
+                                            <GameAsset Subject="@product.Id" Type="item" Height="24" Width="24" Clickable="true" />
+                                            <span class="ml-2">@GameData.GetPartDisplayName(product.Id): @FormatNumber(product.Amount)/min</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            
+                            @if (node.Factory.Products.Any())
+                            {
+                                <div class="node-section">
+                                    <p class="section-title">Exporting:</p>
+                                    <p class="text-muted"><em>Export details require reconstruction</em></p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            
+            <svg class="graph-edges" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none;">
+                @foreach (GraphEdge edge in _edges)
+                {
+                    <line x1="@edge.X1" y1="@edge.Y1" x2="@edge.X2" y2="@edge.Y2"
+                          stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" />
+                }
+                <defs>
+                    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                        <polygon points="0 0, 10 3, 0 6" fill="#666" />
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ElementReference _graphContainer;
+    private List<GraphNode> _nodes = new();
+    private List<GraphEdge> _edges = new();
+    
+    private class GraphNode
+    {
+        public Factory Factory { get; set; } = new Factory();
+        public double X { get; set; }
+        public double Y { get; set; }
+    }
+    
+    private class GraphEdge
+    {
+        public double X1 { get; set; }
+        public double Y1 { get; set; }
+        public double X2 { get; set; }
+        public double Y2 { get; set; }
+        public string Label { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GameData.LoadGameDataAsync();
+        await AppState.LoadFactoriesAsync();
+        AppState.OnChange += StateHasChanged;
+        GenerateGraph();
+    }
+
+    private void GenerateGraph()
+    {
+        List<Factory> factories = AppState.GetFactories();
+        _nodes.Clear();
+        _edges.Clear();
+        
+        // Simple left-to-right layout
+        double nodeWidth = 320;
+        double nodeHeight = 200;
+        double horizontalSpacing = 200;
+        double verticalSpacing = 150;
+        
+        double x = 50;
+        double y = 50;
+        
+        // Generate nodes with simple positioning
+        foreach (Factory factory in factories)
+        {
+            _nodes.Add(new GraphNode
+            {
+                Factory = factory,
+                X = x,
+                Y = y
+            });
+            
+            x += nodeWidth + horizontalSpacing;
+            if (x > 1200)
+            {
+                x = 50;
+                y += nodeHeight + verticalSpacing;
+            }
+        }
+        
+        // Generate edges based on dependencies
+        foreach (GraphNode node in _nodes)
+        {
+            Factory factory = node.Factory;
+            
+            // Check all requests in dependencies
+            foreach (KeyValuePair<string, List<FactoryDependencyRequest>> requestGroup in factory.Dependencies.Requests)
+            {
+                foreach (FactoryDependencyRequest request in requestGroup.Value)
+                {
+                    // Find the source factory node
+                    GraphNode? sourceNode = _nodes.FirstOrDefault(n => n.Factory.Id == request.RequestingFactoryId);
+                    
+                    if (sourceNode != null)
+                    {
+                        _edges.Add(new GraphEdge
+                        {
+                            X1 = sourceNode.X + nodeWidth,
+                            Y1 = sourceNode.Y + nodeHeight / 2,
+                            X2 = node.X,
+                            Y2 = node.Y + nodeHeight / 2,
+                            Label = $"{GameData.GetPartDisplayName(request.Part)}: {FormatNumber(request.Amount)}/m"
+                        });
+                    }
+                }
+            }
+        }
+    }
+    
+    private string FormatNumber(double value)
+    {
+        return Math.Round(value, 2).ToString("F2");
+    }
+
+    public void Dispose()
+    {
+        AppState.OnChange -= StateHasChanged;
+    }
+}
