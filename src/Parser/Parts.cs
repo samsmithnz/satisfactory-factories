@@ -271,7 +271,7 @@ public static class Parts
                     string friendlyName = Common.GetFriendlyName(displayName.GetString() ?? "");  // Use the friendly name
 
                     // Extract the product's Desc_ class name so we can find it in the class descriptors to get the stack size
-                    Match? productClassMatch = Regex.Match(match.Value, @"Desc_(.*?)\.Desc_");
+                    Match productClassMatch = Regex.Match(match.Value, @"Desc_(.*?)\.Desc_");
                     if (!productClassMatch.Success)
                         continue;
 
