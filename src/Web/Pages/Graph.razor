@@ -72,12 +72,12 @@
             <svg class="graph-edges" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; pointer-events: none;">
                 @foreach (GraphEdge edge in _edges)
                 {
-                    <line x1="@edge.X1" y1="@edge.Y1" x2="@edge.X2" y2="@edge.Y2"
-                          stroke="#666" stroke-width="2" marker-end="url(#arrowhead)" />
+                    <line class="graph-edge-line" x1="@edge.X1" y1="@edge.Y1" x2="@edge.X2" y2="@edge.Y2"
+                          marker-end="url(#arrowhead)" />
                 }
                 <defs>
                     <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-                        <polygon points="0 0, 10 3, 0 6" fill="#666" />
+                        <polygon class="graph-edge-arrow" points="0 0, 10 3, 0 6" />
                     </marker>
                 </defs>
             </svg>

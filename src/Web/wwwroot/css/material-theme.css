@@ -18,6 +18,7 @@
   --bg-primary: #121212;
   --bg-surface: #1e1e1e;
   --bg-card: rgb(50, 50, 50);
+  --bg-chip: #424242;
   --bg-header: rgba(43, 43, 43, 0.4);
   
   /* Text Colors */
@@ -27,6 +28,10 @@
   /* Borders */
   --border-color: rgb(108, 108, 108);
   --border-light: rgb(129, 129, 129);
+  --border-secondary: #555;
+  
+  /* Graph Colors */
+  --graph-edge-color: #666;
   
   /* Spacing */
   --spacing-xs: 4px;

@@ -502,7 +502,7 @@
 
 .node-card-title {
   padding: 12px 16px;
-  border-bottom: 1px solid #555;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .node-card-content {
@@ -511,7 +511,7 @@
 
 .node-section {
   padding: 8px 0;
-  border-bottom: 1px solid #555;
+  border-bottom: 1px solid var(--border-secondary);
 }
 
 .node-section:last-child {
@@ -530,13 +530,22 @@
   align-items: center;
   padding: 4px 12px;
   margin: 4px 4px 4px 0;
-  background-color: #424242;
+  background-color: var(--bg-chip);
   border-radius: 16px;
   font-size: 13px;
 }
 
 .graph-edges {
   z-index: 1;
+}
+
+.graph-edge-line {
+  stroke: var(--graph-edge-color);
+  stroke-width: 2;
+}
+
+.graph-edge-arrow {
+  fill: var(--graph-edge-color);
 }
 
 .text-muted {
