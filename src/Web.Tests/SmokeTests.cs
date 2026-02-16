@@ -7,7 +7,7 @@ public sealed class SmokeTests
     public void SmokeTest_ProjectBuildsSuccessfully()
     {
         // Arrange & Act
-        var result = true;
+        bool result = true;
 
         // Assert
         Assert.IsTrue(result, "Web.Tests project should build and run successfully");
@@ -17,8 +17,8 @@ public sealed class SmokeTests
     public void SmokeTest_BasicAssertions()
     {
         // Arrange
-        var expected = 42;
-        var actual = 42;
+        int expected = 42;
+        int actual = 42;
 
         // Act & Assert
         Assert.AreEqual(expected, actual, "Basic assertions should work correctly");
