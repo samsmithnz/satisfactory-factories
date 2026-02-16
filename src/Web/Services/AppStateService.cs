@@ -19,6 +19,8 @@ public class AppStateService : IAppStateService
     private const string FactoryTabsKey = "factoryTabs";
     private const string CurrentTabIndexKey = "currentFactoryTabIndex";
     private const string HelpTextKey = "helpText";
+    private const string LastEditKey = "lastEdit";
+    private DateTime? _lastEdit = null;
 
     /// <inheritdoc/>
     public event Action? OnChange;
@@ -153,6 +155,21 @@ public class AppStateService : IAppStateService
         }
     }
 
+    /// <inheritdoc/>
+    public DateTime? GetLastEdit()
+    {
+        return _lastEdit;
+    }
+
+    /// <summary>
+    /// Updates the last edit timestamp (called internally when factories are modified).
+    /// </summary>
+    private void UpdateLastEdit()
+    {
+        _lastEdit = DateTime.Now;
+        _ = SaveLastEditAsync();
+    }
+
     private async Task SaveCurrentTabIndexAsync(int index)
     {
         try
@@ -178,8 +195,24 @@ public class AppStateService : IAppStateService
         }
     }
 
+    private async Task SaveLastEditAsync()
+    {
+        try
+        {
+            if (_lastEdit.HasValue)
+            {
+                await _jsRuntime.InvokeVoidAsync("localStorage.setItem", LastEditKey, _lastEdit.Value.ToString("o"));
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error saving last edit: {ex.Message}");
+        }
+    }
+
     private void NotifyStateChanged()
     {
+        UpdateLastEdit();
         OnChange?.Invoke();
     }
 }

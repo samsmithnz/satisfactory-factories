@@ -1,0 +1,133 @@
+@using Web.Services
+@inject ISyncService SyncService
+@inject IAppStateService AppState
+@implements IDisposable
+
+<div class="sync-container my-4">
+    @if (_showOOSDialog)
+    {
+        <div class="modal-backdrop">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5>Data out of sync!</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p class="mb-4">Your local data and saved server data are out of sync. Please decide how to resolve this issue:</p>
+                        <div class="button-group">
+                            <button class="btn btn-primary mr-2" @onclick="ReplaceRemoteData">
+                                Use local data*
+                            </button>
+                            <button class="btn btn-secondary" @onclick="() => HandleDataLoad(true)">
+                                Use server data
+                            </button>
+                        </div>
+                        <p class="mt-4 text-small">*Recommended if you have made changes recently. Upon your next change to the plan, it will overwrite the server data.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="sync-status">
+        @if (!SyncService.IsSyncing)
+        {
+            <p>
+                <i class="fas fa-save"></i>
+                <span class="ml-2 font-weight-bold">Last synced:</span> @_lastSavedDisplay
+            </p>
+        }
+        else
+        {
+            <p>
+                <i class="fas fa-sync fa-spin"></i>
+                <span class="ml-2 font-weight-bold">Syncing...</span>
+            </p>
+        }
+    </div>
+
+    <div class="sync-actions">
+        <button class="btn btn-warning" @onclick="ConfirmForceDownload">
+            <i class="fas fa-download mr-2"></i>Force Download
+        </button>
+        @if (_isDebugMode)
+        {
+            <button class="btn btn-secondary ml-2" @onclick="TriggerOOSDialog">
+                <i class="fas fa-bug mr-2"></i>Trigger OOS
+            </button>
+        }
+    </div>
+</div>
+
+@code {
+    private bool _showOOSDialog = false;
+    private string _lastSavedDisplay = "Not saved yet, make a change!";
+    private bool _isDebugMode = false;
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("Sync: Component initialized");
+        SyncService.OnChange += UpdateDisplay;
+        UpdateDisplay();
+        
+        // Check for debug mode (you can set this via configuration or environment)
+        _isDebugMode = false; // Set to true for debugging
+    }
+
+    private void UpdateDisplay()
+    {
+        _lastSavedDisplay = SyncService.GetLastSavedDisplay();
+        StateHasChanged();
+    }
+
+    private async Task HandleDataLoad(bool forceLoad = false)
+    {
+        string? result = await SyncService.HandleDataLoadAsync(forceLoad);
+
+        if (result == "oos")
+        {
+            _showOOSDialog = true;
+        }
+        else if (result != null)
+        {
+            _showOOSDialog = false;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task ReplaceRemoteData()
+    {
+        bool result = await SyncService.HandleSyncAsync(true);
+        if (result)
+        {
+            Console.WriteLine("Sync: Replaced remote data with local data");
+            UpdateDisplay();
+            _showOOSDialog = false;
+        }
+        StateHasChanged();
+    }
+
+    private async Task ConfirmForceDownload()
+    {
+        // TODO: Replace with proper dialog component when available
+        bool confirmed = await Task.FromResult(true); // Placeholder
+        
+        if (confirmed)
+        {
+            await HandleDataLoad(true);
+        }
+    }
+
+    private void TriggerOOSDialog()
+    {
+        Console.WriteLine("Sync: Triggering OOS dialog for debug");
+        _showOOSDialog = true;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        SyncService.OnChange -= UpdateDisplay;
+    }
+}
