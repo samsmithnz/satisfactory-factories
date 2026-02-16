@@ -552,3 +552,31 @@
   color: rgba(255, 255, 255, 0.5);
   font-size: 13px;
 }
+
+/* Error Page Styles */
+.error-card {
+  width: 800px;
+  max-width: 90vw;
+  border: 2px solid var(--error-color, red);
+  background-color: var(--bg-card);
+  border-radius: var(--radius-md);
+}
+
+.error-card-content {
+  padding: 1rem;
+}
+
+.text-red {
+  color: var(--error-color, red);
+}
+
+.bg-indigo-darken-2 {
+  background-color: #3949ab !important;
+  color: white;
+  text-decoration: none;
+}
+
+.bg-indigo-darken-2:hover {
+  background-color: #303f9f !important;
+  text-decoration: none;
+}
