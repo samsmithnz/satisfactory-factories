@@ -1,0 +1,439 @@
+[
+  {
+    "id": 1,
+    "name": "Oil Processing",
+    "products": [
+      {
+        "id": "Plastic",
+        "amount": 640,
+        "recipe": "Plastic",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "LiquidFuel",
+        "amount": 40,
+        "recipe": "ResidualFuel",
+        "displayOrder": 1,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [
+      {
+        "building": "generatorfuel",
+        "buildingAmount": 0,
+        "buildingCount": 0,
+        "ingredients": [],
+        "ingredientAmount": 0,
+        "powerAmount": 500,
+        "powerProduced": 0,
+        "recipe": "GeneratorFuel_LiquidFuel",
+        "byproduct": null,
+        "displayOrder": 0,
+        "updated": "power"
+      }
+    ],
+    "inputs": [],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": true,
+    "syncState": {
+      "Plastic": {
+        "amount": 640,
+        "recipe": "Plastic"
+      },
+      "LiquidFuel": {
+        "amount": 40,
+        "recipe": "ResidualFuel"
+      }
+    },
+    "syncStatePower": {
+      "generatorfuel": {
+        "powerAmount": 500,
+        "buildingAmount": 2,
+        "recipe": "GeneratorFuel_LiquidFuel",
+        "ingredientAmount": 40
+      }
+    },
+    "displayOrder": 1,
+    "tasks": [],
+    "notes": "This factory is producing fuel which is burned off internally, also demonstrating how power generators work.\n\nIt also purposefully has a surplus of Heavy Oil Residue which unless handled would cause a blockage in the system.",
+    "dataVersion": "2025-01-03"
+  },
+  {
+    "id": 2,
+    "name": "Copper Ingots",
+    "products": [
+      {
+        "id": "CopperIngot",
+        "amount": 320,
+        "recipe": "IngotCopper",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [],
+    "inputs": [],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": true,
+    "syncState": {
+      "CopperIngot": {
+        "amount": 320,
+        "recipe": "IngotCopper"
+      }
+    },
+    "syncStatePower": {},
+    "displayOrder": 2,
+    "tasks": [],
+    "notes": "",
+    "dataVersion": "2025-01-03"
+  },
+  {
+    "id": 3,
+    "name": "Copper Basics",
+    "products": [
+      {
+        "id": "Wire",
+        "amount": 400,
+        "recipe": "Wire",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "Cable",
+        "amount": 200,
+        "recipe": "Cable",
+        "displayOrder": 1,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "CopperSheet",
+        "amount": 160,
+        "recipe": "CopperSheet",
+        "displayOrder": 2,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [],
+    "inputs": [
+      {
+        "factoryId": 2,
+        "outputPart": "CopperIngot",
+        "amount": 320
+      }
+    ],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": null,
+    "syncState": {},
+    "syncStatePower": {},
+    "displayOrder": 3,
+    "tasks": [],
+    "notes": "This factory is deliberately short on Copper Ingots to highlight the shortage functionality. It is also over producing cables by 40 to show trimming.",
+    "dataVersion": "2025-01-03"
+  },
+  {
+    "id": 4,
+    "name": "Circuit Boards",
+    "products": [
+      {
+        "id": "CircuitBoard",
+        "amount": 80,
+        "recipe": "CircuitBoard",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [],
+    "inputs": [
+      {
+        "factoryId": 3,
+        "outputPart": "CopperSheet",
+        "amount": 160
+      },
+      {
+        "factoryId": 1,
+        "outputPart": "Plastic",
+        "amount": 320
+      }
+    ],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": null,
+    "syncState": {},
+    "syncStatePower": {},
+    "displayOrder": 4,
+    "tasks": [],
+    "notes": "",
+    "dataVersion": "2025-01-03"
+  },
+  {
+    "id": 5,
+    "name": "Computers (end product)",
+    "products": [
+      {
+        "id": "Computer",
+        "amount": 20,
+        "recipe": "Computer",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [],
+    "inputs": [
+      {
+        "factoryId": 1,
+        "outputPart": "Plastic",
+        "amount": 320
+      },
+      {
+        "factoryId": 3,
+        "outputPart": "Cable",
+        "amount": 160
+      },
+      {
+        "factoryId": 4,
+        "outputPart": "CircuitBoard",
+        "amount": 80
+      }
+    ],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": null,
+    "syncState": {},
+    "syncStatePower": {},
+    "displayOrder": 5,
+    "tasks": [],
+    "notes": "This factory is the end product of the chain / plan. While not yet supported, it will eventually show that the computers will be sunk or for space elevator parts used in the construction of Project Assembly.",
+    "dataVersion": "2025-01-03"
+  },
+  {
+    "id": 6,
+    "name": "☢️ Uranium Power",
+    "products": [
+      {
+        "id": "Cement",
+        "amount": 60,
+        "recipe": "Concrete",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "SulfuricAcid",
+        "amount": 160,
+        "recipe": "SulfuricAcid",
+        "displayOrder": 1,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "ElectromagneticControlRod",
+        "amount": 10,
+        "recipe": "ElectromagneticControlRod",
+        "displayOrder": 2,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "NuclearFuelRod",
+        "amount": 2,
+        "recipe": "NuclearFuelRod",
+        "displayOrder": 3,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      },
+      {
+        "id": "UraniumCell",
+        "amount": 100,
+        "recipe": "UraniumCell",
+        "displayOrder": 4,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [
+      {
+        "building": "generatornuclear",
+        "buildingAmount": 0,
+        "buildingCount": 0,
+        "ingredients": [],
+        "ingredientAmount": 0,
+        "powerAmount": 25000,
+        "powerProduced": 0,
+        "recipe": "GeneratorNuclear_NuclearFuelRod",
+        "byproduct": null,
+        "displayOrder": 0,
+        "updated": "power"
+      }
+    ],
+    "inputs": [],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": null,
+    "syncState": {},
+    "syncStatePower": {},
+    "displayOrder": 6,
+    "tasks": [
+      {
+        "title": "Add Stators factory to supply this one",
+        "completed": false
+      },
+      {
+        "title": "Make a place for the waste to go",
+        "completed": false
+      },
+      {
+        "title": "Get a hazmat suit",
+        "completed": true
+      }
+    ],
+    "notes": "This factory is producing nuclear fuel rods and using them via a nuclear power station. This demonstrates how power generators also can generate waste products which need to be handled.",
+    "dataVersion": "2025-01-03"
+  },
+  {
+    "id": 7,
+    "name": "☢️ Plutonium Processing",
+    "products": [
+      {
+        "id": "NonFissibleUranium",
+        "amount": 33.333,
+        "recipe": "NonFissileUranium",
+        "displayOrder": 0,
+        "requirements": {},
+        "buildingRequirements": {},
+        "byProducts": []
+      }
+    ],
+    "byProducts": [],
+    "powerProducers": [],
+    "inputs": [
+      {
+        "factoryId": 6,
+        "outputPart": "NuclearWaste",
+        "amount": 100
+      }
+    ],
+    "previousInputs": [],
+    "parts": {},
+    "buildingRequirements": {},
+    "dependencies": {
+      "requests": {},
+      "metrics": {}
+    },
+    "exportCalculator": {},
+    "rawResources": {},
+    "power": {},
+    "requirementsSatisfied": true,
+    "usingRawResourcesOnly": false,
+    "hidden": false,
+    "hasProblem": false,
+    "inSync": null,
+    "syncState": {},
+    "syncStatePower": {},
+    "displayOrder": 7,
+    "tasks": [],
+    "notes": "",
+    "dataVersion": "2025-01-03"
+  }
+]
