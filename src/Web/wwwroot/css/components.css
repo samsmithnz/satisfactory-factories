@@ -930,3 +930,89 @@
   color: #aaa;
   margin-top: 1rem;
 }
+
+/* Add Product Dialog */
+.add-product-dialog {
+  max-width: 520px;
+  width: 92%;
+}
+
+.part-list {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #484848;
+  border-radius: 6px;
+  background: #1a1a1a;
+}
+
+.part-list-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #333;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s;
+}
+
+.part-list-item:last-child {
+  border-bottom: none;
+}
+
+.part-list-item:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.part-list-item.selected {
+  background-color: rgba(25, 118, 210, 0.25);
+  border-left: 3px solid var(--primary-color);
+}
+
+.selected-part-info {
+  background: #1e1e1e;
+  border: 1px solid #484848;
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+.selected-part-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.factory-add-part {
+  margin-top: 8px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.mb-3 {
+  margin-bottom: 12px;
+}
+
+.mb-2 {
+  margin-bottom: 8px;
+}
+
+.align-items-center {
+  align-items: center;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
