@@ -88,25 +88,45 @@
                                         </div>
                                     </div>
                                     <div class="factory-body">
-                                        @if (factory.Products.Count > 0)
-                                        {
-                                            <div class="factory-products">
-                                                @foreach (FactoryItem product in factory.Products)
-                                                {
-                                                    <span class="sf-chip">
-                                                        <GameAsset Subject="@product.Id" Type="item" />
-                                                        <span style="margin-left: 4px;">@GameDataService.GetPartDisplayName(product.Id): @product.Amount/min</span>
-                                                    </span>
-                                                }
-                                            </div>
-                                        }
-                                        else
+                                        @if (factory.Products.Count == 0)
                                         {
                                             <p class="text-grey">No products. Add a product to this factory.</p>
                                         }
+                                        @foreach (FactoryItem product in factory.Products.ToList())
+                                        {
+                                            <div class="product-row">
+                                                <select class="form-control product-part-select"
+                                                        value="@product.Id"
+                                                        @onchange="(e) => OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                    <option value="">-- Select Part --</option>
+                                                    @foreach (KeyValuePair<string, Part> partEntry in GetSortedParts())
+                                                    {
+                                                        <option value="@partEntry.Key">@partEntry.Value.Name</option>
+                                                    }
+                                                </select>
+                                                @if (!string.IsNullOrEmpty(product.Id))
+                                                {
+                                                    <select class="form-control product-recipe-select"
+                                                            value="@product.Recipe"
+                                                            @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                        @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
+                                                        {
+                                                            <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
+                                                        }
+                                                    </select>
+                                                    <input type="number"
+                                                           class="form-control product-amount-input"
+                                                           value="@product.Amount"
+                                                           min="1"
+                                                           @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                }
+                                                <button class="btn btn-sm btn-danger" @onclick="() => RemoveProduct(factory, product)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        }
                                         <div class="factory-add-part mt-2">
-                                            <AddProductDialog @ref="_addProductDialogs[factory.Id]" Factory="@factory" OnProductAdded="() => OnProductAdded(factory)" />
-                                            <button class="btn btn-sm btn-primary" @onclick="() => OpenAddProductDialog(factory.Id)">
+                                            <button class="btn btn-sm btn-primary" @onclick="() => AddEmptyProduct(factory)">
                                                 <i class="fas fa-plus"></i> Add Product
                                             </button>
                                         </div>
@@ -131,7 +151,6 @@
     private List<Factory> _factories = new List<Factory>();
     private GameData? _gameData;
     private int _nextFactoryId = 1;
-    private Dictionary<int, AddProductDialog> _addProductDialogs = new Dictionary<int, AddProductDialog>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -217,18 +236,76 @@
         Task.Run(async () => await AppState.SaveFactoriesAsync());
     }
 
-    private void OpenAddProductDialog(int factoryId)
+    private void AddEmptyProduct(Factory factory)
     {
-        if (_addProductDialogs.TryGetValue(factoryId, out AddProductDialog? dialog))
+        FactoryItem newProduct = new FactoryItem
         {
-            dialog.OpenDialog();
+            Id = string.Empty,
+            Recipe = string.Empty,
+            Amount = 10,
+            DisplayOrder = factory.Products.Count,
+            Requirements = new Dictionary<string, RequirementAmount>(),
+            BuildingRequirements = new BuildingRequirement()
+        };
+        factory.Products.Add(newProduct);
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void OnPartSelected(FactoryItem product, Factory factory, string partId)
+    {
+        product.Id = partId;
+
+        if (!string.IsNullOrEmpty(partId))
+        {
+            string defaultRecipe = GameDataService.GetDefaultRecipeForPart(partId);
+            List<Recipe> recipes = GameDataService.GetRecipesForPart(partId);
+            product.Recipe = !string.IsNullOrEmpty(defaultRecipe) && recipes.Count > 0
+                ? defaultRecipe
+                : (recipes.Count > 0 ? recipes[0].Id : string.Empty);
+        }
+        else
+        {
+            product.Recipe = string.Empty;
+        }
+
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void OnRecipeSelected(FactoryItem product, Factory factory, string recipeId)
+    {
+        product.Recipe = recipeId;
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void OnAmountChanged(FactoryItem product, Factory factory, string amountStr)
+    {
+        if (double.TryParse(amountStr, out double amount) && amount > 0)
+        {
+            product.Amount = amount;
+            _ = AppState.SaveFactoriesAsync();
         }
     }
 
-    private async Task OnProductAdded(Factory factory)
+    private void RemoveProduct(Factory factory, FactoryItem product)
     {
-        // Save to local storage after product is added
-        await AppState.SaveFactoriesAsync();
+        factory.Products.Remove(product);
+        for (int i = 0; i < factory.Products.Count; i++)
+        {
+            factory.Products[i].DisplayOrder = i;
+        }
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private List<KeyValuePair<string, Part>> GetSortedParts()
+    {
+        if (_gameData == null)
+        {
+            return new List<KeyValuePair<string, Part>>();
+        }
+
+        return _gameData.Items.Parts
+            .OrderBy(p => p.Value.Name)
+            .ToList();
     }
 
     public void Dispose()

@@ -1016,3 +1016,27 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Inline product editing row */
+.product-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.product-part-select {
+  max-width: 300px;
+  flex: 1 1 200px;
+}
+
+.product-recipe-select {
+  max-width: 280px;
+  flex: 1 1 180px;
+}
+
+.product-amount-input {
+  max-width: 100px;
+  flex: 0 0 100px;
+}
