@@ -12,4 +12,15 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.2" PrivateAssets="all" />
   </ItemGroup>
 
+  <Target Name="CopyGameAssets" BeforeTargets="Build"
+          Condition="Exists('$(MSBuildProjectDirectory)/../../web/public/assets/game')">
+    <Message Text="Copying game assets from Vue project to wwwroot..." Importance="high" />
+    <ItemGroup>
+      <GameAssetFiles Include="$(MSBuildProjectDirectory)/../../web/public/assets/game/**/*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(GameAssetFiles)"
+          DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/assets/game/%(RecursiveDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

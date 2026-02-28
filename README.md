@@ -42,6 +42,9 @@ The .NET version is actively under development and will eventually replace the V
 ### .NET Web Application (Blazor WebAssembly - New)
 The new .NET 10 Blazor WebAssembly application is under active development and will eventually replace the Vue frontend.
 
+#### Game Assets
+Part and building images are stored in `web/public/assets/game/` (the Vue project's public folder) and are automatically copied to `src/Web/wwwroot/assets/game/` during the build via an MSBuild target. The copied assets are excluded from Git (see `.gitignore`), so they will be populated on first build. No manual steps are required — simply running `dotnet build` or `dotnet run` will copy the assets automatically.
+
 #### Running the Blazor Web Application
 ```sh
 cd src/Web
