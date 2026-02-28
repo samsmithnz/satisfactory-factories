@@ -92,7 +92,7 @@
                                         {
                                             <p class="text-grey">No products. Add a product to this factory.</p>
                                         }
-                                        @foreach (FactoryItem product in factory.Products.ToList())
+                                        @foreach (FactoryItem product in factory.Products)
                                         {
                                             <div class="product-row">
                                                 <select class="form-control product-part-select"
