@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Web.Models.Factory;
 using Web.Services;
@@ -9,19 +10,29 @@ public class DemoPlansServiceTests
 {
     private TestAppStateService _testAppState = null!;
     private LoadingService _loadingService = null!;
+    private TestHttpMessageHandler _httpHandler = null!;
+    private HttpClient _httpClient = null!;
 
     [TestInitialize]
     public void Setup()
     {
         _testAppState = new TestAppStateService();
         _loadingService = new LoadingService();
+        _httpHandler = new TestHttpMessageHandler();
+        _httpClient = new HttpClient(_httpHandler) { BaseAddress = new Uri("http://localhost/") };
+    }
+
+    [TestCleanup]
+    public void Cleanup()
+    {
+        _httpClient?.Dispose();
     }
 
     [TestMethod]
     public void GetSimpleDemoPlanShouldReturnFactories()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -35,7 +46,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanShouldHaveCorrectFactoryNames()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -49,7 +60,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanShouldHaveCorrectFactoryIds()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -63,7 +74,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanFirstFactoryShouldHaveProduct()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -79,7 +90,7 @@ public class DemoPlansServiceTests
     public void GetSimpleDemoPlanSecondFactoryShouldHaveInputAndProduct()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<Factory> factories = service.GetSimpleDemoPlan();
@@ -103,7 +114,7 @@ public class DemoPlansServiceTests
     public void GetAvailableTemplatesShouldReturnTemplateList()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
@@ -117,7 +128,7 @@ public class DemoPlansServiceTests
     public void GetAvailableTemplatesShouldIncludeSimpleTemplate()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
@@ -130,10 +141,56 @@ public class DemoPlansServiceTests
     }
 
     [TestMethod]
+    public void GetAvailableTemplatesShouldIncludeDemoTemplate()
+    {
+        // Arrange
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
+
+        // Act
+        List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
+
+        // Assert
+        DemoPlanTemplate? demoTemplate = templates.Find(t => t.Name == "Demo");
+        Assert.IsNotNull(demoTemplate);
+        Assert.IsFalse(demoTemplate.IsDebug);
+        Assert.IsFalse(string.IsNullOrEmpty(demoTemplate.Description));
+    }
+
+    [TestMethod]
+    public void GetAvailableTemplatesShouldIncludeMaelTemplate()
+    {
+        // Arrange
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
+
+        // Act
+        List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
+
+        // Assert
+        DemoPlanTemplate? maelTemplate = templates.Find(t => t.Name == "Mael's \"MegaPlan\"");
+        Assert.IsNotNull(maelTemplate);
+        Assert.IsFalse(maelTemplate.IsDebug);
+        Assert.IsFalse(string.IsNullOrEmpty(maelTemplate.Description));
+    }
+
+    [TestMethod]
+    public void GetAvailableTemplatesShouldReturnThreeNonDebugTemplates()
+    {
+        // Arrange
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
+
+        // Act
+        List<DemoPlanTemplate> templates = service.GetAvailableTemplates();
+
+        // Assert
+        Assert.AreEqual(3, templates.Count);
+        Assert.IsTrue(templates.All(t => !t.IsDebug));
+    }
+
+    [TestMethod]
     public void GetSimpleDemoPlanShouldReturnNewInstancesEachTime()
     {
         // Arrange
-        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService);
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
 
         // Act
         List<Factory> factories1 = service.GetSimpleDemoPlan();
@@ -141,6 +198,67 @@ public class DemoPlansServiceTests
 
         // Assert
         Assert.AreNotSame(factories1, factories2);
+    }
+
+    [TestMethod]
+    public async Task LoadDemoPlanAsyncShouldLoadDemoTemplateFromFile()
+    {
+        // Arrange - use minimal JSON that represents the template file format (camelCase from Vue)
+        string demoJson = @"[
+            {""id"": 1, ""name"": ""Oil Processing"", ""products"": [], ""byProducts"": [], ""powerProducers"": [], ""inputs"": [], ""previousInputs"": [], ""parts"": {}, ""buildingRequirements"": {}, ""requirementsSatisfied"": false, ""exportCalculator"": {}, ""dependencies"": {""requests"": {}, ""metrics"": {}}, ""rawResources"": {}, ""power"": {}, ""usingRawResourcesOnly"": false, ""hidden"": false, ""hasProblem"": false, ""inSync"": null, ""syncState"": {}, ""syncStatePower"": {}, ""displayOrder"": 1, ""tasks"": [], ""notes"": """", ""dataVersion"": ""2025-01-03""},
+            {""id"": 2, ""name"": ""Copper Ingots"", ""products"": [], ""byProducts"": [], ""powerProducers"": [], ""inputs"": [], ""previousInputs"": [], ""parts"": {}, ""buildingRequirements"": {}, ""requirementsSatisfied"": false, ""exportCalculator"": {}, ""dependencies"": {""requests"": {}, ""metrics"": {}}, ""rawResources"": {}, ""power"": {}, ""usingRawResourcesOnly"": false, ""hidden"": false, ""hasProblem"": false, ""inSync"": null, ""syncState"": {}, ""syncStatePower"": {}, ""displayOrder"": 2, ""tasks"": [], ""notes"": """", ""dataVersion"": ""2025-01-03""}
+        ]";
+        _httpHandler.Response = new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(demoJson)
+        };
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
+
+        // Act
+        await service.LoadDemoPlanAsync("Demo");
+
+        // Assert
+        Assert.AreEqual(2, _testAppState.GetFactories().Count);
+        Assert.AreEqual("Oil Processing", _testAppState.GetFactories()[0].Name);
+    }
+
+    [TestMethod]
+    public async Task LoadDemoPlanAsyncShouldLoadMaelTemplateFromFile()
+    {
+        // Arrange - use minimal JSON that represents the template file format (camelCase from Vue)
+        string maelJson = @"[
+            {""id"": 1, ""name"": ""Concrete MegaFac"", ""products"": [], ""byProducts"": [], ""powerProducers"": [], ""inputs"": [], ""previousInputs"": [], ""parts"": {}, ""buildingRequirements"": {}, ""requirementsSatisfied"": false, ""exportCalculator"": {}, ""dependencies"": {""requests"": {}, ""metrics"": {}}, ""rawResources"": {}, ""power"": {}, ""usingRawResourcesOnly"": false, ""hidden"": false, ""hasProblem"": false, ""inSync"": null, ""syncState"": {}, ""syncStatePower"": {}, ""displayOrder"": 1, ""tasks"": [], ""notes"": """", ""dataVersion"": ""2025-01-03""},
+            {""id"": 2, ""name"": ""Stone Input"", ""products"": [], ""byProducts"": [], ""powerProducers"": [], ""inputs"": [], ""previousInputs"": [], ""parts"": {}, ""buildingRequirements"": {}, ""requirementsSatisfied"": false, ""exportCalculator"": {}, ""dependencies"": {""requests"": {}, ""metrics"": {}}, ""rawResources"": {}, ""power"": {}, ""usingRawResourcesOnly"": false, ""hidden"": false, ""hasProblem"": false, ""inSync"": null, ""syncState"": {}, ""syncStatePower"": {}, ""displayOrder"": 2, ""tasks"": [], ""notes"": """", ""dataVersion"": ""2025-01-03""}
+        ]";
+        _httpHandler.Response = new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(maelJson)
+        };
+        DemoPlansService service = new DemoPlansService(_testAppState, _loadingService, _httpClient);
+
+        // Act
+        await service.LoadDemoPlanAsync("Mael's \"MegaPlan\"");
+
+        // Assert
+        Assert.AreEqual(2, _testAppState.GetFactories().Count);
+        Assert.AreEqual("Concrete MegaFac", _testAppState.GetFactories()[0].Name);
+    }
+
+    /// <summary>
+    /// Test HTTP message handler for mocking HTTP responses.
+    /// </summary>
+    private class TestHttpMessageHandler : HttpMessageHandler
+    {
+        public HttpResponseMessage? Response { get; set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (Response == null)
+            {
+                throw new InvalidOperationException($"No HTTP response configured for request: {request.RequestUri}");
+            }
+            return Task.FromResult(Response);
+        }
     }
 
     /// <summary>

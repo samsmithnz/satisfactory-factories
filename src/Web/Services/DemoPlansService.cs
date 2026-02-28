@@ -11,11 +11,13 @@ public class DemoPlansService
 {
     private readonly IAppStateService _appState;
     private readonly LoadingService _loadingService;
+    private readonly HttpClient _httpClient;
 
-    public DemoPlansService(IAppStateService appState, LoadingService loadingService)
+    public DemoPlansService(IAppStateService appState, LoadingService loadingService, HttpClient httpClient)
     {
         _appState = appState;
         _loadingService = loadingService;
+        _httpClient = httpClient;
     }
 
     /// <summary>
@@ -102,7 +104,8 @@ public class DemoPlansService
   }
 ]";
 
-        List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(jsonData);
+        JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(jsonData, options);
         return factories ?? new List<Factory>();
     }
 
@@ -118,6 +121,18 @@ public class DemoPlansService
                 Name = "Simple",
                 Description = "Very simple Iron Ingot and Iron Plate factory setup, with a single dependency link.",
                 IsDebug = false
+            },
+            new DemoPlanTemplate
+            {
+                Name = "Demo",
+                Description = "Contains 7 factories with a mix of fluids, solids and multiple dependencies, along with power generation. Has a purposeful bottleneck on Copper Basics to demonstrate the bottleneck feature, and multiple missing resources for the Uranium Power.",
+                IsDebug = false
+            },
+            new DemoPlanTemplate
+            {
+                Name = "Mael's \"MegaPlan\"",
+                Description = "A real-life plan created by Maelstrome. This is considered a very large plan, and makes use of all features of the planner.",
+                IsDebug = false
             }
         };
     }
@@ -129,7 +144,7 @@ public class DemoPlansService
     public async Task LoadDemoPlanAsync(string templateName)
     {
         // Get the demo plan data based on template name
-        List<Factory> factories = GetDemoPlanByName(templateName);
+        List<Factory> factories = await GetDemoPlanByNameAsync(templateName);
         
         // Initialize loading overlay
         _loadingService.Initialize($"Loading {templateName}", factories.Count + 2);
@@ -157,17 +172,32 @@ public class DemoPlansService
     }
 
     /// <summary>
-    /// Gets a demo plan by template name.
+    /// Gets a demo plan by template name asynchronously.
     /// </summary>
     /// <param name="templateName">Name of the template.</param>
     /// <returns>List of factories for the demo plan.</returns>
-    private List<Factory> GetDemoPlanByName(string templateName)
+    private async Task<List<Factory>> GetDemoPlanByNameAsync(string templateName)
     {
         return templateName switch
         {
             "Simple" => GetSimpleDemoPlan(),
+            "Demo" => await GetDemoPlanFromFileAsync("sample-data/templates/demo-template.json"),
+            "Mael's \"MegaPlan\"" => await GetDemoPlanFromFileAsync("sample-data/templates/mael-template.json"),
             _ => GetSimpleDemoPlan() // Default to simple
         };
+    }
+
+    /// <summary>
+    /// Loads a demo plan from a JSON file in wwwroot.
+    /// </summary>
+    /// <param name="fileName">Relative path to the JSON file.</param>
+    /// <returns>List of factories loaded from the file.</returns>
+    private async Task<List<Factory>> GetDemoPlanFromFileAsync(string fileName)
+    {
+        string jsonContent = await _httpClient.GetStringAsync(fileName);
+        JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(jsonContent, options);
+        return factories ?? new List<Factory>();
     }
 }
 
