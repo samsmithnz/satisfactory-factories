@@ -1040,3 +1040,151 @@
   max-width: 100px;
   flex: 0 0 100px;
 }
+
+/* Factory header improvements */
+.factory-header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.factory-name-input {
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  flex: 1;
+  min-width: 0;
+  transition: background-color 0.2s;
+}
+
+.factory-name-input:hover,
+.factory-name-input:focus {
+  background: rgba(255,255,255,0.08);
+  outline: none;
+}
+
+.factory-card-problem {
+  border-left: 4px solid #f44336 !important;
+}
+
+/* Factory sections */
+.factory-section {
+  padding: 12px 0;
+}
+
+.factory-divider {
+  border: none;
+  border-top: 3px solid #fff;
+  opacity: 0.15;
+  margin: 4px -16px;
+}
+
+.section-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.text-red {
+  color: #f44336;
+}
+
+.text-green {
+  color: #4caf50;
+}
+
+/* Satisfaction table */
+.satisfaction-table-wrapper {
+  border: 1px solid #484848;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.satisfaction-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.satisfaction-table thead th {
+  background: #1e1e1e;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #484848;
+}
+
+.satisfaction-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #333;
+  vertical-align: middle;
+}
+
+.satisfaction-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.sat-row-ok {
+  background: rgba(76, 175, 80, 0.08);
+}
+
+.sat-row-fail {
+  background: rgba(244, 67, 54, 0.15);
+}
+
+.sat-col-item {
+  min-width: 200px;
+}
+
+.sat-col-satisfaction {
+  min-width: 160px;
+}
+
+/* Power & Buildings Card */
+.power-buildings-card {
+  background: #1e1e1e;
+  border: 1px solid #484848;
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+.power-buildings-heading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Collapsed factory body */
+.factory-body-collapsed {
+  padding: 8px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* sf-chip colour variants */
+.sf-chip.yellow {
+  border-color: #f9a825;
+}
+
+.sf-chip.orange {
+  border-color: #e65100;
+}
+
+.sf-chip.cyan {
+  border-color: #00bcd4;
+  color: #00bcd4;
+}
+
+.sf-chip.x-small {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+}
