@@ -1,0 +1,190 @@
+@using Web.Models
+@using Web.Models.Factory
+@using Web.Services
+@inject GameDataService GameDataService
+
+@if (_showDialog)
+{
+    <div class="modal-overlay" @onclick="CloseDialog">
+        <div class="modal-dialog add-product-dialog" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h3>Add Product</h3>
+                <button class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group mb-3">
+                    <label class="form-label">Search Part</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        placeholder="Type to search parts..."
+                        @bind="_searchTerm"
+                        @bind:event="oninput" />
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(_searchTerm) && _filteredParts.Count > 0)
+                {
+                    <div class="part-list mb-3">
+                        @foreach (KeyValuePair<string, Part> partEntry in _filteredParts.Take(20))
+                        {
+                            <button
+                                class="part-list-item @(_selectedPartId == partEntry.Key ? "selected" : "")"
+                                @onclick="() => SelectPart(partEntry.Key)">
+                                <GameAsset Subject="@partEntry.Key" Type="item" Height="24" Width="24" />
+                                <span class="ml-2">@partEntry.Value.Name</span>
+                            </button>
+                        }
+                    </div>
+                }
+                else if (!string.IsNullOrWhiteSpace(_searchTerm) && _filteredParts.Count == 0)
+                {
+                    <p class="text-grey mb-3">No parts found matching "@_searchTerm".</p>
+                }
+
+                @if (!string.IsNullOrEmpty(_selectedPartId))
+                {
+                    <div class="selected-part-info mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <GameAsset Subject="@_selectedPartId" Type="item" Height="32" Width="32" />
+                            <span class="ml-2 selected-part-name">@_selectedPartName</span>
+                        </div>
+
+                        @if (_availableRecipes.Count > 0)
+                        {
+                            <div class="form-group mb-3">
+                                <label class="form-label">Recipe</label>
+                                <select class="form-control" @bind="_selectedRecipeId">
+                                    @foreach (Recipe recipe in _availableRecipes)
+                                    {
+                                        <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-grey mb-3">No recipe found for this part.</p>
+                        }
+
+                        <div class="form-group mb-3">
+                            <label class="form-label">Amount per minute</label>
+                            <input
+                                type="number"
+                                class="form-control"
+                                min="1"
+                                @bind="_amount" />
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseDialog">Cancel</button>
+                <button
+                    class="btn btn-primary"
+                    @onclick="AddProduct"
+                    disabled="@(!CanAdd)">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public Factory Factory { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback OnProductAdded { get; set; }
+
+    private bool _showDialog = false;
+    private string _searchTerm = string.Empty;
+    private string _selectedPartId = string.Empty;
+    private string _selectedPartName = string.Empty;
+    private string _selectedRecipeId = string.Empty;
+    private double _amount = 10;
+    private List<Recipe> _availableRecipes = new List<Recipe>();
+    private GameData? _gameData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _gameData = await GameDataService.LoadGameDataAsync();
+    }
+
+    private List<KeyValuePair<string, Part>> _filteredParts
+    {
+        get
+        {
+            if (_gameData == null || string.IsNullOrWhiteSpace(_searchTerm))
+            {
+                return new List<KeyValuePair<string, Part>>();
+            }
+
+            return _gameData.Items.Parts
+                .Where(p => p.Value.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                    || p.Key.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(p => p.Value.Name)
+                .ToList();
+        }
+    }
+
+    private bool CanAdd =>
+        !string.IsNullOrEmpty(_selectedPartId) &&
+        !string.IsNullOrEmpty(_selectedRecipeId) &&
+        _amount > 0;
+
+    public void OpenDialog()
+    {
+        _showDialog = true;
+        _searchTerm = string.Empty;
+        _selectedPartId = string.Empty;
+        _selectedPartName = string.Empty;
+        _selectedRecipeId = string.Empty;
+        _amount = 10;
+        _availableRecipes = new List<Recipe>();
+    }
+
+    private void CloseDialog()
+    {
+        _showDialog = false;
+    }
+
+    private void SelectPart(string partId)
+    {
+        _selectedPartId = partId;
+        _selectedPartName = _gameData?.Items.Parts.TryGetValue(partId, out Part? part) == true
+            ? part.Name
+            : partId;
+
+        _availableRecipes = GameDataService.GetRecipesForPart(partId);
+
+        string defaultRecipe = GameDataService.GetDefaultRecipeForPart(partId);
+        _selectedRecipeId = !string.IsNullOrEmpty(defaultRecipe) && _availableRecipes.Count > 0
+            ? defaultRecipe
+            : (_availableRecipes.Count > 0 ? _availableRecipes[0].Id : string.Empty);
+    }
+
+    private async Task AddProduct()
+    {
+        if (!CanAdd)
+        {
+            return;
+        }
+
+        FactoryItem newProduct = new FactoryItem
+        {
+            Id = _selectedPartId,
+            Recipe = _selectedRecipeId,
+            Amount = _amount,
+            DisplayOrder = Factory.Products.Count,
+            Requirements = new Dictionary<string, RequirementAmount>(),
+            BuildingRequirements = new BuildingRequirement()
+        };
+
+        Factory.Products.Add(newProduct);
+
+        CloseDialog();
+
+        await OnProductAdded.InvokeAsync();
+    }
+}

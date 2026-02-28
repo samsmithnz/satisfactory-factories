@@ -104,6 +104,12 @@
                                         {
                                             <p class="text-grey">No products. Add a product to this factory.</p>
                                         }
+                                        <div class="factory-add-part mt-2">
+                                            <AddProductDialog @ref="_addProductDialogs[factory.Id]" Factory="@factory" OnProductAdded="() => OnProductAdded(factory)" />
+                                            <button class="btn btn-sm btn-primary" @onclick="() => OpenAddProductDialog(factory.Id)">
+                                                <i class="fas fa-plus"></i> Add Product
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             }
@@ -125,6 +131,7 @@
     private List<Factory> _factories = new List<Factory>();
     private GameData? _gameData;
     private int _nextFactoryId = 1;
+    private Dictionary<int, AddProductDialog> _addProductDialogs = new Dictionary<int, AddProductDialog>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -208,6 +215,20 @@
         
         // Save to local storage
         Task.Run(async () => await AppState.SaveFactoriesAsync());
+    }
+
+    private void OpenAddProductDialog(int factoryId)
+    {
+        if (_addProductDialogs.TryGetValue(factoryId, out AddProductDialog? dialog))
+        {
+            dialog.OpenDialog();
+        }
+    }
+
+    private async Task OnProductAdded(Factory factory)
+    {
+        // Save to local storage after product is added
+        await AppState.SaveFactoriesAsync();
     }
 
     public void Dispose()
