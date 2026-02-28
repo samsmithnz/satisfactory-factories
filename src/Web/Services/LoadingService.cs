@@ -70,19 +70,7 @@ public class LoadingService
         if (_currentStep >= _totalSteps || isFinalStep)
         {
             // Complete after a short delay to show the final message
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await Task.Delay(100);
-                    Complete();
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"Error during loading completion: {ex.Message}");
-                    Complete(); // Ensure we complete even if there's an error
-                }
-            });
+            _ = CompleteAfterDelayAsync();
         }
         
         NotifyStateChanged();
@@ -109,6 +97,20 @@ public class LoadingService
         _currentStep = 0;
         _message = string.Empty;
         NotifyStateChanged();
+    }
+
+    private async Task CompleteAfterDelayAsync()
+    {
+        try
+        {
+            await Task.Delay(100);
+            Complete();
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error during loading completion: {ex.Message}");
+            Complete(); // Ensure we complete even if there's an error
+        }
     }
 
     private void NotifyStateChanged()
