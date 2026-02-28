@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Web;
 using Web.Services;
+using Web.Services.FactoryManagement;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -16,5 +17,7 @@ builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddSingleton<IToastService, ToastService>();
 builder.Services.AddSingleton<LoadingService>();
 builder.Services.AddScoped<DemoPlansService>();
+builder.Services.AddScoped<IFactoryCommonService, FactoryCommonService>();
+builder.Services.AddScoped<IFactoryCalculationService, FactoryCalculationService>();
 
 await builder.Build().RunAsync();
