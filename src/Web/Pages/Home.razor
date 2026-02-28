@@ -88,9 +88,22 @@
                                         </div>
                                     </div>
                                     <div class="factory-body">
-                                        <p>Factory ID: @factory.Id</p>
-                                        <p>Products: @factory.Products.Count</p>
-                                        <p>Inputs: @factory.Inputs.Count</p>
+                                        @if (factory.Products.Count > 0)
+                                        {
+                                            <div class="factory-products">
+                                                @foreach (FactoryItem product in factory.Products)
+                                                {
+                                                    <span class="sf-chip">
+                                                        <GameAsset Subject="@product.Id" Type="item" />
+                                                        <span style="margin-left: 4px;">@GameDataService.GetPartDisplayName(product.Id): @product.Amount/min</span>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-grey">No products. Add a product to this factory.</p>
+                                        }
                                     </div>
                                 </div>
                             }
