@@ -12,7 +12,7 @@ namespace Web.Tests.Services.FactoryManagement;
 [TestClass]
 public sealed class FactoryCalculationServiceTests
 {
-    private FactoryCalculationService? _service;
+    private FactoryCalculationService _service = null!;
 
     [TestInitialize]
     public void Initialize()
@@ -26,7 +26,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void NewFactory_ShouldCreateFactoryWithRandomId()
     {
-        Factory fac = _service!.NewFactory("My new factory");
+        Factory fac = _service.NewFactory("My new factory");
 
         Assert.IsTrue(fac.Id > 0);
         Assert.AreEqual("My new factory", fac.Name);
@@ -37,7 +37,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void NewFactory_ShouldUseProvidedIdAndOrder()
     {
-        Factory fac = _service!.NewFactory("Test", order: 3, id: 42);
+        Factory fac = _service.NewFactory("Test", order: 3, id: 42);
 
         Assert.AreEqual(42, fac.Id);
         Assert.AreEqual(3, fac.DisplayOrder);
@@ -46,7 +46,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void NewFactory_ShouldHaveCorrectDefaults()
     {
-        Factory fac = _service!.NewFactory();
+        Factory fac = _service.NewFactory();
 
         Assert.IsTrue(fac.RequirementsSatisfied);
         Assert.IsFalse(fac.UsingRawResourcesOnly);
@@ -62,14 +62,14 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void CountActiveTasks_ShouldReturnZeroForNoTasks()
     {
-        Factory fac = _service!.NewFactory();
+        Factory fac = _service.NewFactory();
         Assert.AreEqual(0, _service.CountActiveTasks(fac));
     }
 
     [TestMethod]
     public void CountActiveTasks_ShouldCountIncompleteTasks()
     {
-        Factory fac = _service!.NewFactory();
+        Factory fac = _service.NewFactory();
         fac.Tasks.Add(new FactoryTask { Title = "Task 1", Completed = false });
         fac.Tasks.Add(new FactoryTask { Title = "Task 2", Completed = false });
         fac.Tasks.Add(new FactoryTask { Title = "Task 3", Completed = true });
@@ -80,7 +80,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void CountActiveTasks_ShouldNotCountCompletedTasks()
     {
-        Factory fac = _service!.NewFactory();
+        Factory fac = _service.NewFactory();
         fac.Tasks.Add(new FactoryTask { Title = "Task 1", Completed = true });
 
         Assert.AreEqual(0, _service.CountActiveTasks(fac));
@@ -91,7 +91,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void ReorderFactory_ShouldMoveFactoryUp()
     {
-        Factory fac1 = _service!.NewFactory("Factory 1", order: 0, id: 1);
+        Factory fac1 = _service.NewFactory("Factory 1", order: 0, id: 1);
         Factory fac2 = _service.NewFactory("Factory 2", order: 1, id: 2);
         Factory fac3 = _service.NewFactory("Factory 3", order: 2, id: 3);
         List<Factory> factories = new List<Factory> { fac1, fac2, fac3 };
@@ -106,7 +106,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void ReorderFactory_ShouldMoveFactoryDown()
     {
-        Factory fac1 = _service!.NewFactory("Factory 1", order: 0, id: 1);
+        Factory fac1 = _service.NewFactory("Factory 1", order: 0, id: 1);
         Factory fac2 = _service.NewFactory("Factory 2", order: 1, id: 2);
         Factory fac3 = _service.NewFactory("Factory 3", order: 2, id: 3);
         List<Factory> factories = new List<Factory> { fac1, fac2, fac3 };
@@ -121,7 +121,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void ReorderFactory_ShouldNotMoveFirstFactoryUp()
     {
-        Factory fac1 = _service!.NewFactory("Factory 1", order: 0, id: 1);
+        Factory fac1 = _service.NewFactory("Factory 1", order: 0, id: 1);
         Factory fac2 = _service.NewFactory("Factory 2", order: 1, id: 2);
         List<Factory> factories = new List<Factory> { fac1, fac2 };
 
@@ -134,7 +134,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void ReorderFactory_ShouldNotMoveLastFactoryDown()
     {
-        Factory fac1 = _service!.NewFactory("Factory 1", order: 0, id: 1);
+        Factory fac1 = _service.NewFactory("Factory 1", order: 0, id: 1);
         Factory fac2 = _service.NewFactory("Factory 2", order: 1, id: 2);
         List<Factory> factories = new List<Factory> { fac1, fac2 };
 
@@ -149,7 +149,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void RegenerateSortOrders_ShouldSetSequentialDisplayOrders()
     {
-        Factory fac1 = _service!.NewFactory("Factory 1", order: 1);
+        Factory fac1 = _service.NewFactory("Factory 1", order: 1);
         Factory fac2 = _service.NewFactory("Factory 2", order: 3);
         Factory fac3 = _service.NewFactory("Factory 3", order: 6);
         Factory fac4 = _service.NewFactory("Factory 4", order: 13);
@@ -168,7 +168,7 @@ public sealed class FactoryCalculationServiceTests
     [TestMethod]
     public void RegenerateSortOrders_ShouldReorderEvenIfOutOfSync()
     {
-        Factory fac1 = _service!.NewFactory("Factory 1", order: 2);
+        Factory fac1 = _service.NewFactory("Factory 1", order: 2);
         Factory fac2 = _service.NewFactory("Factory 2", order: 3);
         Factory fac3 = _service.NewFactory("Factory 3", order: 4);
         List<Factory> factories = new List<Factory> { fac1, fac2, fac3 };
@@ -189,7 +189,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
 
         // IronIngot recipe: 30 OreIron/min => at 30/min production: ratio = 30/30 = 1
         // OreIron required = 30 * 1 = 30
@@ -205,7 +205,7 @@ public sealed class FactoryCalculationServiceTests
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
         // First calculation
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         // Second calculation - should replace, not accumulate
         _service.CalculateProducts(factory, gameData);
 
@@ -220,7 +220,7 @@ public sealed class FactoryCalculationServiceTests
         TestDataHelper.AddProductToFactory(factory, "SomePart", 10, "NonExistentRecipe");
 
         // Should not throw
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
 
         Assert.AreEqual(0, factory.Products[0].Requirements.Count);
     }
@@ -232,7 +232,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 0, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
 
         Assert.AreEqual(1, factory.Products[0].Amount);
     }
@@ -247,7 +247,7 @@ public sealed class FactoryCalculationServiceTests
         // CompactedCoal recipe produces Water as byproduct (ratio 1:1)
         TestDataHelper.AddProductToFactory(factory, "CompactedCoal", 25, "CompactedCoal");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
 
         Assert.AreEqual(1, factory.ByProducts.Count);
         Assert.AreEqual("Water", factory.ByProducts[0].Id);
@@ -261,7 +261,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "CompactedCoal", 25, "CompactedCoal");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateProducts(factory, gameData);
 
         // Should still be 1, not accumulated
@@ -277,7 +277,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateParts(factory, gameData);
 
         // OreIron is a raw resource => satisfied
@@ -293,7 +293,7 @@ public sealed class FactoryCalculationServiceTests
         // Produce IronPlate which requires IronIngot, but don't produce IronIngot
         TestDataHelper.AddProductToFactory(factory, "IronPlate", 20, "IronPlate");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateParts(factory, gameData);
 
         // IronIngot is not raw and not produced => unsatisfied
@@ -307,7 +307,7 @@ public sealed class FactoryCalculationServiceTests
         GameData gameData = TestDataHelper.CreateTestGameData();
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
 
-        _service!.CalculateParts(factory, gameData);
+        _service.CalculateParts(factory, gameData);
 
         Assert.IsTrue(factory.RequirementsSatisfied);
     }
@@ -320,7 +320,7 @@ public sealed class FactoryCalculationServiceTests
         // IronIngot requires only OreIron (raw)
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateParts(factory, gameData);
 
         Assert.IsTrue(factory.UsingRawResourcesOnly);
@@ -334,7 +334,7 @@ public sealed class FactoryCalculationServiceTests
         // IronPlate requires IronIngot (non-raw)
         TestDataHelper.AddProductToFactory(factory, "IronPlate", 20, "IronPlate");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateParts(factory, gameData);
 
         Assert.IsFalse(factory.UsingRawResourcesOnly);
@@ -355,7 +355,7 @@ public sealed class FactoryCalculationServiceTests
             Amount = 30,
         });
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateParts(factory, gameData);
 
         Assert.AreEqual(30, factory.Parts["IronIngot"].AmountSuppliedViaInput);
@@ -371,7 +371,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculatePartMetrics(factory, gameData);
 
         Assert.IsTrue(factory.Parts["IronIngot"].Exportable);
@@ -386,7 +386,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateFactoryBuildingsAndPower(factory, gameData);
 
         // IronIngot recipe: 30/min per building => building count = 30/30 = 1
@@ -401,7 +401,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateFactoryBuildingsAndPower(factory, gameData);
 
         // Smelter: 4 MW per building, 1 building => 4 MW consumed
@@ -417,7 +417,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateProducts(factory, gameData);
+        _service.CalculateProducts(factory, gameData);
         _service.CalculateFactoryBuildingsAndPower(factory, gameData);
         _service.CalculateFactoryBuildingsAndPower(factory, gameData);
 
@@ -432,7 +432,7 @@ public sealed class FactoryCalculationServiceTests
     {
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
 
-        List<FactoryDependencyRequest> requests = _service!.GetRequestsForFactory(factory);
+        List<FactoryDependencyRequest> requests = _service.GetRequestsForFactory(factory);
 
         Assert.AreEqual(0, requests.Count);
     }
@@ -451,7 +451,7 @@ public sealed class FactoryCalculationServiceTests
             new FactoryDependencyRequest { RequestingFactoryId = 3, Part = "IronIngot", Amount = 20 },
         };
 
-        List<FactoryDependencyRequest> requests = _service!.GetRequestsForFactory(factory);
+        List<FactoryDependencyRequest> requests = _service.GetRequestsForFactory(factory);
 
         Assert.AreEqual(3, requests.Count);
     }
@@ -465,7 +465,7 @@ public sealed class FactoryCalculationServiceTests
         factory.RequirementsSatisfied = true;
         List<Factory> factories = new List<Factory> { factory };
 
-        _service!.CalculateHasProblem(factories);
+        _service.CalculateHasProblem(factories);
 
         Assert.IsFalse(factory.HasProblem);
     }
@@ -477,7 +477,7 @@ public sealed class FactoryCalculationServiceTests
         factory.RequirementsSatisfied = false;
         List<Factory> factories = new List<Factory> { factory };
 
-        _service!.CalculateHasProblem(factories);
+        _service.CalculateHasProblem(factories);
 
         Assert.IsTrue(factory.HasProblem);
     }
@@ -497,7 +497,7 @@ public sealed class FactoryCalculationServiceTests
         };
         List<Factory> factories = new List<Factory> { factory };
 
-        _service!.CalculateHasProblem(factories);
+        _service.CalculateHasProblem(factories);
 
         Assert.IsTrue(factory.HasProblem);
     }
@@ -511,7 +511,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Iron Ingot Factory", id: 1);
         TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
 
-        _service!.CalculateFactory(factory, new List<Factory> { factory }, gameData);
+        _service.CalculateFactory(factory, new List<Factory> { factory }, gameData);
 
         // Ingredients
         Assert.AreEqual(30, factory.Products[0].Requirements["OreIron"].Amount, 0.001);
@@ -539,7 +539,7 @@ public sealed class FactoryCalculationServiceTests
         Factory factory = TestDataHelper.CreateTestFactory("Iron Plate Factory", id: 1);
         TestDataHelper.AddProductToFactory(factory, "IronPlate", 20, "IronPlate");
 
-        _service!.CalculateFactory(factory, new List<Factory> { factory }, gameData);
+        _service.CalculateFactory(factory, new List<Factory> { factory }, gameData);
 
         // IronIngot is required but not produced or imported
         Assert.IsFalse(factory.Parts["IronIngot"].Satisfied);
@@ -557,7 +557,7 @@ public sealed class FactoryCalculationServiceTests
         TestDataHelper.AddProductToFactory(fac2, "IronPlate", 20, "IronPlate");
         List<Factory> factories = new List<Factory> { fac1, fac2 };
 
-        _service!.CalculateFactories(factories, gameData);
+        _service.CalculateFactories(factories, gameData);
 
         // fac1 should be satisfied (only needs raw OreIron)
         Assert.IsTrue(fac1.RequirementsSatisfied);

@@ -279,7 +279,7 @@ public class FactoryCalculationService : IFactoryCalculationService
             {
                 Console.Error.WriteLine("CalculatePartMetrics: Part key is an empty string! Flushing part data.");
                 factory.Parts.Remove(part);
-                return;
+                continue;
             }
 
             PartMetrics partData = factory.Parts[part];
@@ -558,7 +558,7 @@ public class FactoryCalculationService : IFactoryCalculationService
             }
 
             double wholeBuildingCount = Math.Floor(producer.BuildingAmount);
-            double fractionalBuildingCount = producer.BuildingCount - wholeBuildingCount;
+            double fractionalBuildingCount = producer.BuildingAmount - wholeBuildingCount;
             double powerProduced = ((recipe.Building.Power) * wholeBuildingCount) +
                                    (recipe.Building.Power * Math.Pow(fractionalBuildingCount, 1.321928));
 
