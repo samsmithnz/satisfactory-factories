@@ -58,6 +58,9 @@
 }
 
 @code {
+    [Parameter]
+    public EventCallback OnTemplateLoaded { get; set; }
+
     private bool _showDialog = false;
     private List<DemoPlanTemplate> _templates = new();
 
@@ -85,6 +88,9 @@
         
         // Load the demo plan using the service
         await DemoPlansService.LoadDemoPlanAsync(template.Name);
+        
+        // Notify parent to recalculate factories
+        await OnTemplateLoaded.InvokeAsync();
         
         Console.WriteLine($"Template {template.Name} loaded successfully");
     }

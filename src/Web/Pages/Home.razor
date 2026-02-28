@@ -45,7 +45,7 @@
                             <button class="btn btn-primary" @onclick="CreateFactory">
                                 <i class="fas fa-plus"></i> Add Factory
                             </button>
-                            <TemplatesDialog />
+                            <TemplatesDialog OnTemplateLoaded="HandleTemplateLoaded" />
                             @if (_factories.Count > 0)
                             {
                                 <div class="d-flex gap-2 mt-2">
@@ -71,7 +71,7 @@
                                 <button class="btn btn-primary btn-lg" @onclick="CreateFactory">
                                     <i class="fas fa-plus"></i> Create Your First Factory
                                 </button>
-                                <TemplatesDialog />
+                                <TemplatesDialog OnTemplateLoaded="HandleTemplateLoaded" />
                             </div>
                         </div>
                     }
@@ -386,6 +386,15 @@
             FactoryCalcService.CalculateFactories(_factories, _gameData);
         }
         Console.WriteLine("Demo plan loaded successfully");
+    }
+
+    private void HandleTemplateLoaded()
+    {
+        _factories = AppState.GetFactories();
+        if (_gameData != null)
+        {
+            FactoryCalcService.CalculateFactories(_factories, _gameData);
+        }
     }
 
     private void RecalculateAll()
