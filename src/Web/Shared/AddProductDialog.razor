@@ -8,7 +8,7 @@
     <div class="modal-overlay" @onclick="CloseDialog">
         <div class="modal-dialog add-product-dialog" @onclick:stopPropagation="true">
             <div class="modal-header">
-                <h3>Add Part</h3>
+                <h3>Add Product</h3>
                 <button class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
             </div>
             <div class="modal-body">
@@ -83,7 +83,7 @@
                     class="btn btn-primary"
                     @onclick="AddProduct"
                     disabled="@(!CanAdd)">
-                    <i class="fas fa-plus"></i> Add Part
+                    <i class="fas fa-plus"></i> Add Product
                 </button>
             </div>
         </div>
