@@ -169,6 +169,69 @@
 
                                             <hr class="factory-divider" />
 
+                                            <!-- Imports Section -->
+                                            <div class="factory-section">
+                                                <h5 class="section-heading">
+                                                    <i class="fas fa-arrow-to-right mr-2"></i>Imports
+                                                </h5>
+                                                @foreach (FactoryInput input in factory.Inputs)
+                                                {
+                                                    <div class="product-row mb-2">
+                                                        <i class="fas fa-industry mr-2"></i>
+                                                        <select class="form-control product-part-select"
+                                                                value="@(input.FactoryId?.ToString() ?? string.Empty)"
+                                                                @onchange="(e) => OnInputFactoryChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
+                                                            <option value="">-- Select Factory --</option>
+                                                            @foreach (Factory supplierFactory in GetImportableFactories(factory))
+                                                            {
+                                                                <option value="@supplierFactory.Id">@supplierFactory.Name</option>
+                                                            }
+                                                        </select>
+                                                        @if (input.FactoryId.HasValue)
+                                                        {
+                                                            <select class="form-control product-recipe-select"
+                                                                    value="@(input.OutputPart ?? string.Empty)"
+                                                                    @onchange="(e) => OnInputPartChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
+                                                                <option value="">-- Select Part --</option>
+                                                                @foreach (KeyValuePair<string, PartMetrics> partEntry in GetExportablePartsForFactory(input.FactoryId.Value))
+                                                                {
+                                                                    <option value="@partEntry.Key">@GameDataService.GetPartDisplayName(partEntry.Key)</option>
+                                                                }
+                                                            </select>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(input.OutputPart))
+                                                        {
+                                                            <input type="number"
+                                                                   class="form-control product-amount-input"
+                                                                   value="@input.Amount"
+                                                                   min="0"
+                                                                   @onchange="(e) => OnInputAmountChanged(factory, input, e.Value?.ToString() ?? string.Empty)" />
+                                                        }
+                                                        <button class="btn btn-sm btn-danger" title="Remove Import" @onclick="() => RemoveInput(factory, input)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && input.Amount == 0)
+                                                        {
+                                                            <span class="sf-chip red small"><i class="fas fa-exclamation-triangle"></i><span class="ml-2">No amount set!</span></span>
+                                                        }
+                                                    </div>
+                                                }
+                                                <div class="factory-add-part mt-2">
+                                                    <button class="btn btn-sm btn-success"
+                                                            disabled="@(GetImportableFactories(factory).Count == 0)"
+                                                            title="@(GetImportableFactories(factory).Count == 0 ? "No other factories with available outputs" : "Add Import")"
+                                                            @onclick="() => AddEmptyInput(factory)">
+                                                        <i class="fas fa-dolly"></i> Add Import
+                                                    </button>
+                                                    @if (GetImportableFactories(factory).Count == 0 && factory.Inputs.Count == 0)
+                                                    {
+                                                        <span class="text-grey ml-2">No other factories with available outputs.</span>
+                                                    }
+                                                </div>
+                                            </div>
+
+                                            <hr class="factory-divider" />
+
                                             <!-- Satisfaction Section -->
                                             <div class="factory-section">
                                                 <h5 class="section-heading @(factory.RequirementsSatisfied ? "" : "text-red")">
@@ -464,6 +527,75 @@
             factory.Products[i].DisplayOrder = i;
         }
         RecalculateAll();
+    }
+
+    private List<Factory> GetImportableFactories(Factory currentFactory)
+    {
+        return _factories
+            .Where(f => f.Id != currentFactory.Id && f.Parts.Any(p => p.Value.Exportable))
+            .ToList();
+    }
+
+    private List<KeyValuePair<string, PartMetrics>> GetExportablePartsForFactory(int factoryId)
+    {
+        Factory? supplierFactory = _factories.FirstOrDefault(f => f.Id == factoryId);
+        if (supplierFactory == null)
+        {
+            return new List<KeyValuePair<string, PartMetrics>>();
+        }
+
+        return supplierFactory.Parts
+            .Where(p => p.Value.Exportable)
+            .ToList();
+    }
+
+    private void AddEmptyInput(Factory factory)
+    {
+        factory.Inputs.Add(new FactoryInput
+        {
+            FactoryId = null,
+            OutputPart = null,
+            Amount = 0,
+        });
+        // Don't recalculate yet - wait until a factory and part are selected
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void RemoveInput(Factory factory, FactoryInput input)
+    {
+        factory.Inputs.Remove(input);
+        RecalculateAll();
+    }
+
+    private void OnInputFactoryChanged(Factory factory, FactoryInput input, string factoryIdStr)
+    {
+        if (int.TryParse(factoryIdStr, out int factoryId) && factoryId > 0)
+        {
+            input.FactoryId = factoryId;
+        }
+        else
+        {
+            input.FactoryId = null;
+        }
+
+        input.OutputPart = null;
+        input.Amount = 0;
+        RecalculateAll();
+    }
+
+    private void OnInputPartChanged(Factory factory, FactoryInput input, string partId)
+    {
+        input.OutputPart = !string.IsNullOrEmpty(partId) ? partId : null;
+        RecalculateAll();
+    }
+
+    private void OnInputAmountChanged(Factory factory, FactoryInput input, string amountStr)
+    {
+        if (double.TryParse(amountStr, out double amount) && amount >= 0)
+        {
+            input.Amount = amount;
+            RecalculateAll();
+        }
     }
 
     private List<KeyValuePair<string, Part>> GetSortedParts()
