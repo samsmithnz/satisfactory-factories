@@ -10,63 +10,63 @@
 
 @if (_showDialog)
 {
-    <div class="modal-overlay" @onclick="CloseDialog">
-        <div class="modal-dialog templates-dialog" @onclick:stopPropagation="true">
-            <div class="modal-header">
-                <h3>Load a template plan</h3>
-                <button class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
+    <div class="templates-modal-backdrop" @onclick="CloseDialog"></div>
+    <div class="modal-dialog templates-dialog">
+        <div class="modal-header">
+            <h3>Load a template plan</h3>
+            <button type="button" class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="template-warning">
+                <p>
+                    Clicking on a button below will load a template plan into the planner.
+                    <span class="warning-text">This will overwrite any existing plan WITHOUT warning.</span>
+                    You may wish to save your plan first by creating a share link.
+                </p>
             </div>
-            <div class="modal-body">
-                <div class="template-warning">
-                    <p>
-                        Clicking on a button below will load a template plan into the planner.
-                        <span class="warning-text">This will overwrite any existing plan WITHOUT warning.</span>
-                        You may wish to save your plan first by creating a share link.
-                    </p>
+            @if (_errorMessage != null)
+            {
+                <div class="template-error">
+                    <p class="text-red">@_errorMessage</p>
                 </div>
-                @if (_errorMessage != null)
-                {
-                    <div class="template-error">
-                        <p class="text-red">@_errorMessage</p>
-                    </div>
-                }
-                @if (_isLoading)
-                {
-                    <div class="template-loading">
-                        <p><i class="fas fa-spinner fa-spin mr-2"></i>Loading @_loadingTemplateName...</p>
-                    </div>
-                }
-                <div class="templates-table">
-                    <table>
-                        <thead>
+            }
+            @if (_isLoading)
+            {
+                <div class="template-loading">
+                    <p><i class="fas fa-spinner fa-spin mr-2"></i>Loading @_loadingTemplateName...</p>
+                </div>
+            }
+            <div class="templates-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="name-column">Name</th>
+                            <th class="desc-column">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (DemoPlanTemplate template in _templates)
+                        {
                             <tr>
-                                <th class="name-column">Name</th>
-                                <th class="desc-column">Description</th>
+                                <td class="template-name-cell">
+                                    <button
+                                        type="button"
+                                        class="btn template-btn"
+                                        disabled="@_isLoading"
+                                        @onclick="() => LoadTemplate(template)">
+                                        <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
+                                        @template.Name
+                                    </button>
+                                </td>
+                                <td class="template-desc">@template.Description</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (DemoPlanTemplate template in _templates)
-                            {
-                                <tr>
-                                    <td class="template-name-cell">
-                                        <button
-                                            class="btn template-btn"
-                                            disabled="@_isLoading"
-                                            @onclick="() => LoadTemplate(template)">
-                                            <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
-                                            @template.Name
-                                        </button>
-                                    </td>
-                                    <td class="template-desc">@template.Description</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="CloseDialog" disabled="@_isLoading">Close</button>
-            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @onclick="CloseDialog" disabled="@_isLoading">Close</button>
         </div>
     </div>
 }

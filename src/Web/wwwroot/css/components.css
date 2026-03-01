@@ -774,10 +774,24 @@
   min-height: 24px;
 }
 
-/* Templates Dialog */
+/* Templates Dialog - uses sibling backdrop pattern (backdrop and dialog are siblings, not parent-child) */
+.templates-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 2000;
+}
+
 .templates-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2001;
   max-width: 1200px;
   width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .template-warning {
