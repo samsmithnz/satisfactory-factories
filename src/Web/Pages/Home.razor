@@ -115,9 +115,10 @@
                                             }
                                             else
                                             {
-                                                <span class="sf-chip small @(FactoryCalcService.ValidForGameSync(factory) ? "" : "disabled")"
+                                                bool validForSync = FactoryCalcService.ValidForGameSync(factory);
+                                                <span class="sf-chip small @(validForSync ? "" : "disabled")"
                                                       role="button"
-                                                      title="@(FactoryCalcService.ValidForGameSync(factory) ? "Mark as in sync with game" : "Add products or power producers first")"
+                                                      title="@(validForSync ? "Mark as in sync with game" : "Add products or power producers first")"
                                                       @onclick="() => HandleSetSyncState(factory)">
                                                     <i class="fas fa-question"></i>
                                                     <span class="ml-2">Mark as in sync with game</span>

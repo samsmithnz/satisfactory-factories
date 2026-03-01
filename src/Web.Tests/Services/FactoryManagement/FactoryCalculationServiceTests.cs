@@ -613,6 +613,8 @@ public sealed class FactoryCalculationServiceTests
         _service.ResetSyncState(factory);
 
         Assert.IsNull(factory.InSync);
+        Assert.AreEqual(0, factory.SyncState.Count);
+        Assert.AreEqual(0, factory.SyncStatePower.Count);
     }
 
     [TestMethod]

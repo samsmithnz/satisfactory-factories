@@ -677,6 +677,8 @@ public class FactoryCalculationService : IFactoryCalculationService
     public void ResetSyncState(Factory factory)
     {
         factory.InSync = null;
+        factory.SyncState = new Dictionary<string, FactorySyncState>();
+        factory.SyncStatePower = new Dictionary<string, FactoryPowerSyncState>();
     }
 
     /// <inheritdoc/>
@@ -731,7 +733,8 @@ public class FactoryCalculationService : IFactoryCalculationService
         {
             if (!factory.SyncState.TryGetValue(product.Id, out FactorySyncState? syncState))
             {
-                continue;
+                factory.InSync = false;
+                return;
             }
 
             if (syncState.Amount != product.Amount || syncState.Recipe != product.Recipe)
