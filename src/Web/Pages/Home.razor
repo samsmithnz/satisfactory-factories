@@ -201,6 +201,10 @@
                                                         <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemoveProduct(factory, product)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
+                                                        @if (ShouldShowNotInDemand(product, factory))
+                                                        {
+                                                            <span class="sf-chip orange small ml-2">No demand!</span>
+                                                        }
                                                     </div>
                                                     @if (!string.IsNullOrEmpty(product.Recipe) && (product.Requirements.Count > 0 || !string.IsNullOrEmpty(product.BuildingRequirements.Name)))
                                                     {
@@ -763,6 +767,16 @@
     private static string CollapsedProductChipClass(Factory factory, string partId)
     {
         return factory.Parts.TryGetValue(partId, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : string.Empty;
+    }
+
+    private static bool ShouldShowNotInDemand(FactoryItem product, Factory factory)
+    {
+        if (string.IsNullOrEmpty(product.Id))
+        {
+            return false;
+        }
+
+        return factory.Parts.TryGetValue(product.Id, out PartMetrics? part) && part.AmountRequired <= 0;
     }
 
     public void Dispose()
