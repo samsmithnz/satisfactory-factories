@@ -297,6 +297,12 @@ public class FactoryCalculationService : IFactoryCalculationService
         {
             _common.CreateNewPart(factory, product.Id);
 
+            if (product.Requirements == null)
+            {
+                Console.Error.WriteLine($"CalculatePartRequirements: Requirements is null for product '{product.Id}'. Skipping.");
+                continue;
+            }
+
             foreach (KeyValuePair<string, RequirementAmount> reqKv in product.Requirements)
             {
                 if (reqKv.Value == null || reqKv.Value.Amount == 0)
@@ -620,6 +626,11 @@ public class FactoryCalculationService : IFactoryCalculationService
             if (!factory.RequirementsSatisfied)
             {
                 factory.HasProblem = true;
+                continue;
+            }
+
+            if (factory.Dependencies?.Metrics == null)
+            {
                 continue;
             }
 

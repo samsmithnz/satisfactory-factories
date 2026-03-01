@@ -9,6 +9,7 @@
 @inject NavigationManager NavManager
 @inject LoadingService LoadingService
 @inject DemoPlansService DemoPlansService
+@inject IToastService ToastService
 @implements IDisposable
 
 <PageTitle>Satisfactory Factories - Production Planner</PageTitle>
@@ -509,11 +510,19 @@
 
     private void RecalculateAll()
     {
-        if (_gameData != null)
+        try
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
+            if (_gameData != null)
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            _ = AppState.SaveFactoriesAsync();
         }
-        _ = AppState.SaveFactoriesAsync();
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"RecalculateAll: Error during factory calculation: {ex}");
+            ToastService.ShowToast($"An error occurred while calculating factories: {ex.Message}", ToastType.Error);
+        }
     }
 
     private void CreateFactory()
