@@ -98,7 +98,7 @@ public class FactoryCalculationService : IFactoryCalculationService
     }
 
     /// <inheritdoc/>
-    public Factory CalculateFactory(Factory factory, List<Factory> allFactories, GameData gameData)
+    public Factory CalculateFactory(Factory factory, List<Factory> allFactories, GameData gameData, bool loadMode = false)
     {
         Console.WriteLine($"factory: CalculateFactory started {factory.Name}");
 
@@ -106,9 +106,21 @@ public class FactoryCalculationService : IFactoryCalculationService
         factory.Parts = new Dictionary<string, PartMetrics>();
 
         CalculateProducts(factory, gameData);
-        CalculateFactoryBuildingsAndPower(factory, gameData);
-        CalculateParts(factory, gameData);
         CalculateSyncState(factory);
+        CalculateFactoryBuildingsAndPower(factory, gameData);
+
+        // Calculate dependencies for this factory (updates provider factories' Requests).
+        CalculateFactoryDependencies(factory, allFactories, gameData, loadMode);
+
+        // Build metrics from requests registered on this factory by other factories.
+        CalculateDependencyMetrics(factory);
+
+        // Calculate parts (uses Dependencies.Requests to compute export requirements).
+        CalculateParts(factory, gameData);
+
+        // Fill supply values into the dependency metrics now that parts are known.
+        CalculateDependencyMetricsSupply(factory);
+
         CalculateHasProblem(allFactories);
 
         Console.WriteLine($"factory: CalculateFactory completed {factory.Name}");
@@ -120,13 +132,14 @@ public class FactoryCalculationService : IFactoryCalculationService
     {
         Console.WriteLine("factory: Calculating factories");
 
-        // First pass: generate part metrics needed for dependency evaluation
+        // First pass with loadMode=true: build initial part metrics without removing
+        // incomplete inputs (providers may not have had their parts calculated yet).
         foreach (Factory factory in factories)
         {
-            CalculateFactory(factory, factories, gameData);
+            CalculateFactory(factory, factories, gameData, loadMode: true);
         }
 
-        // Second pass: re-run after dependencies are established
+        // Second pass: final calculation with all dependencies established.
         foreach (Factory factory in factories)
         {
             CalculateFactory(factory, factories, gameData);
@@ -598,6 +611,135 @@ public class FactoryCalculationService : IFactoryCalculationService
     }
 
     // ── Exports / dependency requests (exports.ts) ───────────────────────────
+
+    /// <inheritdoc/>
+    public void CalculateFactoryDependencies(Factory factory, List<Factory> allFactories, GameData gameData, bool loadMode = false)
+    {
+        HashSet<int> providersToRecalculate = new HashSet<int>();
+
+        foreach (FactoryInput input in factory.Inputs.ToList())
+        {
+            // Skip incomplete inputs (user may still be selecting them).
+            if (!input.FactoryId.HasValue || string.IsNullOrEmpty(input.OutputPart))
+            {
+                Console.WriteLine($"Factory {factory.Id} has an incomplete input. User may still be selecting it.");
+                continue;
+            }
+
+            // Prevent self-referencing.
+            if (input.FactoryId == factory.Id)
+            {
+                throw new InvalidOperationException($"Factory {factory.Id} is trying to add a dependency to itself!");
+            }
+
+            Factory? provider = allFactories.Find(f => f.Id == input.FactoryId);
+            if (provider == null)
+            {
+                Console.Error.WriteLine($"CalculateFactoryDependencies: Factory with ID {input.FactoryId} not found. Removing input.");
+                factory.Inputs.Remove(input);
+                continue;
+            }
+
+            // In loadMode we skip the part check so inputs are not removed before parts are calculated.
+            if (!loadMode && !provider.Parts.ContainsKey(input.OutputPart))
+            {
+                Console.Error.WriteLine($"CalculateFactoryDependencies: Factory {provider.Name} ({provider.Id}) does not have the part {input.OutputPart} requested by {factory.Name} ({factory.Id}). Removing input.");
+                factory.Inputs.Remove(input);
+                continue;
+            }
+
+            UpdateDependency(factory, provider, input);
+            providersToRecalculate.Add(provider.Id);
+        }
+
+        // Recalculate metrics for any providers whose requests changed.
+        foreach (int providerId in providersToRecalculate)
+        {
+            Factory? provider = allFactories.Find(f => f.Id == providerId);
+            if (provider == null)
+            {
+                Console.Error.WriteLine($"CalculateFactoryDependencies: Provider factory with ID {providerId} not found.");
+                continue;
+            }
+            CalculateDependencyMetrics(provider);
+            CalculateParts(provider, gameData);
+            CalculateDependencyMetricsSupply(provider);
+        }
+    }
+
+    /// <inheritdoc/>
+    public void CalculateDependencyMetrics(Factory factory)
+    {
+        factory.Dependencies.Metrics = new Dictionary<string, FactoryDependencyMetrics>();
+
+        foreach (KeyValuePair<string, List<FactoryDependencyRequest>> kv in factory.Dependencies.Requests)
+        {
+            foreach (FactoryDependencyRequest request in kv.Value)
+            {
+                string part = request.Part;
+
+                if (!factory.Dependencies.Metrics.ContainsKey(part))
+                {
+                    factory.Dependencies.Metrics[part] = new FactoryDependencyMetrics
+                    {
+                        Part = part,
+                        Request = 0,
+                        Supply = 0,
+                        IsRequestSatisfied = false,
+                        Difference = 0,
+                    };
+                }
+
+                factory.Dependencies.Metrics[part].Request += request.Amount;
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public void CalculateDependencyMetricsSupply(Factory factory)
+    {
+        foreach (KeyValuePair<string, FactoryDependencyMetrics> kv in factory.Dependencies.Metrics)
+        {
+            FactoryDependencyMetrics metrics = kv.Value;
+
+            if (factory.Parts.TryGetValue(kv.Key, out PartMetrics? partData))
+            {
+                metrics.Supply = partData.AmountSupplied;
+            }
+
+            metrics.Difference = metrics.Supply - metrics.Request;
+            metrics.IsRequestSatisfied = metrics.Difference >= 0;
+        }
+    }
+
+    private void UpdateDependency(Factory factory, Factory provider, FactoryInput input)
+    {
+        string requestingKey = factory.Id.ToString();
+
+        if (!provider.Dependencies.Requests.ContainsKey(requestingKey))
+        {
+            provider.Dependencies.Requests[requestingKey] = new List<FactoryDependencyRequest>();
+        }
+
+        List<FactoryDependencyRequest> requests = provider.Dependencies.Requests[requestingKey];
+
+        FactoryDependencyRequest? existingRequest = requests.Find(r => r.Part == input.OutputPart);
+        if (existingRequest != null)
+        {
+            if (existingRequest.Amount != input.Amount)
+            {
+                existingRequest.Amount = input.Amount;
+            }
+            return;
+        }
+
+        requests.Add(new FactoryDependencyRequest
+        {
+            RequestingFactoryId = factory.Id,
+            Part = input.OutputPart!,
+            Amount = input.Amount,
+        });
+    }
 
     /// <inheritdoc/>
     public List<FactoryDependencyRequest> GetRequestsForFactory(Factory factory)
