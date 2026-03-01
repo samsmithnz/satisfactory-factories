@@ -1050,7 +1050,7 @@
 
     private static string FormatNumber(double value)
     {
-        return value % 1 == 0 ? ((int)value).ToString() : value.ToString("0.##");
+        return value % 1 == 0 ? ((int)value).ToString() : value.ToString("0.###");
     }
 
     private static string FormatPower(double mw)
@@ -1058,9 +1058,9 @@
         const double MwToGwConversion = 1000;
         if (mw >= MwToGwConversion)
         {
-            return $"{mw / MwToGwConversion:0.##} GW";
+            return $"{mw / MwToGwConversion:0.###} GW";
         }
-        return $"{mw:0.##} MW";
+        return $"{mw:0.###} MW";
     }
 
     private static string CollapsedProductChipClass(Factory factory, string partId)
