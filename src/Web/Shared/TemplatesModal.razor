@@ -3,15 +3,16 @@
 @inject DemoPlansService DemoPlansService
 @inject IToastService ToastService
 @inject TemplateModalService TemplateModal
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 @if (TemplateModal.IsOpen)
 {
-    <div class="templates-modal-backdrop" @onclick="CloseDialog"></div>
-    <div class="modal-dialog templates-dialog">
+    <div class="templates-modal-backdrop" @onclick="BackdropClicked"></div>
+    <div class="modal-dialog templates-dialog" @onclick:stopPropagation="true" @onclick="DialogClicked">
         <div class="modal-header">
             <h3>Load a template plan</h3>
-            <button type="button" class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
+            <button type="button" class="close-btn" @onclick="CloseDialog" @onclick:stopPropagation="true" aria-label="Close">×</button>
         </div>
         <div class="modal-body">
             <div class="template-warning">
@@ -44,18 +45,20 @@
                     <tbody>
                         @foreach (DemoPlanTemplate template in _templates)
                         {
+                            DemoPlanTemplate captured = template;
                             <tr>
                                 <td class="template-name-cell">
                                     <button
                                         type="button"
                                         class="btn template-btn"
                                         disabled="@_isLoading"
-                                        @onclick="() => LoadTemplate(template)">
-                                        <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
-                                        @template.Name
+                                        @onclick="() => LoadTemplate(captured)"
+                                        @onclick:stopPropagation="true">
+                                        <i class="fas @(captured.IsDebug ? "fa-bug" : "fa-file")"></i>
+                                        @captured.Name
                                     </button>
                                 </td>
-                                <td class="template-desc">@template.Description</td>
+                                <td class="template-desc">@captured.Description</td>
                             </tr>
                         }
                     </tbody>
@@ -63,7 +66,7 @@
             </div>
         </div>
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @onclick="CloseDialog" disabled="@_isLoading">Close</button>
+            <button type="button" class="btn btn-secondary" @onclick="CloseDialog" @onclick:stopPropagation="true" disabled="@_isLoading">Close</button>
         </div>
     </div>
 }
@@ -73,31 +76,68 @@
     private string _loadingTemplateName = string.Empty;
     private string? _errorMessage = null;
     private List<DemoPlanTemplate> _templates = new();
+    private int _renderCount = 0;
 
     protected override void OnInitialized()
     {
         _templates = DemoPlansService.GetAvailableTemplates();
-        TemplateModal.OnChange += StateHasChanged;
+        TemplateModal.OnChange += OnModalStateChanged;
         Console.WriteLine($"TemplatesModal: Initialized with {_templates.Count} templates");
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _renderCount++;
+        if (TemplateModal.IsOpen)
+        {
+            Console.WriteLine($"TemplatesModal: Dialog rendered to DOM (render #{_renderCount}), isLoading={_isLoading}");
+            await JSRuntime.InvokeVoidAsync("console.log",
+                $"[JS] TemplatesModal: Dialog is in DOM (render #{_renderCount}). Bootstrap pointer-events override should be active.");
+        }
     }
 
     public void Dispose()
     {
-        TemplateModal.OnChange -= StateHasChanged;
+        TemplateModal.OnChange -= OnModalStateChanged;
+    }
+
+    private void OnModalStateChanged()
+    {
+        Console.WriteLine($"TemplatesModal: State changed - IsOpen={TemplateModal.IsOpen}");
+        StateHasChanged();
+    }
+
+    private void BackdropClicked()
+    {
+        Console.WriteLine($"TemplatesModal: BACKDROP CLICKED (isLoading={_isLoading}) — this fires when click falls through dialog or user clicks outside");
+        _ = JSRuntime.InvokeVoidAsync("console.warn",
+            "[JS] TemplatesModal: Backdrop was clicked! If you clicked a template button and this fires, pointer-events:none is overriding the button.");
+        CloseDialog();
+    }
+
+    private void DialogClicked()
+    {
+        Console.WriteLine($"TemplatesModal: Dialog div @onclick fired (click reached the dialog container)");
     }
 
     private void CloseDialog()
     {
         if (!_isLoading)
         {
-            Console.WriteLine("TemplatesModal: Dialog closed");
+            Console.WriteLine("TemplatesModal: CloseDialog called — hiding dialog");
             TemplateModal.Close();
+        }
+        else
+        {
+            Console.WriteLine("TemplatesModal: CloseDialog called but _isLoading=true — ignoring");
         }
     }
 
     private async Task LoadTemplate(DemoPlanTemplate template)
     {
-        Console.WriteLine($"TemplatesModal: LoadTemplate button clicked for '{template.Name}'");
+        Console.WriteLine($"TemplatesModal: *** LoadTemplate ENTERED for '{template.Name}' ***");
+        await JSRuntime.InvokeVoidAsync("console.log",
+            $"[JS] TemplatesModal: LoadTemplate called for '{template.Name}'");
 
         _isLoading = true;
         _loadingTemplateName = template.Name;
@@ -106,7 +146,7 @@
 
         try
         {
-            Console.WriteLine($"TemplatesModal: Starting load for '{template.Name}'");
+            Console.WriteLine($"TemplatesModal: Calling DemoPlansService.LoadDemoPlanAsync('{template.Name}')");
 
             await DemoPlansService.LoadDemoPlanAsync(template.Name);
 
@@ -114,7 +154,7 @@
 
             await TemplateModal.InvokeTemplateLoadedAsync();
 
-            Console.WriteLine($"TemplatesModal: Callback fired for '{template.Name}'");
+            Console.WriteLine($"TemplatesModal: OnTemplateLoaded callback fired for '{template.Name}'");
 
             ToastService.ShowToast($"Template \"{template.Name}\" loaded successfully", ToastType.Success);
 
@@ -122,7 +162,7 @@
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"TemplatesModal: Error loading template '{template.Name}': {ex.GetType().Name}: {ex.Message}");
+            Console.Error.WriteLine($"TemplatesModal: ERROR loading '{template.Name}': {ex.GetType().Name}: {ex.Message}");
             Console.Error.WriteLine($"TemplatesModal: Stack trace: {ex.StackTrace}");
             _errorMessage = $"Failed to load \"{template.Name}\": {ex.Message}";
             ToastService.ShowToast($"Failed to load template \"{template.Name}\"", ToastType.Error);

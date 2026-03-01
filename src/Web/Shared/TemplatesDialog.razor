@@ -17,7 +17,8 @@
 
     private void OpenModal()
     {
-        Console.WriteLine("TemplatesDialog: Opening templates modal");
+        Console.WriteLine($"TemplatesDialog: OpenModal() called — TemplateModal.IsOpen is currently {TemplateModal.IsOpen}");
         TemplateModal.Open(() => OnTemplateLoaded.InvokeAsync());
+        Console.WriteLine($"TemplatesDialog: After Open() — TemplateModal.IsOpen is now {TemplateModal.IsOpen}");
     }
 }

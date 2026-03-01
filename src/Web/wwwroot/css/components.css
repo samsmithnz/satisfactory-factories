@@ -792,6 +792,8 @@
   width: 95%;
   max-height: 90vh;
   overflow-y: auto;
+  /* Bootstrap .modal-dialog sets pointer-events:none — override it so button clicks register */
+  pointer-events: auto;
 }
 
 .template-warning {

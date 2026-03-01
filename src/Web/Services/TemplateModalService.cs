@@ -26,6 +26,7 @@ public class TemplateModalService
     /// <param name="onTemplateLoaded">Optional callback to invoke after a template is loaded successfully.</param>
     public void Open(Func<Task>? onTemplateLoaded = null)
     {
+        Console.WriteLine($"TemplateModalService: Open() called. IsOpen was {_isOpen}, now setting to true");
         _onTemplateLoaded = onTemplateLoaded;
         _isOpen = true;
         NotifyStateChanged();
@@ -36,6 +37,7 @@ public class TemplateModalService
     /// </summary>
     public void Close()
     {
+        Console.WriteLine($"TemplateModalService: Close() called. IsOpen was {_isOpen}, now setting to false");
         _isOpen = false;
         _onTemplateLoaded = null;
         NotifyStateChanged();
@@ -46,6 +48,7 @@ public class TemplateModalService
     /// </summary>
     public async Task InvokeTemplateLoadedAsync()
     {
+        Console.WriteLine($"TemplateModalService: InvokeTemplateLoadedAsync() — callback is {(_onTemplateLoaded != null ? "set" : "null")}");
         if (_onTemplateLoaded != null)
         {
             await _onTemplateLoaded();
