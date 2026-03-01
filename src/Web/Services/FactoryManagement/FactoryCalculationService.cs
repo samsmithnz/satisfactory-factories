@@ -330,7 +330,7 @@ public class FactoryCalculationService : IFactoryCalculationService
                 _common.CreateNewPart(factory, ingredient.Part);
                 if (ingredient.PerMin == 0)
                 {
-                    Console.Error.WriteLine("CalculatePartRequirements - powerProducers: perMin is missing from ingredient!");
+                    // PerMin is 0 when the user has not yet specified fuel amounts - this is expected
                     continue;
                 }
                 factory.Parts[ingredient.Part].AmountRequiredPower += ingredient.PerMin;
