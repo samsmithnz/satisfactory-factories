@@ -51,6 +51,22 @@
                             @if (_factories.Count > 0)
                             {
                                 <div class="d-flex gap-2 mt-2">
+                                    <button class="btn btn-secondary flex-1" @onclick="HideAllFactories" title="Collapse all factories">
+                                        <i class="fas fa-compress-alt"></i> Hide All
+                                    </button>
+                                    <button class="btn btn-secondary flex-1" @onclick="ShowAllFactories" title="Expand all factories">
+                                        <i class="fas fa-expand-alt"></i> Expand All
+                                    </button>
+                                </div>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button class="btn btn-secondary flex-1" @onclick="CopyPlanToClipboard" title="Copy plan to clipboard">
+                                        <i class="fas fa-copy"></i> Copy Plan
+                                    </button>
+                                    <button class="btn btn-secondary flex-1" @onclick="PastePlanFromClipboard" title="Paste plan from clipboard">
+                                        <i class="fas fa-clipboard"></i> Paste Plan
+                                    </button>
+                                </div>
+                                <div class="d-flex gap-2 mt-2">
                                     <button class="btn btn-secondary flex-1" @onclick="ClearAll">
                                         <i class="fas fa-trash"></i> Clear All
                                     </button>
@@ -167,6 +183,117 @@
                                             <p class="text-grey">No Product Surplus or Deficit</p>
                                         }
                                     </div>
+                                    <hr class="factory-divider" />
+                                    <!-- Produced Items toggle -->
+                                    <div class="text-center">
+                                        <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleStatisticsProducts">
+                                            <i class="fas @(_statisticsProductsHidden ? "fa-eye" : "fa-eye-slash") mr-1"></i>
+                                            @(_statisticsProductsHidden ? "Show all Products" : "Hide all Products")
+                                        </button>
+                                    </div>
+                                    @if (!_statisticsProductsHidden)
+                                    {
+                                        <hr class="factory-divider" />
+                                        <!-- Produced Items -->
+                                        <div class="statistics-section">
+                                            <h5 class="text-h5"><i class="fas fa-conveyor-belt-alt mr-2"></i>Produced Items</h5>
+                                            @{ List<StatProducedItem> producedItems = GetProducedItems(); }
+                                            @if (producedItems.Count > 0)
+                                            {
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    @foreach (StatProducedItem item in producedItems)
+                                                    {
+                                                        <span class="sf-chip blue">
+                                                            <GameAsset Subject="@item.Id" Type="item" Height="24" Width="24" />
+                                                            <span class="ml-2"><b>@GameDataService.GetPartDisplayName(item.Id)</b>: @FormatNumber(item.AmountSupplied)/min</span>
+                                                        </span>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <p class="text-grey">Awaiting Production</p>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Factories Summary -->
+                        <div class="statistics-panel @(_summarySectionHidden ? "statistics-collapsed" : "")">
+                            <div class="statistics-header">
+                                <h4 class="statistics-title">
+                                    <i class="fas fa-list mr-2"></i>Factories Summary
+                                </h4>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleSummary">
+                                    <i class="fas @(_summarySectionHidden ? "fa-eye" : "fa-eye-slash") mr-1"></i>
+                                    @(_summarySectionHidden ? "Show" : "Hide")
+                                </button>
+                            </div>
+                            @if (!_summarySectionHidden)
+                            {
+                                <div class="factories-summary-table-wrapper">
+                                    <table class="factories-summary-table">
+                                        <thead>
+                                            <tr>
+                                                <th><i class="fas fa-industry mr-1"></i> Factory Name</th>
+                                                <th><i class="fas fa-building mr-1"></i> Buildings</th>
+                                                <th><i class="fas fa-box mr-1"></i> Items</th>
+                                                <th><i class="fas fa-arrow-right mr-1"></i> Imports</th>
+                                                <th><i class="fas fa-truck mr-1"></i> Exports</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (Factory factory in _factories)
+                                            {
+                                                <tr class="@(factory.HasProblem ? "summary-row-problem" : "")" role="button" @onclick="() => ScrollToFactory(factory)">
+                                                    <td>@factory.Name</td>
+                                                    <td>
+                                                        @foreach (KeyValuePair<string, BuildingRequirement> bldg in factory.BuildingRequirements.OrderBy(b => GameDataService.GetBuildingDisplayName(b.Key)))
+                                                        {
+                                                            <span class="sf-chip small orange no-margin mr-1">
+                                                                <GameAsset Subject="@bldg.Key" Type="building" Height="20" Width="20" />
+                                                                <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Key)</b>: @FormatNumber(bldg.Value.Amount)x</span>
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @foreach (FactoryItem product in factory.Products.OrderBy(p => GameDataService.GetPartDisplayName(p.Id)))
+                                                        {
+                                                            @if (!string.IsNullOrEmpty(product.Id))
+                                                            {
+                                                                <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")">
+                                                                    <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
+                                                                </span>
+                                                            }
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @{ List<SummaryImport> imports = GetSummaryImports(factory); }
+                                                        @foreach (SummaryImport imp in imports)
+                                                        {
+                                                            <span class="sf-chip small blue no-margin mr-1">
+                                                                <GameAsset Subject="@imp.PartId" Type="item" Height="20" Width="20" />
+                                                                <span class="ml-1"><b>@GameDataService.GetPartDisplayName(imp.PartId)</b>: @FormatNumber(imp.Amount)/min</span>
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                    <td>
+                                                        @{ List<SummaryExport> exports = GetSummaryExports(factory); }
+                                                        @foreach (SummaryExport exp in exports)
+                                                        {
+                                                            <span class="sf-chip small blue no-margin mr-1">
+                                                                <GameAsset Subject="@exp.PartId" Type="item" Height="20" Width="20" />
+                                                                <span class="ml-1"><b>@GameDataService.GetPartDisplayName(exp.PartId)</b>: @FormatNumber(exp.Amount)/min</span>
+                                                            </span>
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
                                 </div>
                             }
                         </div>
@@ -794,12 +921,17 @@
     private GameData? _gameData;
     private int _nextFactoryId = 1;
     private bool _statisticsHidden = false;
+    private bool _statisticsProductsHidden = true;
+    private bool _summarySectionHidden = false;
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
 
     // Simple statistics record types for aggregation
     private record StatRawResource(string Id, double TotalAmount);
     private record StatBuilding(string Name, double TotalAmount);
     private record StatPartDifference(string Id, double AmountRemaining);
+    private record StatProducedItem(string Id, double AmountSupplied);
+    private record SummaryImport(string PartId, double Amount);
+    private record SummaryExport(string PartId, double Amount);
 
     protected override async Task OnInitializedAsync()
     {
@@ -1498,6 +1630,16 @@
         _statisticsHidden = !_statisticsHidden;
     }
 
+    private void ToggleStatisticsProducts()
+    {
+        _statisticsProductsHidden = !_statisticsProductsHidden;
+    }
+
+    private void ToggleSummary()
+    {
+        _summarySectionHidden = !_summarySectionHidden;
+    }
+
     private List<StatRawResource> GetTotalRawResources()
     {
         Dictionary<string, double> totals = new Dictionary<string, double>();
@@ -1556,6 +1698,138 @@
             .Select(kv => new StatPartDifference(kv.Key, kv.Value))
             .OrderBy(p => GameDataService.GetPartDisplayName(p.Id))
             .ToList();
+    }
+
+    private List<StatProducedItem> GetProducedItems()
+    {
+        Dictionary<string, double> totals = new Dictionary<string, double>();
+        foreach (Factory factory in _factories)
+        {
+            foreach (KeyValuePair<string, PartMetrics> kv in factory.Parts)
+            {
+                if (kv.Value.IsRaw) continue;
+                if (kv.Value.AmountSupplied <= 0) continue;
+                totals[kv.Key] = totals.GetValueOrDefault(kv.Key) + kv.Value.AmountSupplied;
+            }
+        }
+
+        return totals
+            .Select(kv => new StatProducedItem(kv.Key, kv.Value))
+            .OrderBy(p => GameDataService.GetPartDisplayName(p.Id))
+            .ToList();
+    }
+
+    private List<SummaryImport> GetSummaryImports(Factory factory)
+    {
+        Dictionary<string, double> totals = new Dictionary<string, double>();
+        foreach (FactoryInput input in factory.Inputs)
+        {
+            if (!string.IsNullOrEmpty(input.OutputPart) && input.Amount > 0)
+            {
+                totals[input.OutputPart] = totals.GetValueOrDefault(input.OutputPart) + input.Amount;
+            }
+        }
+        foreach (KeyValuePair<string, WorldRawResource> kv in factory.RawResources)
+        {
+            if (kv.Value.Amount > 0)
+            {
+                totals[kv.Key] = totals.GetValueOrDefault(kv.Key) + kv.Value.Amount;
+            }
+        }
+        return totals
+            .Select(kv => new SummaryImport(kv.Key, kv.Value))
+            .OrderBy(i => GameDataService.GetPartDisplayName(i.PartId))
+            .ToList();
+    }
+
+    private List<SummaryExport> GetSummaryExports(Factory factory)
+    {
+        if (factory.Dependencies?.Requests == null)
+        {
+            return new List<SummaryExport>();
+        }
+
+        Dictionary<string, double> totals = new Dictionary<string, double>();
+        foreach (KeyValuePair<string, List<FactoryDependencyRequest>> req in factory.Dependencies.Requests)
+        {
+            foreach (FactoryDependencyRequest dr in req.Value)
+            {
+                totals[dr.Part] = totals.GetValueOrDefault(dr.Part) + dr.Amount;
+            }
+        }
+        return totals
+            .Select(kv => new SummaryExport(kv.Key, kv.Value))
+            .OrderBy(e => GameDataService.GetPartDisplayName(e.PartId))
+            .ToList();
+    }
+
+    // ===== Global Actions =====
+
+    private void HideAllFactories()
+    {
+        foreach (Factory factory in _factories)
+        {
+            factory.Hidden = true;
+        }
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void ShowAllFactories()
+    {
+        foreach (Factory factory in _factories)
+        {
+            factory.Hidden = false;
+        }
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private async Task CopyPlanToClipboard()
+    {
+        string plan = System.Text.Json.JsonSerializer.Serialize(_factories);
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", plan);
+        ToastService.ShowToast("Plan copied to clipboard! You can save it to a file or paste it.", ToastType.Success);
+    }
+
+    private async Task PastePlanFromClipboard()
+    {
+        try
+        {
+            string plan = await JSRuntime.InvokeAsync<string>("navigator.clipboard.readText");
+            if (string.IsNullOrWhiteSpace(plan))
+            {
+                ToastService.ShowToast("Clipboard is empty.", ToastType.Error);
+                return;
+            }
+            List<Factory>? parsed = System.Text.Json.JsonSerializer.Deserialize<List<Factory>>(plan, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (parsed == null || parsed.Count == 0)
+            {
+                ToastService.ShowToast("Invalid plan in clipboard.", ToastType.Error);
+                return;
+            }
+            AppState.SetFactories(parsed);
+            _factories = AppState.GetFactories();
+            if (_gameData != null)
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            _ = AppState.SaveFactoriesAsync();
+            ToastService.ShowToast($"Plan pasted successfully ({parsed.Count} factories loaded).", ToastType.Success);
+        }
+        catch (Exception ex)
+        {
+            ToastService.ShowToast($"Invalid plan. Error: {ex.Message}", ToastType.Error);
+        }
+    }
+
+    private async Task ScrollToFactory(Factory factory)
+    {
+        if (factory.Hidden)
+        {
+            factory.Hidden = false;
+            StateHasChanged();
+            await Task.Delay(50);
+        }
+        await JSRuntime.InvokeVoidAsync("scrollToElement", $"factory-{factory.Id}");
     }
 
     public void Dispose()

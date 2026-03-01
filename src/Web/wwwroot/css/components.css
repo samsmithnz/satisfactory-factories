@@ -1361,3 +1361,51 @@
 .btn-outline-info:hover {
   background: rgba(2, 136, 209, 0.12);
 }
+
+/* Factories Summary Table */
+.factories-summary-table-wrapper {
+  border: 1px solid #484848;
+  border-radius: 6px;
+  overflow: auto;
+  max-height: 500px;
+}
+
+.factories-summary-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.factories-summary-table thead th {
+  background: #1e1e1e;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid #484848;
+  min-width: 150px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.factories-summary-table tbody td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #333;
+  vertical-align: middle;
+}
+
+.factories-summary-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.factories-summary-table tbody tr[role="button"] {
+  cursor: pointer;
+}
+
+.factories-summary-table tbody tr[role="button"]:hover td {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.summary-row-problem td {
+  background: rgba(244, 67, 54, 0.08);
+}
