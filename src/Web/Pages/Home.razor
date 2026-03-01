@@ -228,6 +228,26 @@
                                                         <span class="text-grey ml-2">No other factories with available outputs.</span>
                                                     }
                                                 </div>
+                                                @if (factory.RawResources.Count > 0)
+                                                {
+                                                    <div class="raw-resources-section mt-3">
+                                                        <h6 class="section-subheading">
+                                                            <i class="fas fa-hard-hat mr-2"></i>Raw Resources
+                                                        </h6>
+                                                        <p class="text-grey text-small mb-2">
+                                                            <i class="fas fa-info-circle mr-1"></i>Raw resources (e.g. Iron Ore) aren't defined as imports. It is assumed you'll supply them sufficiently.
+                                                        </p>
+                                                        <div class="d-flex flex-wrap gap-2">
+                                                            @foreach (KeyValuePair<string, WorldRawResource> resource in factory.RawResources)
+                                                            {
+                                                                <span class="sf-chip cyan">
+                                                                    <GameAsset Subject="@resource.Key" Type="item" Height="24" Width="24" />
+                                                                    <span class="ml-2"><b>@resource.Value.Name</b>: @FormatNumber(resource.Value.Amount)/min</span>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
                                             </div>
 
                                             <hr class="factory-divider" />
