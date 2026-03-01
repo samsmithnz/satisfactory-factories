@@ -23,6 +23,12 @@
                         You may wish to save your plan first by creating a share link.
                     </p>
                 </div>
+                @if (_errorMessage != null)
+                {
+                    <div class="template-error">
+                        <p class="text-red">@_errorMessage</p>
+                    </div>
+                }
                 <div class="templates-table">
                     <table>
                         <thead>
@@ -62,6 +68,7 @@
     public EventCallback OnTemplateLoaded { get; set; }
 
     private bool _showDialog = false;
+    private string? _errorMessage = null;
     private List<DemoPlanTemplate> _templates = new();
 
     protected override void OnInitialized()
@@ -72,6 +79,7 @@
     private void OpenDialog()
     {
         _showDialog = true;
+        _errorMessage = null;
     }
 
     private void CloseDialog()
@@ -82,16 +90,25 @@
     private async Task LoadTemplate(DemoPlanTemplate template)
     {
         Console.WriteLine($"Loading template: {template.Name}");
-        
+
         // Close dialog first
         _showDialog = false;
-        
-        // Load the demo plan using the service
-        await DemoPlansService.LoadDemoPlanAsync(template.Name);
-        
-        // Notify parent to recalculate factories
-        await OnTemplateLoaded.InvokeAsync();
-        
-        Console.WriteLine($"Template {template.Name} loaded successfully");
+
+        try
+        {
+            // Load the demo plan using the service
+            await DemoPlansService.LoadDemoPlanAsync(template.Name);
+
+            // Notify parent to recalculate factories
+            await OnTemplateLoaded.InvokeAsync();
+
+            Console.WriteLine($"Template {template.Name} loaded successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error loading template {template.Name}: {ex.Message}");
+            _errorMessage = $"Failed to load template \"{template.Name}\": {ex.Message}";
+            _showDialog = true;
+        }
     }
 }
