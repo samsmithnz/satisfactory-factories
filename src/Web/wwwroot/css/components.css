@@ -1074,6 +1074,12 @@
   min-width: 0;
 }
 
+.factory-sync-status {
+  display: flex;
+  align-items: center;
+  margin: 0 var(--spacing-sm);
+}
+
 .factory-name-input {
   background: transparent;
   border: none;

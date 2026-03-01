@@ -65,6 +65,17 @@
   border: 0 !important;
 }
 
+.sf-chip[role="button"] {
+  cursor: pointer;
+}
+
+.sf-chip.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  border-style: dashed !important;
+}
+
 /* Vuetify-compatible Class Names
  * These class names are preserved from the Vue/Vuetify implementation
  * to facilitate component migration. They will be used in Blazor components
