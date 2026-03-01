@@ -564,4 +564,129 @@ public sealed class FactoryCalculationServiceTests
         // fac2 needs IronIngot which is not imported => unsatisfied
         Assert.IsFalse(fac2.RequirementsSatisfied);
     }
+
+    // ── Sync state (syncState.ts) ─────────────────────────────────────────────
+
+    [TestMethod]
+    public void NewFactory_ShouldHaveNullInSync()
+    {
+        Factory factory = _service.NewFactory();
+        Assert.IsNull(factory.InSync);
+    }
+
+    [TestMethod]
+    public void ValidForGameSync_ReturnsFalseForEmptyFactory()
+    {
+        Factory factory = _service.NewFactory();
+        Assert.IsFalse(_service.ValidForGameSync(factory));
+    }
+
+    [TestMethod]
+    public void ValidForGameSync_ReturnsTrueWhenProductHasRecipe()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        Assert.IsTrue(_service.ValidForGameSync(factory));
+    }
+
+    [TestMethod]
+    public void SetSyncState_MarksFactoryAsInSync()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+
+        _service.SetSyncState(factory);
+
+        Assert.IsTrue(factory.InSync);
+        Assert.IsTrue(factory.SyncState.ContainsKey("IronIngot"));
+        Assert.AreEqual(30, factory.SyncState["IronIngot"].Amount, 0.001);
+        Assert.AreEqual("IronIngot", factory.SyncState["IronIngot"].Recipe);
+    }
+
+    [TestMethod]
+    public void ResetSyncState_SetsInSyncToNull()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        _service.SetSyncState(factory);
+
+        _service.ResetSyncState(factory);
+
+        Assert.IsNull(factory.InSync);
+    }
+
+    [TestMethod]
+    public void CalculateSyncState_DoesNothingWhenInSyncIsNull()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+
+        _service.CalculateSyncState(factory);
+
+        Assert.IsNull(factory.InSync);
+    }
+
+    [TestMethod]
+    public void CalculateSyncState_RemainsInSyncWhenNothingChanged()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        _service.SetSyncState(factory);
+
+        _service.CalculateSyncState(factory);
+
+        Assert.IsTrue(factory.InSync);
+    }
+
+    [TestMethod]
+    public void CalculateSyncState_DropsOutOfSyncWhenAmountChanges()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        _service.SetSyncState(factory);
+
+        factory.Products[0].Amount = 60;
+        _service.CalculateSyncState(factory);
+
+        Assert.IsFalse(factory.InSync);
+    }
+
+    [TestMethod]
+    public void CalculateSyncState_DropsOutOfSyncWhenRecipeChanges()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        _service.SetSyncState(factory);
+
+        factory.Products[0].Recipe = "Alternate_IronIngot";
+        _service.CalculateSyncState(factory);
+
+        Assert.IsFalse(factory.InSync);
+    }
+
+    [TestMethod]
+    public void CalculateSyncState_DropsOutOfSyncWhenProductAdded()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        _service.SetSyncState(factory);
+
+        TestDataHelper.AddProductToFactory(factory, "IronPlate", 20, "IronPlate");
+        _service.CalculateSyncState(factory);
+
+        Assert.IsFalse(factory.InSync);
+    }
+
+    [TestMethod]
+    public void CalculateSyncState_DropsOutOfSyncWhenAllProductsRemoved()
+    {
+        Factory factory = _service.NewFactory();
+        TestDataHelper.AddProductToFactory(factory, "IronIngot", 30, "IronIngot");
+        _service.SetSyncState(factory);
+
+        factory.Products.Clear();
+        _service.CalculateSyncState(factory);
+
+        Assert.IsFalse(factory.InSync);
+    }
 }

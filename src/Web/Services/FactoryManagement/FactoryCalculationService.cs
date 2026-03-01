@@ -108,6 +108,7 @@ public class FactoryCalculationService : IFactoryCalculationService
         CalculateProducts(factory, gameData);
         CalculateFactoryBuildingsAndPower(factory, gameData);
         CalculateParts(factory, gameData);
+        CalculateSyncState(factory);
         CalculateHasProblem(allFactories);
 
         Console.WriteLine($"factory: CalculateFactory completed {factory.Name}");
@@ -629,6 +630,133 @@ public class FactoryCalculationService : IFactoryCalculationService
                     factory.HasProblem = true;
                     break;
                 }
+            }
+        }
+    }
+
+    // ── Sync state (syncState.ts) ─────────────────────────────────────────────
+
+    /// <inheritdoc/>
+    public bool ValidForGameSync(Factory factory)
+    {
+        bool hasProduct = factory.Products.Count > 0 && !string.IsNullOrEmpty(factory.Products[0].Recipe);
+        bool hasPowerProducer = factory.PowerProducers.Count > 0 && !string.IsNullOrEmpty(factory.PowerProducers[0].Building);
+        return hasProduct || hasPowerProducer;
+    }
+
+    /// <inheritdoc/>
+    public void SetSyncState(Factory factory)
+    {
+        factory.SyncState = new Dictionary<string, FactorySyncState>();
+        factory.SyncStatePower = new Dictionary<string, FactoryPowerSyncState>();
+
+        foreach (FactoryItem product in factory.Products)
+        {
+            factory.SyncState[product.Id] = new FactorySyncState
+            {
+                Amount = product.Amount,
+                Recipe = product.Recipe,
+            };
+        }
+
+        foreach (FactoryPowerProducer powerProducer in factory.PowerProducers)
+        {
+            factory.SyncStatePower[powerProducer.Building] = new FactoryPowerSyncState
+            {
+                PowerAmount = powerProducer.PowerAmount,
+                BuildingAmount = powerProducer.BuildingAmount,
+                Recipe = powerProducer.Recipe,
+                IngredientAmount = powerProducer.IngredientAmount,
+            };
+        }
+
+        factory.InSync = true;
+    }
+
+    /// <inheritdoc/>
+    public void ResetSyncState(Factory factory)
+    {
+        factory.InSync = null;
+    }
+
+    /// <inheritdoc/>
+    public void CalculateSyncState(Factory factory)
+    {
+        // If factory has never been synced, nothing to check.
+        if (factory.InSync == null)
+        {
+            return;
+        }
+
+        // Only check factories currently marked as in sync.
+        if (factory.InSync != true)
+        {
+            return;
+        }
+
+        // Empty factory — drop out of sync.
+        if (factory.Products.Count == 0 && factory.PowerProducers.Count == 0)
+        {
+            factory.InSync = false;
+            return;
+        }
+
+        // Check product count mismatch (fuel-only factories legitimately have no products).
+        if (factory.Products.Count != factory.SyncState.Count)
+        {
+            bool isFuelOnly = factory.Products.Count == 0 && factory.PowerProducers.Count > 0 && factory.SyncState.Count == 0;
+            if (!isFuelOnly)
+            {
+                factory.InSync = false;
+                return;
+            }
+        }
+
+        // Check all power producers deleted.
+        if (factory.PowerProducers.Count == 0 && factory.SyncStatePower.Count > 0)
+        {
+            factory.InSync = false;
+            return;
+        }
+
+        // Check power producer count mismatch.
+        if (factory.PowerProducers.Count != factory.SyncStatePower.Count)
+        {
+            factory.InSync = false;
+            return;
+        }
+
+        // Check individual products.
+        foreach (FactoryItem product in factory.Products)
+        {
+            if (!factory.SyncState.TryGetValue(product.Id, out FactorySyncState? syncState))
+            {
+                continue;
+            }
+
+            if (syncState.Amount != product.Amount || syncState.Recipe != product.Recipe)
+            {
+                factory.InSync = false;
+                return;
+            }
+        }
+
+        // Check individual power producers.
+        foreach (FactoryPowerProducer powerProducer in factory.PowerProducers)
+        {
+            if (!factory.SyncStatePower.TryGetValue(powerProducer.Building, out FactoryPowerSyncState? syncState))
+            {
+                factory.InSync = false;
+                return;
+            }
+
+            if (syncState.BuildingAmount != powerProducer.BuildingAmount
+                || syncState.Recipe != powerProducer.Recipe
+                || syncState.PowerAmount != powerProducer.PowerAmount
+                || syncState.IngredientAmount != powerProducer.IngredientAmount)
+            {
+                factory.InSync = false;
+                return;
             }
         }
     }
