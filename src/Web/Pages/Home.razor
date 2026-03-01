@@ -202,6 +202,31 @@
                                                             <i class="fas fa-trash"></i>
                                                         </button>
                                                     </div>
+                                                    @if (!string.IsNullOrEmpty(product.Recipe) && (product.Requirements.Count > 0 || !string.IsNullOrEmpty(product.BuildingRequirements.Name)))
+                                                    {
+                                                        <div class="product-requires-row">
+                                                            <span class="requires-label">Requires:</span>
+                                                            @foreach (KeyValuePair<string, RequirementAmount> req in product.Requirements)
+                                                            {
+                                                                bool isRaw = factory.Parts.TryGetValue(req.Key, out PartMetrics? pm) && pm.IsRaw;
+                                                                <span class="sf-chip small @(isRaw ? "cyan" : "blue")">
+                                                                    <GameAsset Subject="@req.Key" Type="item" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetPartDisplayName(req.Key)</b>: @FormatNumber(req.Value.Amount)/min</span>
+                                                                </span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(product.BuildingRequirements.Name))
+                                                            {
+                                                                <span class="sf-chip small orange">
+                                                                    <GameAsset Subject="@product.BuildingRequirements.Name" Type="building" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(product.BuildingRequirements.Name)</b>: @FormatNumber(product.BuildingRequirements.Amount)x</span>
+                                                                </span>
+                                                                <span class="sf-chip small yellow">
+                                                                    <i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i>
+                                                                    <span>@FormatPower(product.BuildingRequirements.PowerConsumed ?? 0)</span>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    }
                                                 }
                                                 <div class="factory-add-part mt-2">
                                                     <button class="btn btn-sm btn-primary" @onclick="() => AddEmptyProduct(factory)">
@@ -209,6 +234,41 @@
                                                     </button>
                                                 </div>
                                             </div>
+
+                                            @if (factory.PowerProducers.Count > 0)
+                                            {
+                                                <hr class="factory-divider" />
+                                                <div class="factory-section">
+                                                    <h5 class="section-heading">
+                                                        <i class="fas fa-bolt mr-2"></i>Power Generators
+                                                    </h5>
+                                                    @foreach (FactoryPowerProducer producer in factory.PowerProducers)
+                                                    {
+                                                        @if (!string.IsNullOrEmpty(producer.Recipe))
+                                                        {
+                                                            <div class="product-requires-row">
+                                                                <span class="requires-label">@GameDataService.GetBuildingDisplayName(producer.Building) Requires:</span>
+                                                                @if (producer.Ingredients.Count > 1)
+                                                                {
+                                                                    Web.Models.Factory.PowerItem supplementalIngredient = producer.Ingredients[1];
+                                                                    <span class="sf-chip small blue">
+                                                                        <GameAsset Subject="@supplementalIngredient.Part" Type="item" Height="20" Width="20" />
+                                                                        <span class="ml-1"><b>@GameDataService.GetPartDisplayName(supplementalIngredient.Part)</b>: @FormatNumber(supplementalIngredient.PerMin)/min</span>
+                                                                    </span>
+                                                                }
+                                                                <span class="sf-chip small orange">
+                                                                    <GameAsset Subject="@producer.Building" Type="building" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(producer.Building)</b>: @FormatNumber(producer.BuildingAmount)x</span>
+                                                                </span>
+                                                                <span class="sf-chip small yellow">
+                                                                    <i class="fas fa-bolt mr-1"></i><i class="fas fa-plus mr-1"></i>
+                                                                    <span>@FormatPower(producer.PowerAmount)</span>
+                                                                </span>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            }
 
                                             <hr class="factory-divider" />
 
