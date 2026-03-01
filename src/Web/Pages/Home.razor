@@ -349,6 +349,16 @@
                                                         </select>
                                                         @if (input.FactoryId.HasValue)
                                                         {
+                                                            <span class="mr-2">
+                                                                @if (!string.IsNullOrEmpty(input.OutputPart))
+                                                                {
+                                                                    <GameAsset Subject="@input.OutputPart" Type="item" Height="32" Width="32" />
+                                                                }
+                                                                else
+                                                                {
+                                                                    <i class="fas fa-cube" style="width: 32px; height: 32px"></i>
+                                                                }
+                                                            </span>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@(input.OutputPart ?? string.Empty)"
                                                                     @onchange="(e) => OnInputPartChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
