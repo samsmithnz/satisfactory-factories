@@ -117,4 +117,29 @@ public interface IFactoryCalculationService
     /// Sets the HasProblem flag on every factory in the list.
     /// </summary>
     void CalculateHasProblem(List<Factory> factories);
+
+    // ── Sync state (syncState.ts) ─────────────────────────────────────────────
+
+    /// <summary>
+    /// Returns true if the factory has enough configured products or power producers
+    /// to be eligible for game sync marking.
+    /// </summary>
+    bool ValidForGameSync(Factory factory);
+
+    /// <summary>
+    /// Records the current products and power producers as the sync baseline and
+    /// marks the factory as in sync.
+    /// </summary>
+    void SetSyncState(Factory factory);
+
+    /// <summary>
+    /// Clears the sync baseline and resets InSync to null (unknown).
+    /// </summary>
+    void ResetSyncState(Factory factory);
+
+    /// <summary>
+    /// Checks whether a previously-synced factory has drifted out of sync.
+    /// No-ops if InSync is null (never synced).
+    /// </summary>
+    void CalculateSyncState(Factory factory);
 }

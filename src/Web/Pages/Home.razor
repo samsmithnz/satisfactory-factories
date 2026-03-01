@@ -9,6 +9,7 @@
 @inject NavigationManager NavManager
 @inject LoadingService LoadingService
 @inject DemoPlansService DemoPlansService
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 <PageTitle>Satisfactory Factories - Production Planner</PageTitle>
@@ -91,6 +92,40 @@
                                                    aria-label="Factory name"
                                                    @onchange="(e) => RenameFactory(factory, e.Value?.ToString() ?? string.Empty)" />
                                         </div>
+                                        <!-- Sync status chips -->
+                                        <div class="factory-sync-status">
+                                            @if (factory.InSync == true)
+                                            {
+                                                <span class="sf-chip green small" role="button" title="Click to re-sync" @onclick="() => HandleSetSyncState(factory)">
+                                                    <i class="fas fa-check-square"></i>
+                                                    <span class="ml-2">In sync with game</span>
+                                                    <button class="btn btn-link btn-sm p-0 ml-2" title="Reset sync status" @onclick:stopPropagation="true" @onclick="() => HandleResetSyncState(factory)">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </span>
+                                            }
+                                            else if (factory.InSync == false)
+                                            {
+                                                <span class="sf-chip orange small" role="button" title="Click to re-sync" @onclick="() => HandleSetSyncState(factory)">
+                                                    <i class="fas fa-times-square"></i>
+                                                    <span class="ml-2">Out of sync with game</span>
+                                                    <button class="btn btn-link btn-sm p-0 ml-2" title="Reset sync status" @onclick:stopPropagation="true" @onclick="() => HandleResetSyncState(factory)">
+                                                        <i class="fas fa-times"></i>
+                                                    </button>
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                bool validForSync = FactoryCalcService.ValidForGameSync(factory);
+                                                <span class="sf-chip small @(validForSync ? "" : "disabled")"
+                                                      role="button"
+                                                      title="@(validForSync ? "Mark as in sync with game" : "Add products or power producers first")"
+                                                      @onclick="() => HandleSetSyncState(factory)">
+                                                    <i class="fas fa-question"></i>
+                                                    <span class="ml-2">Mark as in sync with game</span>
+                                                </span>
+                                            }
+                                        </div>
                                         <div class="factory-actions">
                                             <button class="btn btn-sm btn-outline-secondary"
                                                     title="Move Up"
@@ -130,6 +165,14 @@
                                                 @foreach (FactoryItem product in factory.Products)
                                                 {
                                                     <div class="product-row">
+                                                        @if (string.IsNullOrEmpty(product.Id))
+                                                        {
+                                                            <i class="fas fa-cube product-icon"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" />
+                                                        }
                                                         <select class="form-control product-part-select"
                                                                 value="@product.Id"
                                                                 @onchange="(e) => OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
@@ -141,6 +184,7 @@
                                                         </select>
                                                         @if (!string.IsNullOrEmpty(product.Id))
                                                         {
+                                                            <i class="fas fa-hat-chef product-icon"></i>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@product.Recipe"
                                                                     @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
@@ -158,14 +202,129 @@
                                                         <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemoveProduct(factory, product)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
+                                                        @if (ShouldShowNotInDemand(product, factory))
+                                                        {
+                                                            <span class="sf-chip orange small ml-2">No demand!</span>
+                                                        }
                                                     </div>
+                                                    @if (!string.IsNullOrEmpty(product.Recipe) && (product.Requirements.Count > 0 || !string.IsNullOrEmpty(product.BuildingRequirements.Name)))
+                                                    {
+                                                        <div class="product-requires-row">
+                                                            <span class="requires-label">Requires:</span>
+                                                            @foreach (KeyValuePair<string, RequirementAmount> req in product.Requirements)
+                                                            {
+                                                                bool isRaw = factory.Parts.TryGetValue(req.Key, out PartMetrics? pm) && pm.IsRaw;
+                                                                <span class="sf-chip small @(isRaw ? "cyan" : "blue")">
+                                                                    <GameAsset Subject="@req.Key" Type="item" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetPartDisplayName(req.Key)</b>: @FormatNumber(req.Value.Amount)/min</span>
+                                                                </span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(product.BuildingRequirements.Name))
+                                                            {
+                                                                <span class="sf-chip small orange">
+                                                                    <GameAsset Subject="@product.BuildingRequirements.Name" Type="building" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(product.BuildingRequirements.Name)</b>: @FormatNumber(product.BuildingRequirements.Amount)x</span>
+                                                                </span>
+                                                                <span class="sf-chip small yellow">
+                                                                    <i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i>
+                                                                    <span>@FormatPower(product.BuildingRequirements.PowerConsumed ?? 0)</span>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    }
                                                 }
                                                 <div class="factory-add-part mt-2">
                                                     <button class="btn btn-sm btn-primary" @onclick="() => AddEmptyProduct(factory)">
                                                         <i class="fas fa-plus"></i> Add Product
                                                     </button>
                                                 </div>
+
+                                                <!-- Power Producers -->
+                                                @foreach (FactoryPowerProducer producer in factory.PowerProducers)
+                                                {
+                                                    <div class="product-row mt-2">
+                                                        <select class="form-control product-part-select"
+                                                                value="@producer.Building"
+                                                                @onchange="(e) => OnPowerProducerBuildingChanged(producer, factory, e.Value?.ToString() ?? string.Empty)">
+                                                            <option value="">-- Select Generator --</option>
+                                                            @foreach (string building in GetPowerProducerBuildings())
+                                                            {
+                                                                <option value="@building">@GameDataService.GetBuildingDisplayName(building)</option>
+                                                            }
+                                                        </select>
+                                                        @if (!string.IsNullOrEmpty(producer.Building))
+                                                        {
+                                                            <select class="form-control product-recipe-select"
+                                                                    value="@producer.Recipe"
+                                                                    @onchange="(e) => OnPowerProducerRecipeChanged(producer, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                <option value="">-- Select Fuel --</option>
+                                                                @foreach (PowerRecipe recipe in GameDataService.GetRecipesForPowerProducer(producer.Building))
+                                                                {
+                                                                    <option value="@recipe.Id">@GetFuelDisplayName(recipe.DisplayName)</option>
+                                                                }
+                                                            </select>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(producer.Recipe))
+                                                        {
+                                                            <input type="number"
+                                                                   class="form-control product-amount-input"
+                                                                   value="@producer.IngredientAmount"
+                                                                   min="0"
+                                                                   placeholder="Fuel/min"
+                                                                   @onchange="(e) => OnPowerProducerIngredientChanged(producer, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                            <input type="number"
+                                                                   class="form-control product-amount-input"
+                                                                   value="@producer.PowerAmount"
+                                                                   min="0"
+                                                                   placeholder="MW"
+                                                                   @onchange="(e) => OnPowerProducerPowerChanged(producer, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                        }
+                                                        <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemovePowerProducer(factory, producer)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                                <div class="factory-add-part mt-2">
+                                                    <button class="btn btn-sm btn-warning" @onclick="() => AddEmptyPowerProducer(factory)">
+                                                        <i class="fas fa-bolt"></i> Add Power Generator
+                                                    </button>
+                                                </div>
                                             </div>
+
+                                            @if (factory.PowerProducers.Count > 0)
+                                            {
+                                                <hr class="factory-divider" />
+                                                <div class="factory-section">
+                                                    <h5 class="section-heading">
+                                                        <i class="fas fa-bolt mr-2"></i>Power Generators
+                                                    </h5>
+                                                    @foreach (FactoryPowerProducer producer in factory.PowerProducers)
+                                                    {
+                                                        @if (!string.IsNullOrEmpty(producer.Recipe))
+                                                        {
+                                                            <div class="product-requires-row">
+                                                                <span class="requires-label">@GameDataService.GetBuildingDisplayName(producer.Building) Requires:</span>
+                                                                @if (producer.Ingredients.Count > 1)
+                                                                {
+                                                                    Web.Models.Factory.PowerItem supplementalIngredient = producer.Ingredients[1];
+                                                                    <span class="sf-chip small blue">
+                                                                        <GameAsset Subject="@supplementalIngredient.Part" Type="item" Height="20" Width="20" />
+                                                                        <span class="ml-1"><b>@GameDataService.GetPartDisplayName(supplementalIngredient.Part)</b>: @FormatNumber(supplementalIngredient.PerMin)/min</span>
+                                                                    </span>
+                                                                }
+                                                                <span class="sf-chip small orange">
+                                                                    <GameAsset Subject="@producer.Building" Type="building" Height="20" Width="20" />
+                                                                    <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(producer.Building)</b>: @FormatNumber(producer.BuildingAmount)x</span>
+                                                                </span>
+                                                                <span class="sf-chip small yellow">
+                                                                    <i class="fas fa-bolt mr-1"></i><i class="fas fa-plus mr-1"></i>
+                                                                    <span>@FormatPower(producer.PowerAmount)</span>
+                                                                </span>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            }
 
                                             <hr class="factory-divider" />
 
@@ -207,6 +366,24 @@
                                                                    min="0"
                                                                    @onchange="(e) => OnInputAmountChanged(factory, input, e.Value?.ToString() ?? string.Empty)" />
                                                         }
+                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && !RequirementSatisfied(factory, input.OutputPart))
+                                                        {
+                                                            <button class="btn btn-sm btn-success mr-1" title="Satisfy - set amount to meet requirements" @onclick="() => SatisfyImport(factory, input)">
+                                                                <i class="fas fa-arrow-up mr-1"></i>Satisfy
+                                                            </button>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && RequirementSatisfied(factory, input.OutputPart) && ShowInputOverflow(factory, input.OutputPart))
+                                                        {
+                                                            <button class="btn btn-sm btn-warning mr-1" title="Trim - reduce amount to match requirements" @onclick="() => SatisfyImport(factory, input)">
+                                                                <i class="fas fa-arrow-down mr-1"></i>Trim
+                                                            </button>
+                                                        }
+                                                        <button class="btn btn-sm btn-outline-primary mr-1"
+                                                                title="View Factory"
+                                                                disabled="@(!input.FactoryId.HasValue)"
+                                                                @onclick="() => NavigateToFactory(input.FactoryId)">
+                                                            <i class="fas fa-industry mr-1"></i>View
+                                                        </button>
                                                         <button class="btn btn-sm btn-danger" title="Remove Import" @onclick="() => RemoveInput(factory, input)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
@@ -228,6 +405,26 @@
                                                         <span class="text-grey ml-2">No other factories with available outputs.</span>
                                                     }
                                                 </div>
+                                                @if (factory.RawResources.Count > 0)
+                                                {
+                                                    <div class="raw-resources-section mt-3">
+                                                        <h6 class="section-subheading">
+                                                            <i class="fas fa-hard-hat mr-2"></i>Raw Resources
+                                                        </h6>
+                                                        <p class="text-grey text-small mb-2">
+                                                            <i class="fas fa-info-circle mr-1"></i>Raw resources (e.g. Iron Ore) aren't defined as imports. It is assumed you'll supply them sufficiently.
+                                                        </p>
+                                                        <div class="d-flex flex-wrap gap-2">
+                                                            @foreach (KeyValuePair<string, WorldRawResource> resource in factory.RawResources)
+                                                            {
+                                                                <span class="sf-chip cyan">
+                                                                    <GameAsset Subject="@resource.Key" Type="item" Height="24" Width="24" />
+                                                                    <span class="ml-2"><b>@resource.Value.Name</b>: @FormatNumber(resource.Value.Amount)/min</span>
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
                                             </div>
 
                                             <hr class="factory-divider" />
@@ -477,6 +674,22 @@
         _ = AppState.SaveFactoriesAsync();
     }
 
+    private void HandleSetSyncState(Factory factory)
+    {
+        if (!FactoryCalcService.ValidForGameSync(factory))
+        {
+            return;
+        }
+        FactoryCalcService.SetSyncState(factory);
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void HandleResetSyncState(Factory factory)
+    {
+        FactoryCalcService.ResetSyncState(factory);
+        _ = AppState.SaveFactoriesAsync();
+    }
+
     private void MoveFactory(Factory factory, int direction)
     {
         int currentOrder = factory.DisplayOrder;
@@ -572,6 +785,124 @@
         RecalculateAll();
     }
 
+    private List<string> GetPowerProducerBuildings()
+    {
+        if (_gameData == null)
+        {
+            return new List<string>();
+        }
+
+        return _gameData.PowerGenerationRecipes
+            .Select(r => r.Building.Name)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToList();
+    }
+
+    private static string GetFuelDisplayName(string displayName)
+    {
+        int openParenIndex = displayName.IndexOf('(');
+        int closeParenIndex = displayName.IndexOf(')');
+        if (openParenIndex >= 0 && closeParenIndex > openParenIndex)
+        {
+            return displayName.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1);
+        }
+
+        return displayName;
+    }
+
+    private void AddEmptyPowerProducer(Factory factory)
+    {
+        FactoryPowerProducer producer = new FactoryPowerProducer
+        {
+            Building = string.Empty,
+            BuildingAmount = 0,
+            BuildingCount = 0,
+            Ingredients = new List<Web.Models.Factory.PowerItem>(),
+            IngredientAmount = 0,
+            PowerAmount = 0,
+            Recipe = string.Empty,
+            DisplayOrder = factory.PowerProducers.Count,
+            Updated = null
+        };
+        factory.PowerProducers.Add(producer);
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void OnPowerProducerBuildingChanged(FactoryPowerProducer producer, Factory factory, string building)
+    {
+        producer.Building = building;
+
+        PowerRecipe? defaultRecipe = GameDataService.GetDefaultRecipeForPowerProducer(building);
+        if (defaultRecipe != null)
+        {
+            producer.Recipe = defaultRecipe.Id;
+            producer.Ingredients = defaultRecipe.Ingredients
+                .Select(i => new Web.Models.Factory.PowerItem { Part = i.Part, PerMin = 0 })
+                .ToList();
+        }
+        else
+        {
+            producer.Recipe = string.Empty;
+            producer.Ingredients = new List<Web.Models.Factory.PowerItem>();
+        }
+
+        producer.PowerAmount = 0;
+        producer.IngredientAmount = 0;
+        producer.Byproduct = null;
+        RecalculateAll();
+    }
+
+    private void OnPowerProducerRecipeChanged(FactoryPowerProducer producer, Factory factory, string recipeId)
+    {
+        producer.Recipe = recipeId;
+
+        PowerRecipe? recipe = GameDataService.GetPowerRecipeById(recipeId);
+        if (recipe != null)
+        {
+            producer.Ingredients = recipe.Ingredients
+                .Select(i => new Web.Models.Factory.PowerItem { Part = i.Part, PerMin = 0 })
+                .ToList();
+        }
+
+        producer.PowerAmount = 0;
+        producer.IngredientAmount = 0;
+        producer.Byproduct = null;
+        producer.Updated = null;
+        RecalculateAll();
+    }
+
+    private void OnPowerProducerIngredientChanged(FactoryPowerProducer producer, Factory factory, string amountStr)
+    {
+        if (double.TryParse(amountStr, out double amount) && amount >= 0)
+        {
+            producer.IngredientAmount = amount;
+            producer.Updated = "ingredient";
+            RecalculateAll();
+        }
+    }
+
+    private void OnPowerProducerPowerChanged(FactoryPowerProducer producer, Factory factory, string amountStr)
+    {
+        if (double.TryParse(amountStr, out double amount) && amount >= 0)
+        {
+            producer.PowerAmount = amount;
+            producer.Updated = "power";
+            RecalculateAll();
+        }
+    }
+
+    private void RemovePowerProducer(Factory factory, FactoryPowerProducer producer)
+    {
+        factory.PowerProducers.Remove(producer);
+        for (int index = 0; index < factory.PowerProducers.Count; index++)
+        {
+            factory.PowerProducers[index].DisplayOrder = index;
+        }
+
+        RecalculateAll();
+    }
+
     private List<Factory> GetImportableFactories(Factory currentFactory)
     {
         return _factories
@@ -639,6 +970,61 @@
             input.Amount = amount;
             RecalculateAll();
         }
+    }
+
+    private bool RequirementSatisfied(Factory factory, string? part)
+    {
+        PartMetrics? pm = GetPartMetrics(factory, part);
+        return pm != null && pm.AmountRemaining >= 0;
+    }
+
+    private bool ShowInputOverflow(Factory factory, string? part)
+    {
+        PartMetrics? pm = GetPartMetrics(factory, part);
+        return pm != null && pm.AmountRemaining > 0;
+    }
+
+    private static PartMetrics? GetPartMetrics(Factory factory, string? part)
+    {
+        if (string.IsNullOrEmpty(part)) return null;
+        factory.Parts.TryGetValue(part, out PartMetrics? pm);
+        return pm;
+    }
+
+    private void SatisfyImport(Factory factory, FactoryInput input)
+    {
+        if (string.IsNullOrEmpty(input.OutputPart)) return;
+
+        int inputIndex = factory.Inputs.IndexOf(input);
+
+        double totalOtherImported = factory.Inputs
+            .Select((imp, idx) => new { imp, idx })
+            .Where(x => x.idx != inputIndex && x.imp.OutputPart == input.OutputPart)
+            .Sum(x => x.imp.Amount);
+
+        if (!factory.Parts.TryGetValue(input.OutputPart, out PartMetrics? partData)) return;
+
+        double difference = partData.AmountRequired - partData.AmountSuppliedViaProduction - totalOtherImported;
+        input.Amount = difference > 0 ? difference : 0;
+        RecalculateAll();
+    }
+
+    private async Task NavigateToFactory(int? factoryId)
+    {
+        if (!factoryId.HasValue) return;
+
+        // Delay to allow DOM to update after unhiding factory before scrolling
+        const int FactoryRevealDelayMs = 50;
+
+        Factory? targetFactory = _factories.FirstOrDefault(f => f.Id == factoryId.Value);
+        if (targetFactory != null && targetFactory.Hidden)
+        {
+            targetFactory.Hidden = false;
+            StateHasChanged();
+            await Task.Delay(FactoryRevealDelayMs);
+        }
+
+        await JSRuntime.InvokeVoidAsync("scrollToFactory", factoryId.Value);
     }
 
     private List<KeyValuePair<string, Part>> GetSortedParts()
@@ -726,6 +1112,16 @@
         if (!factory.Parts.TryGetValue(partId, out PartMetrics? part)) return;
         input.Amount = part.AmountRequired;
         RecalculateAll();
+    }
+
+    private static bool ShouldShowNotInDemand(FactoryItem product, Factory factory)
+    {
+        if (string.IsNullOrEmpty(product.Id))
+        {
+            return false;
+        }
+
+        return factory.Parts.TryGetValue(product.Id, out PartMetrics? part) && part.AmountRequired <= 0;
     }
 
     public void Dispose()
