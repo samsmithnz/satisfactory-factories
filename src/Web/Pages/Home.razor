@@ -465,6 +465,33 @@
                                                                                     <span class="sf-chip cyan x-small ml-2">Raw</span>
                                                                                 }
                                                                             </div>
+                                                                            @if (!partEntry.Value.Satisfied)
+                                                                            {
+                                                                                <div class="sat-action-buttons mt-1">
+                                                                                    @if (ShowAddProductButton(factory, partEntry.Key, partEntry.Value))
+                                                                                    {
+                                                                                        <button class="btn btn-sm btn-success mr-1"
+                                                                                                title="Add product to produce this item"
+                                                                                                @onclick="() => AddProductFromSatisfaction(factory, partEntry.Key, partEntry.Value)">
+                                                                                            <i class="fas fa-plus"></i> Add Product
+                                                                                        </button>
+                                                                                    }
+                                                                                    @if (ShowFixImportButton(factory, partEntry.Key, partEntry.Value) == "single")
+                                                                                    {
+                                                                                        <button class="btn btn-sm btn-success mr-1"
+                                                                                                title="Fix import amount to satisfy this item"
+                                                                                                @onclick="() => FixImportFromSatisfaction(factory, partEntry.Key)">
+                                                                                            <i class="fas fa-arrow-up"></i> Fix Import
+                                                                                        </button>
+                                                                                    }
+                                                                                    @if (ShowFixImportButton(factory, partEntry.Key, partEntry.Value) == "multiple")
+                                                                                    {
+                                                                                        <span class="sf-chip grey small" title="There are multiple imports for this item. Please correct manually using the Imports section.">
+                                                                                            <i class="fas fa-exclamation-circle mr-1"></i>Fix Import (manual)
+                                                                                        </span>
+                                                                                    }
+                                                                                </div>
+                                                                            }
                                                                         </td>
                                                                         <td class="sat-col-satisfaction">
                                                                             <span class="sf-chip @(partEntry.Value.Satisfied ? "green" : "red") small">
@@ -1030,6 +1057,61 @@
     private static string CollapsedProductChipClass(Factory factory, string partId)
     {
         return factory.Parts.TryGetValue(partId, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : string.Empty;
+    }
+
+    /// <summary>
+    /// Returns true if an "Add Product" button should be shown for this unsatisfied part.
+    /// Mirrors Vue's showAddProduct: not raw, not satisfied, no existing product.
+    /// </summary>
+    private static bool ShowAddProductButton(Factory factory, string partId, PartMetrics part)
+    {
+        if (part.IsRaw || part.Satisfied) return false;
+        return !factory.Products.Any(p => p.Id == partId);
+    }
+
+    /// <summary>
+    /// Returns "single", "multiple", or "none" to indicate Fix Import button visibility.
+    /// Mirrors Vue's showFixImport.
+    /// </summary>
+    private static string ShowFixImportButton(Factory factory, string partId, PartMetrics part)
+    {
+        if (part.Satisfied) return "none";
+        int inputCount = factory.Inputs.Count(i => i.OutputPart == partId);
+        if (inputCount > 1) return "multiple";
+        if (inputCount == 1) return "single";
+        return "none";
+    }
+
+    /// <summary>
+    /// Adds a product to the factory to satisfy the given part's deficit.
+    /// </summary>
+    private void AddProductFromSatisfaction(Factory factory, string partId, PartMetrics part)
+    {
+        string defaultRecipe = GameDataService.GetDefaultRecipeForPart(partId);
+        FactoryItem newProduct = new FactoryItem
+        {
+            Id = partId,
+            Amount = Math.Abs(part.AmountRemaining),
+            Recipe = defaultRecipe,
+            DisplayOrder = factory.Products.Count,
+            Requirements = new Dictionary<string, RequirementAmount>(),
+            BuildingRequirements = new BuildingRequirement()
+        };
+        factory.Products.Add(newProduct);
+        RecalculateAll();
+    }
+
+    /// <summary>
+    /// Fixes a single import's amount to satisfy the part's total requirement.
+    /// Mirrors Vue's fixSatisfactionImport.
+    /// </summary>
+    private void FixImportFromSatisfaction(Factory factory, string partId)
+    {
+        FactoryInput? input = factory.Inputs.FirstOrDefault(i => i.OutputPart == partId);
+        if (input == null) return;
+        if (!factory.Parts.TryGetValue(partId, out PartMetrics? part)) return;
+        input.Amount = part.AmountRequired;
+        RecalculateAll();
     }
 
     private static bool ShouldShowNotInDemand(FactoryItem product, Factory factory)
