@@ -9,6 +9,7 @@
 @inject NavigationManager NavManager
 @inject LoadingService LoadingService
 @inject DemoPlansService DemoPlansService
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 <PageTitle>Satisfactory Factories - Production Planner</PageTitle>
@@ -207,6 +208,24 @@
                                                                    min="0"
                                                                    @onchange="(e) => OnInputAmountChanged(factory, input, e.Value?.ToString() ?? string.Empty)" />
                                                         }
+                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && !RequirementSatisfied(factory, input.OutputPart))
+                                                        {
+                                                            <button class="btn btn-sm btn-success mr-1" title="Satisfy - set amount to meet requirements" @onclick="() => SatisfyImport(factory, input)">
+                                                                <i class="fas fa-arrow-up mr-1"></i>Satisfy
+                                                            </button>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && RequirementSatisfied(factory, input.OutputPart) && ShowInputOverflow(factory, input.OutputPart))
+                                                        {
+                                                            <button class="btn btn-sm btn-warning mr-1" title="Trim - reduce amount to match requirements" @onclick="() => SatisfyImport(factory, input)">
+                                                                <i class="fas fa-arrow-down mr-1"></i>Trim
+                                                            </button>
+                                                        }
+                                                        <button class="btn btn-sm btn-outline-primary mr-1"
+                                                                title="View Factory"
+                                                                disabled="@(!input.FactoryId.HasValue)"
+                                                                @onclick="() => NavigateToFactory(input.FactoryId)">
+                                                            <i class="fas fa-industry mr-1"></i>View
+                                                        </button>
                                                         <button class="btn btn-sm btn-danger" title="Remove Import" @onclick="() => RemoveInput(factory, input)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
@@ -612,6 +631,61 @@
             input.Amount = amount;
             RecalculateAll();
         }
+    }
+
+    private bool RequirementSatisfied(Factory factory, string? part)
+    {
+        PartMetrics? pm = GetPartMetrics(factory, part);
+        return pm != null && pm.AmountRemaining >= 0;
+    }
+
+    private bool ShowInputOverflow(Factory factory, string? part)
+    {
+        PartMetrics? pm = GetPartMetrics(factory, part);
+        return pm != null && pm.AmountRemaining > 0;
+    }
+
+    private static PartMetrics? GetPartMetrics(Factory factory, string? part)
+    {
+        if (string.IsNullOrEmpty(part)) return null;
+        factory.Parts.TryGetValue(part, out PartMetrics? pm);
+        return pm;
+    }
+
+    private void SatisfyImport(Factory factory, FactoryInput input)
+    {
+        if (string.IsNullOrEmpty(input.OutputPart)) return;
+
+        int inputIndex = factory.Inputs.IndexOf(input);
+
+        double totalOtherImported = factory.Inputs
+            .Select((imp, idx) => new { imp, idx })
+            .Where(x => x.idx != inputIndex && x.imp.OutputPart == input.OutputPart)
+            .Sum(x => x.imp.Amount);
+
+        if (!factory.Parts.TryGetValue(input.OutputPart, out PartMetrics? partData)) return;
+
+        double difference = partData.AmountRequired - partData.AmountSuppliedViaProduction - totalOtherImported;
+        input.Amount = difference > 0 ? difference : 0;
+        RecalculateAll();
+    }
+
+    private async Task NavigateToFactory(int? factoryId)
+    {
+        if (!factoryId.HasValue) return;
+
+        // Delay to allow DOM to update after unhiding factory before scrolling
+        const int FactoryRevealDelayMs = 50;
+
+        Factory? targetFactory = _factories.FirstOrDefault(f => f.Id == factoryId.Value);
+        if (targetFactory != null && targetFactory.Hidden)
+        {
+            targetFactory.Hidden = false;
+            StateHasChanged();
+            await Task.Delay(FactoryRevealDelayMs);
+        }
+
+        await JSRuntime.InvokeVoidAsync("scrollToFactory", factoryId.Value);
     }
 
     private List<KeyValuePair<string, Part>> GetSortedParts()
