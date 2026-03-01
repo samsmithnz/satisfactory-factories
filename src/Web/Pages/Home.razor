@@ -130,6 +130,14 @@
                                                 @foreach (FactoryItem product in factory.Products)
                                                 {
                                                     <div class="product-row">
+                                                        @if (string.IsNullOrEmpty(product.Id))
+                                                        {
+                                                            <i class="fas fa-cube product-icon"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" />
+                                                        }
                                                         <select class="form-control product-part-select"
                                                                 value="@product.Id"
                                                                 @onchange="(e) => OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
@@ -141,6 +149,7 @@
                                                         </select>
                                                         @if (!string.IsNullOrEmpty(product.Id))
                                                         {
+                                                            <i class="fas fa-hat-chef product-icon"></i>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@product.Recipe"
                                                                     @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
