@@ -1057,6 +1057,21 @@
   flex: 0 0 100px;
 }
 
+.product-requires-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.requires-label {
+  font-size: 0.875rem;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
 /* Factory header improvements */
 .factory-header-left {
   display: flex;
