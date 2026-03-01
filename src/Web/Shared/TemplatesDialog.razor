@@ -1,6 +1,7 @@
 @using Web.Services
 @using Web.Models.Factory
 @inject DemoPlansService DemoPlansService
+@inject IToastService ToastService
 
 <button class="btn btn-primary" @onclick="OpenDialog">
     <i class="fas fa-file-medical"></i>
@@ -29,6 +30,12 @@
                         <p class="text-red">@_errorMessage</p>
                     </div>
                 }
+                @if (_isLoading)
+                {
+                    <div class="template-loading">
+                        <p><i class="fas fa-spinner fa-spin mr-2"></i>Loading @_loadingTemplateName...</p>
+                    </div>
+                }
                 <div class="templates-table">
                     <table>
                         <thead>
@@ -44,6 +51,7 @@
                                     <td class="template-name-cell">
                                         <button
                                             class="btn template-btn"
+                                            disabled="@_isLoading"
                                             @onclick="() => LoadTemplate(template)">
                                             <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
                                             @template.Name
@@ -57,7 +65,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" @onclick="CloseDialog">Close</button>
+                <button class="btn btn-secondary" @onclick="CloseDialog" disabled="@_isLoading">Close</button>
             </div>
         </div>
     </div>
@@ -68,47 +76,71 @@
     public EventCallback OnTemplateLoaded { get; set; }
 
     private bool _showDialog = false;
+    private bool _isLoading = false;
+    private string _loadingTemplateName = string.Empty;
     private string? _errorMessage = null;
     private List<DemoPlanTemplate> _templates = new();
 
     protected override void OnInitialized()
     {
         _templates = DemoPlansService.GetAvailableTemplates();
+        Console.WriteLine($"TemplatesDialog: Initialized with {_templates.Count} templates");
     }
 
     private void OpenDialog()
     {
+        Console.WriteLine("TemplatesDialog: Dialog opened");
         _showDialog = true;
         _errorMessage = null;
     }
 
     private void CloseDialog()
     {
-        _showDialog = false;
+        if (!_isLoading)
+        {
+            _showDialog = false;
+        }
     }
 
     private async Task LoadTemplate(DemoPlanTemplate template)
     {
-        Console.WriteLine($"Loading template: {template.Name}");
+        Console.WriteLine($"TemplatesDialog: LoadTemplate button clicked for '{template.Name}'");
 
-        // Close dialog first
-        _showDialog = false;
+        _isLoading = true;
+        _loadingTemplateName = template.Name;
+        _errorMessage = null;
+        StateHasChanged();
 
         try
         {
+            Console.WriteLine($"TemplatesDialog: Starting load for '{template.Name}'");
+
             // Load the demo plan using the service
             await DemoPlansService.LoadDemoPlanAsync(template.Name);
+
+            Console.WriteLine($"TemplatesDialog: LoadDemoPlanAsync completed for '{template.Name}'");
 
             // Notify parent to recalculate factories
             await OnTemplateLoaded.InvokeAsync();
 
-            Console.WriteLine($"Template {template.Name} loaded successfully");
+            Console.WriteLine($"TemplatesDialog: OnTemplateLoaded callback fired for '{template.Name}'");
+
+            ToastService.ShowToast($"Template \"{template.Name}\" loaded successfully", ToastType.Success);
+
+            // Close dialog on success
+            _showDialog = false;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error loading template {template.Name}: {ex.Message}");
-            _errorMessage = $"Failed to load template \"{template.Name}\": {ex.Message}";
-            _showDialog = true;
+            Console.Error.WriteLine($"TemplatesDialog: Error loading template '{template.Name}': {ex.GetType().Name}: {ex.Message}");
+            Console.Error.WriteLine($"TemplatesDialog: Stack trace: {ex.StackTrace}");
+            _errorMessage = $"Failed to load \"{template.Name}\": {ex.Message}";
+            ToastService.ShowToast($"Failed to load template \"{template.Name}\"", ToastType.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+            _loadingTemplateName = string.Empty;
         }
     }
 }

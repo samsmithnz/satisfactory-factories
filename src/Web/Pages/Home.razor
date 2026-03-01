@@ -390,10 +390,17 @@
 
     private void HandleTemplateLoaded()
     {
+        Console.WriteLine("Home: HandleTemplateLoaded called");
         _factories = AppState.GetFactories();
+        Console.WriteLine($"Home: Retrieved {_factories.Count} factories from AppState");
         if (_gameData != null)
         {
             FactoryCalcService.CalculateFactories(_factories, _gameData);
+            Console.WriteLine("Home: Recalculated all factories after template load");
+        }
+        else
+        {
+            Console.Error.WriteLine("Home: HandleTemplateLoaded - _gameData is null, cannot recalculate factories");
         }
     }
 

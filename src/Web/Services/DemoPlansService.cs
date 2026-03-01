@@ -143,32 +143,47 @@ public class DemoPlansService
     /// <param name="templateName">Name of the template to load.</param>
     public async Task LoadDemoPlanAsync(string templateName)
     {
+        Console.WriteLine($"DemoPlansService: LoadDemoPlanAsync called for '{templateName}'");
+
         // Get the demo plan data based on template name
         List<Factory> factories = await GetDemoPlanByNameAsync(templateName);
-        
+        Console.WriteLine($"DemoPlansService: Retrieved {factories.Count} factories for template '{templateName}'");
+
+        if (factories.Count == 0)
+        {
+            Console.Error.WriteLine($"DemoPlansService: No factories found for template '{templateName}' - aborting load");
+            return;
+        }
+
         // Initialize loading overlay
         _loadingService.Initialize($"Loading {templateName}", factories.Count + 2);
-        
+        Console.WriteLine($"DemoPlansService: Loading overlay initialized with {factories.Count + 2} steps");
+
         // Small delay to let UI update
         await Task.Delay(50);
-        
+
         // Clear existing factories
         _loadingService.IncrementStep("Clearing existing factories...");
+        Console.WriteLine("DemoPlansService: Clearing existing factories");
         _appState.ClearFactories();
         await Task.Delay(100);
-        
+
         // Load factories one by one
         foreach (Factory factory in factories)
         {
+            Console.WriteLine($"DemoPlansService: Adding factory '{factory.Name}' (id={factory.Id})");
             _loadingService.IncrementStep($"Loading {factory.Name}...");
             _appState.AddFactory(factory);
             await Task.Delay(75);
         }
-        
+
         // Save to localStorage
+        Console.WriteLine("DemoPlansService: Saving to localStorage");
         _loadingService.IncrementStep("Saving to local storage...", isFinalStep: true);
         await _appState.SaveFactoriesAsync();
         await Task.Delay(100);
+
+        Console.WriteLine($"DemoPlansService: Template '{templateName}' load complete. Total factories in state: {_appState.GetFactories().Count}");
     }
 
     /// <summary>
@@ -178,6 +193,7 @@ public class DemoPlansService
     /// <returns>List of factories for the demo plan.</returns>
     private async Task<List<Factory>> GetDemoPlanByNameAsync(string templateName)
     {
+        Console.WriteLine($"DemoPlansService: GetDemoPlanByNameAsync called for '{templateName}'");
         return templateName switch
         {
             "Simple" => GetSimpleDemoPlan(),
@@ -194,9 +210,12 @@ public class DemoPlansService
     /// <returns>List of factories loaded from the file.</returns>
     private async Task<List<Factory>> GetDemoPlanFromFileAsync(string fileName)
     {
+        Console.WriteLine($"DemoPlansService: Fetching template file '{fileName}'");
         string jsonContent = await _httpClient.GetStringAsync(fileName);
+        Console.WriteLine($"DemoPlansService: Received {jsonContent.Length} bytes from '{fileName}'");
         JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(jsonContent, options);
+        Console.WriteLine($"DemoPlansService: Deserialized {factories?.Count ?? 0} factories from '{fileName}'");
         return factories ?? new List<Factory>();
     }
 }
