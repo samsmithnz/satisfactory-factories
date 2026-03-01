@@ -170,7 +170,45 @@
     z-index: 998;
 }
 
-/* Mobile adjustments */
+/* Discord Button */
+.btn-discord {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    background-color: #3a3f78;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    white-space: nowrap;
+}
+
+.btn-discord:hover {
+    background-color: #5865f2;
+    color: white;
+    text-decoration: none;
+}
+
+/* Ko-fi Link */
+.toolbar-kofi-link {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.toolbar-kofi-img {
+    max-width: 160px;
+    height: auto;
+    transition: opacity 0.2s;
+}
+
+.toolbar-kofi-img:hover {
+    opacity: 0.85;
+}
+
 @media (max-width: 959px) {
     .v-toolbar {
         height: 56px;

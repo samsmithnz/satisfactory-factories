@@ -3,10 +3,7 @@
 <footer class="v-footer">
     <div class="footer-content">
         <div class="footer-links">
-            @foreach (string link in _links)
-            {
-                <a href="#" class="footer-link">@link</a>
-            }
+            <a href="https://github.com/Maelstromeous/satisfactory-factories" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
         </div>
         <div class="footer-copyright">
             &copy;@DateTime.Now.Year Matt Cavanagh<br />
@@ -17,8 +14,4 @@
 </footer>
 
 @code {
-    private readonly List<string> _links = new()
-    {
-        "GitHub"
-    };
 }
