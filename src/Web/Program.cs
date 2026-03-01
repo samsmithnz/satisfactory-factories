@@ -16,6 +16,7 @@ builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddSingleton<IToastService, ToastService>();
 builder.Services.AddSingleton<LoadingService>();
+builder.Services.AddSingleton<TemplateModalService>();
 builder.Services.AddScoped<DemoPlansService>();
 builder.Services.AddScoped<IFactoryCommonService, FactoryCommonService>();
 builder.Services.AddScoped<IFactoryCalculationService, FactoryCalculationService>();

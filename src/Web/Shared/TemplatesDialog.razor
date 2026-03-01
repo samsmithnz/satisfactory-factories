@@ -1,146 +1,23 @@
 @using Web.Services
-@using Web.Models.Factory
-@inject DemoPlansService DemoPlansService
-@inject IToastService ToastService
+@inject TemplateModalService TemplateModal
 
-<button class="btn btn-primary" @onclick="OpenDialog">
+<button class="btn btn-primary" @onclick="OpenModal">
     <i class="fas fa-file-medical"></i>
     Templates
 </button>
-
-@if (_showDialog)
-{
-    <div class="templates-modal-backdrop" @onclick="CloseDialog"></div>
-    <div class="modal-dialog templates-dialog">
-        <div class="modal-header">
-            <h3>Load a template plan</h3>
-            <button type="button" class="close-btn" @onclick="CloseDialog" aria-label="Close">×</button>
-        </div>
-        <div class="modal-body">
-            <div class="template-warning">
-                <p>
-                    Clicking on a button below will load a template plan into the planner.
-                    <span class="warning-text">This will overwrite any existing plan WITHOUT warning.</span>
-                    You may wish to save your plan first by creating a share link.
-                </p>
-            </div>
-            @if (_errorMessage != null)
-            {
-                <div class="template-error">
-                    <p class="text-red">@_errorMessage</p>
-                </div>
-            }
-            @if (_isLoading)
-            {
-                <div class="template-loading">
-                    <p><i class="fas fa-spinner fa-spin mr-2"></i>Loading @_loadingTemplateName...</p>
-                </div>
-            }
-            <div class="templates-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th class="name-column">Name</th>
-                            <th class="desc-column">Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (DemoPlanTemplate template in _templates)
-                        {
-                            <tr>
-                                <td class="template-name-cell">
-                                    <button
-                                        type="button"
-                                        class="btn template-btn"
-                                        disabled="@_isLoading"
-                                        @onclick="() => LoadTemplate(template)">
-                                        <i class="fas @(template.IsDebug ? "fa-bug" : "fa-file")"></i>
-                                        @template.Name
-                                    </button>
-                                </td>
-                                <td class="template-desc">@template.Description</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @onclick="CloseDialog" disabled="@_isLoading">Close</button>
-        </div>
-    </div>
-}
 
 @code {
     [Parameter]
     public EventCallback OnTemplateLoaded { get; set; }
 
-    private bool _showDialog = false;
-    private bool _isLoading = false;
-    private string _loadingTemplateName = string.Empty;
-    private string? _errorMessage = null;
-    private List<DemoPlanTemplate> _templates = new();
-
     protected override void OnInitialized()
     {
-        _templates = DemoPlansService.GetAvailableTemplates();
-        Console.WriteLine($"TemplatesDialog: Initialized with {_templates.Count} templates");
+        Console.WriteLine("TemplatesDialog: Initialized");
     }
 
-    private void OpenDialog()
+    private void OpenModal()
     {
-        Console.WriteLine("TemplatesDialog: Dialog opened");
-        _showDialog = true;
-        _errorMessage = null;
-    }
-
-    private void CloseDialog()
-    {
-        if (!_isLoading)
-        {
-            _showDialog = false;
-        }
-    }
-
-    private async Task LoadTemplate(DemoPlanTemplate template)
-    {
-        Console.WriteLine($"TemplatesDialog: LoadTemplate button clicked for '{template.Name}'");
-
-        _isLoading = true;
-        _loadingTemplateName = template.Name;
-        _errorMessage = null;
-        StateHasChanged();
-
-        try
-        {
-            Console.WriteLine($"TemplatesDialog: Starting load for '{template.Name}'");
-
-            // Load the demo plan using the service
-            await DemoPlansService.LoadDemoPlanAsync(template.Name);
-
-            Console.WriteLine($"TemplatesDialog: LoadDemoPlanAsync completed for '{template.Name}'");
-
-            // Notify parent to recalculate factories
-            await OnTemplateLoaded.InvokeAsync();
-
-            Console.WriteLine($"TemplatesDialog: OnTemplateLoaded callback fired for '{template.Name}'");
-
-            ToastService.ShowToast($"Template \"{template.Name}\" loaded successfully", ToastType.Success);
-
-            // Close dialog on success
-            _showDialog = false;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"TemplatesDialog: Error loading template '{template.Name}': {ex.GetType().Name}: {ex.Message}");
-            Console.Error.WriteLine($"TemplatesDialog: Stack trace: {ex.StackTrace}");
-            _errorMessage = $"Failed to load \"{template.Name}\": {ex.Message}";
-            ToastService.ShowToast($"Failed to load template \"{template.Name}\"", ToastType.Error);
-        }
-        finally
-        {
-            _isLoading = false;
-            _loadingTemplateName = string.Empty;
-        }
+        Console.WriteLine("TemplatesDialog: Opening templates modal");
+        TemplateModal.Open(() => OnTemplateLoaded.InvokeAsync());
     }
 }
