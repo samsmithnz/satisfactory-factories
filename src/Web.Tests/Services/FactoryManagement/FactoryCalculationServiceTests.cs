@@ -599,6 +599,165 @@ public sealed class FactoryCalculationServiceTests
         Assert.IsFalse(fac2.RequirementsSatisfied);
     }
 
+    // ── CalculateFactoryDependencies (dependencies.ts) ────────────────────────
+
+    [TestMethod]
+    public void CalculateFactoryDependencies_ShouldRegisterRequestOnProvider()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory ingotFac = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0, displayOrder: 0);
+        Factory plateFac = TestDataHelper.CreateTestFactory("Iron Plates", id: 1, displayOrder: 1);
+        TestDataHelper.AddProductToFactory(ingotFac, "IronIngot", 100, "IronIngot");
+        plateFac.Inputs.Add(new FactoryInput { FactoryId = 0, OutputPart = "IronIngot", Amount = 100 });
+        List<Factory> factories = new List<Factory> { ingotFac, plateFac };
+
+        // First build ingot factory parts so the provider check passes (loadMode=false).
+        _service.CalculateProducts(ingotFac, gameData);
+        _service.CalculatePartMetrics(ingotFac, gameData);
+
+        _service.CalculateFactoryDependencies(plateFac, factories, gameData);
+
+        // Iron Ingots should now have a request from Iron Plates.
+        Assert.IsTrue(ingotFac.Dependencies.Requests.ContainsKey("1"));
+        Assert.AreEqual(1, ingotFac.Dependencies.Requests["1"].Count);
+        Assert.AreEqual("IronIngot", ingotFac.Dependencies.Requests["1"][0].Part);
+        Assert.AreEqual(100, ingotFac.Dependencies.Requests["1"][0].Amount, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculateDependencyMetrics_ShouldBuildMetricsFromRequests()
+    {
+        Factory factory = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0);
+        factory.Dependencies.Requests["1"] = new List<FactoryDependencyRequest>
+        {
+            new FactoryDependencyRequest { RequestingFactoryId = 1, Part = "IronIngot", Amount = 100 },
+        };
+
+        _service.CalculateDependencyMetrics(factory);
+
+        Assert.IsTrue(factory.Dependencies.Metrics.ContainsKey("IronIngot"));
+        Assert.AreEqual(100, factory.Dependencies.Metrics["IronIngot"].Request, 0.001);
+        Assert.AreEqual("IronIngot", factory.Dependencies.Metrics["IronIngot"].Part);
+    }
+
+    [TestMethod]
+    public void CalculateDependencyMetrics_ShouldAggregateRequestsFromMultipleFactories()
+    {
+        Factory factory = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0);
+        factory.Dependencies.Requests["1"] = new List<FactoryDependencyRequest>
+        {
+            new FactoryDependencyRequest { RequestingFactoryId = 1, Part = "IronIngot", Amount = 60 },
+        };
+        factory.Dependencies.Requests["2"] = new List<FactoryDependencyRequest>
+        {
+            new FactoryDependencyRequest { RequestingFactoryId = 2, Part = "IronIngot", Amount = 40 },
+        };
+
+        _service.CalculateDependencyMetrics(factory);
+
+        Assert.AreEqual(100, factory.Dependencies.Metrics["IronIngot"].Request, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculateDependencyMetricsSupply_ShouldFillSupplyFromParts()
+    {
+        Factory factory = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0);
+        factory.Dependencies.Metrics["IronIngot"] = new FactoryDependencyMetrics
+        {
+            Part = "IronIngot",
+            Request = 100,
+            Supply = 0,
+            IsRequestSatisfied = false,
+            Difference = 0,
+        };
+        factory.Parts["IronIngot"] = new PartMetrics { AmountSupplied = 100 };
+
+        _service.CalculateDependencyMetricsSupply(factory);
+
+        Assert.AreEqual(100, factory.Dependencies.Metrics["IronIngot"].Supply, 0.001);
+        Assert.AreEqual(0, factory.Dependencies.Metrics["IronIngot"].Difference, 0.001);
+        Assert.IsTrue(factory.Dependencies.Metrics["IronIngot"].IsRequestSatisfied);
+    }
+
+    [TestMethod]
+    public void CalculateDependencyMetricsSupply_ShouldMarkUnsatisfiedWhenSupplyInsufficient()
+    {
+        Factory factory = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0);
+        factory.Dependencies.Metrics["IronIngot"] = new FactoryDependencyMetrics
+        {
+            Part = "IronIngot",
+            Request = 150,
+            Supply = 0,
+            IsRequestSatisfied = false,
+            Difference = 0,
+        };
+        factory.Parts["IronIngot"] = new PartMetrics { AmountSupplied = 100 };
+
+        _service.CalculateDependencyMetricsSupply(factory);
+
+        Assert.AreEqual(100, factory.Dependencies.Metrics["IronIngot"].Supply, 0.001);
+        Assert.AreEqual(-50, factory.Dependencies.Metrics["IronIngot"].Difference, 0.001);
+        Assert.IsFalse(factory.Dependencies.Metrics["IronIngot"].IsRequestSatisfied);
+    }
+
+    // ── Simple plan (Iron Ingots → Iron Plates) end-to-end ────────────────────
+
+    [TestMethod]
+    public void CalculateFactories_SimplePlan_IronIngotsShouldShowDemandFromIronPlates()
+    {
+        // Reproduces the bug: Iron Ingots factory shows "no demand" when imported by Iron Plates.
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory ingotFac = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0, displayOrder: 0);
+        Factory plateFac = TestDataHelper.CreateTestFactory("Iron Plates", id: 1, displayOrder: 1);
+        TestDataHelper.AddProductToFactory(ingotFac, "IronIngot", 100, "IronIngot");
+        TestDataHelper.AddProductToFactory(plateFac, "IronPlate", 100, "IronPlate");
+        // IronPlate recipe requires 30 IronIngot/min to produce 20 IronPlate/min,
+        // so 100 IronPlate/min needs 150 IronIngot/min. Import of 100 is insufficient.
+        plateFac.Inputs.Add(new FactoryInput { FactoryId = 0, OutputPart = "IronIngot", Amount = 100 });
+        List<Factory> factories = new List<Factory> { ingotFac, plateFac };
+
+        _service.CalculateFactories(factories, gameData);
+
+        // Iron Ingots should have a dependency metric showing Iron Plates is requesting IronIngot.
+        Assert.IsTrue(ingotFac.Dependencies.Metrics.ContainsKey("IronIngot"), "Iron Ingots should have a demand metric for IronIngot");
+        Assert.AreEqual(100, ingotFac.Dependencies.Metrics["IronIngot"].Request, 0.001);
+        Assert.AreEqual(100, ingotFac.Dependencies.Metrics["IronIngot"].Supply, 0.001);
+        Assert.IsTrue(ingotFac.Dependencies.Metrics["IronIngot"].IsRequestSatisfied);
+
+        // The request should also appear in Requests keyed by the requesting factory ID.
+        Assert.IsTrue(ingotFac.Dependencies.Requests.ContainsKey("1"));
+
+        // Iron Ingots satisfies the export demand (produces 100, exports 100).
+        Assert.IsTrue(ingotFac.RequirementsSatisfied);
+        Assert.IsFalse(ingotFac.HasProblem);
+
+        // Iron Plates cannot be satisfied: needs 150 IronIngot/min but only imports 100.
+        Assert.IsFalse(plateFac.RequirementsSatisfied);
+        Assert.IsTrue(plateFac.HasProblem);
+    }
+
+    [TestMethod]
+    public void CalculateFactories_SimplePlan_IronIngotsShouldHaveProblemWhenDemandExceedsSupply()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory ingotFac = TestDataHelper.CreateTestFactory("Iron Ingots", id: 0, displayOrder: 0);
+        Factory plateFac = TestDataHelper.CreateTestFactory("Iron Plates", id: 1, displayOrder: 1);
+        TestDataHelper.AddProductToFactory(ingotFac, "IronIngot", 100, "IronIngot");
+        TestDataHelper.AddProductToFactory(plateFac, "IronPlate", 100, "IronPlate");
+        // Iron Plates requests 150 ingots but Iron Ingots only produces 100.
+        plateFac.Inputs.Add(new FactoryInput { FactoryId = 0, OutputPart = "IronIngot", Amount = 150 });
+        List<Factory> factories = new List<Factory> { ingotFac, plateFac };
+
+        _service.CalculateFactories(factories, gameData);
+
+        // Iron Ingots cannot satisfy the demand.
+        Assert.IsFalse(ingotFac.Dependencies.Metrics["IronIngot"].IsRequestSatisfied);
+        Assert.AreEqual(150, ingotFac.Dependencies.Metrics["IronIngot"].Request, 0.001);
+        Assert.AreEqual(100, ingotFac.Dependencies.Metrics["IronIngot"].Supply, 0.001);
+        Assert.AreEqual(-50, ingotFac.Dependencies.Metrics["IronIngot"].Difference, 0.001);
+        Assert.IsTrue(ingotFac.HasProblem);
+    }
+
     // ── Sync state (syncState.ts) ─────────────────────────────────────────────
 
     [TestMethod]

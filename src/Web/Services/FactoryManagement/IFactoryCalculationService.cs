@@ -35,7 +35,7 @@ public interface IFactoryCalculationService
     /// <summary>
     /// Runs the full calculation pipeline for a single factory.
     /// </summary>
-    Factory CalculateFactory(Factory factory, List<Factory> allFactories, GameData gameData);
+    Factory CalculateFactory(Factory factory, List<Factory> allFactories, GameData gameData, bool loadMode = false);
 
     /// <summary>
     /// Runs the full calculation pipeline for all factories (two-pass).
@@ -104,6 +104,25 @@ public interface IFactoryCalculationService
     void CalculateFactoryBuildingsAndPower(Factory factory, GameData gameData);
 
     // ── Exports / dependency requests (exports.ts) ───────────────────────────
+
+    /// <summary>
+    /// Calculates and registers dependency requests between factories based on their inputs.
+    /// Updates the provider factory's <see cref="FactoryDependency.Requests"/> and
+    /// recalculates its metrics and parts.
+    /// </summary>
+    void CalculateFactoryDependencies(Factory factory, List<Factory> allFactories, GameData gameData, bool loadMode = false);
+
+    /// <summary>
+    /// Builds <see cref="FactoryDependency.Metrics"/> from the current Requests registered
+    /// on the factory by other factories.
+    /// </summary>
+    void CalculateDependencyMetrics(Factory factory);
+
+    /// <summary>
+    /// Fills the supply and satisfaction fields in <see cref="FactoryDependency.Metrics"/>
+    /// after parts have been calculated.
+    /// </summary>
+    void CalculateDependencyMetricsSupply(Factory factory);
 
     /// <summary>
     /// Returns all dependency requests that originate from this factory (i.e. things other
