@@ -165,6 +165,57 @@
                                                         <i class="fas fa-plus"></i> Add Product
                                                     </button>
                                                 </div>
+
+                                                <!-- Power Producers -->
+                                                @foreach (FactoryPowerProducer producer in factory.PowerProducers)
+                                                {
+                                                    <div class="product-row mt-2">
+                                                        <select class="form-control product-part-select"
+                                                                value="@producer.Building"
+                                                                @onchange="(e) => OnPowerProducerBuildingChanged(producer, factory, e.Value?.ToString() ?? string.Empty)">
+                                                            <option value="">-- Select Generator --</option>
+                                                            @foreach (string building in GetPowerProducerBuildings())
+                                                            {
+                                                                <option value="@building">@GameDataService.GetBuildingDisplayName(building)</option>
+                                                            }
+                                                        </select>
+                                                        @if (!string.IsNullOrEmpty(producer.Building))
+                                                        {
+                                                            <select class="form-control product-recipe-select"
+                                                                    value="@producer.Recipe"
+                                                                    @onchange="(e) => OnPowerProducerRecipeChanged(producer, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                <option value="">-- Select Fuel --</option>
+                                                                @foreach (PowerRecipe recipe in GameDataService.GetRecipesForPowerProducer(producer.Building))
+                                                                {
+                                                                    <option value="@recipe.Id">@GetFuelDisplayName(recipe.DisplayName)</option>
+                                                                }
+                                                            </select>
+                                                        }
+                                                        @if (!string.IsNullOrEmpty(producer.Recipe))
+                                                        {
+                                                            <input type="number"
+                                                                   class="form-control product-amount-input"
+                                                                   value="@producer.IngredientAmount"
+                                                                   min="0"
+                                                                   placeholder="Fuel/min"
+                                                                   @onchange="(e) => OnPowerProducerIngredientChanged(producer, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                            <input type="number"
+                                                                   class="form-control product-amount-input"
+                                                                   value="@producer.PowerAmount"
+                                                                   min="0"
+                                                                   placeholder="MW"
+                                                                   @onchange="(e) => OnPowerProducerPowerChanged(producer, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                        }
+                                                        <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemovePowerProducer(factory, producer)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                }
+                                                <div class="factory-add-part mt-2">
+                                                    <button class="btn btn-sm btn-warning" @onclick="() => AddEmptyPowerProducer(factory)">
+                                                        <i class="fas fa-bolt"></i> Add Power Generator
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <hr class="factory-divider" />
@@ -542,6 +593,124 @@
         {
             factory.Products[i].DisplayOrder = i;
         }
+        RecalculateAll();
+    }
+
+    private List<string> GetPowerProducerBuildings()
+    {
+        if (_gameData == null)
+        {
+            return new List<string>();
+        }
+
+        return _gameData.PowerGenerationRecipes
+            .Select(r => r.Building.Name)
+            .Distinct()
+            .OrderBy(b => b)
+            .ToList();
+    }
+
+    private static string GetFuelDisplayName(string displayName)
+    {
+        int openParenIndex = displayName.IndexOf('(');
+        int closeParenIndex = displayName.IndexOf(')');
+        if (openParenIndex >= 0 && closeParenIndex > openParenIndex)
+        {
+            return displayName.Substring(openParenIndex + 1, closeParenIndex - openParenIndex - 1);
+        }
+
+        return displayName;
+    }
+
+    private void AddEmptyPowerProducer(Factory factory)
+    {
+        FactoryPowerProducer producer = new FactoryPowerProducer
+        {
+            Building = string.Empty,
+            BuildingAmount = 0,
+            BuildingCount = 0,
+            Ingredients = new List<Web.Models.Factory.PowerItem>(),
+            IngredientAmount = 0,
+            PowerAmount = 0,
+            Recipe = string.Empty,
+            DisplayOrder = factory.PowerProducers.Count,
+            Updated = null
+        };
+        factory.PowerProducers.Add(producer);
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void OnPowerProducerBuildingChanged(FactoryPowerProducer producer, Factory factory, string building)
+    {
+        producer.Building = building;
+
+        PowerRecipe? defaultRecipe = GameDataService.GetDefaultRecipeForPowerProducer(building);
+        if (defaultRecipe != null)
+        {
+            producer.Recipe = defaultRecipe.Id;
+            producer.Ingredients = defaultRecipe.Ingredients
+                .Select(i => new Web.Models.Factory.PowerItem { Part = i.Part, PerMin = 0 })
+                .ToList();
+        }
+        else
+        {
+            producer.Recipe = string.Empty;
+            producer.Ingredients = new List<Web.Models.Factory.PowerItem>();
+        }
+
+        producer.PowerAmount = 0;
+        producer.IngredientAmount = 0;
+        producer.Byproduct = null;
+        RecalculateAll();
+    }
+
+    private void OnPowerProducerRecipeChanged(FactoryPowerProducer producer, Factory factory, string recipeId)
+    {
+        producer.Recipe = recipeId;
+
+        PowerRecipe? recipe = GameDataService.GetPowerRecipeById(recipeId);
+        if (recipe != null)
+        {
+            producer.Ingredients = recipe.Ingredients
+                .Select(i => new Web.Models.Factory.PowerItem { Part = i.Part, PerMin = 0 })
+                .ToList();
+        }
+
+        producer.PowerAmount = 0;
+        producer.IngredientAmount = 0;
+        producer.Byproduct = null;
+        producer.Updated = null;
+        RecalculateAll();
+    }
+
+    private void OnPowerProducerIngredientChanged(FactoryPowerProducer producer, Factory factory, string amountStr)
+    {
+        if (double.TryParse(amountStr, out double amount) && amount >= 0)
+        {
+            producer.IngredientAmount = amount;
+            producer.Updated = "ingredient";
+            RecalculateAll();
+        }
+    }
+
+    private void OnPowerProducerPowerChanged(FactoryPowerProducer producer, Factory factory, string amountStr)
+    {
+        if (double.TryParse(amountStr, out double amount) && amount >= 0)
+        {
+            producer.PowerAmount = amount;
+            producer.Updated = "power";
+            RecalculateAll();
+        }
+    }
+
+    private void RemovePowerProducer(Factory factory, FactoryPowerProducer producer)
+    {
+        factory.PowerProducers.Remove(producer);
+        for (int index = 0; index < factory.PowerProducers.Count; index++)
+        {
+            factory.PowerProducers[index].DisplayOrder = index;
+        }
+
         RecalculateAll();
     }
 
