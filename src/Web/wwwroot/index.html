@@ -32,10 +32,48 @@
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        <div class="blazor-error-content">
+            <strong>An error has occurred.</strong>
+            <span id="blazor-error-message"></span>
+            <div class="blazor-error-actions">
+                <a href="." class="reload">Reload</a>
+                <a href="/error" class="error-details-link">View Error Details</a>
+                <span class="dismiss">🗙</span>
+            </div>
+        </div>
     </div>
+    <script>
+        // Capture unhandled errors and save them to localStorage for the error page
+        // Use a flag to avoid capturing Blazor framework initialization errors
+        var blazorReady = false;
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(function () { blazorReady = true; }, 3000);
+        });
+        window.addEventListener('error', function (event) {
+            try {
+                var errorMessage = event.message || 'Unknown error';
+                if (event.error && event.error.stack) {
+                    errorMessage = event.error.stack;
+                }
+                localStorage.setItem('error', errorMessage);
+                var msgEl = document.getElementById('blazor-error-message');
+                if (msgEl) {
+                    msgEl.textContent = ' ' + event.message;
+                }
+            } catch (e) { /* ignore */ }
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+            try {
+                var shortMessage = event.reason ? (event.reason.message || event.reason.toString()) : 'Unhandled promise rejection';
+                var fullMessage = event.reason ? (event.reason.stack || shortMessage) : shortMessage;
+                localStorage.setItem('error', fullMessage);
+                var msgEl = document.getElementById('blazor-error-message');
+                if (msgEl) {
+                    msgEl.textContent = ' ' + shortMessage;
+                }
+            } catch (e) { /* ignore */ }
+        });
+    </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script>
         window.scrollToFactory = function (factoryId) {

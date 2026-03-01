@@ -483,6 +483,40 @@ public sealed class FactoryCalculationServiceTests
     }
 
     [TestMethod]
+    public void CalculateHasProblem_ShouldHandleNullDependenciesGracefully()
+    {
+        Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
+        factory.RequirementsSatisfied = true;
+        factory.Dependencies = null!;
+        List<Factory> factories = new List<Factory> { factory };
+
+        // Should not throw even with null Dependencies
+        _service.CalculateHasProblem(factories);
+
+        Assert.IsFalse(factory.HasProblem);
+    }
+
+    [TestMethod]
+    public void CalculatePartRequirements_ShouldHandleNullRequirementsGracefully()
+    {
+        Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
+        factory.Products.Add(new FactoryItem
+        {
+            Id = "IronIngot",
+            Recipe = "IronIngot",
+            Amount = 30,
+            DisplayOrder = 0,
+            Requirements = null!,
+            BuildingRequirements = new BuildingRequirement(),
+        });
+
+        // Should not throw even with null Requirements
+        FactoryCommonService common = new FactoryCommonService();
+        FactoryCalculationService service = new FactoryCalculationService(common);
+        service.CalculatePartRequirements(factory);
+    }
+
+    [TestMethod]
     public void CalculateHasProblem_ShouldSetHasProblemTrueWhenDependencyUnsatisfied()
     {
         Factory factory = TestDataHelper.CreateTestFactory("Test Factory");
