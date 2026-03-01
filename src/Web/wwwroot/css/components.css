@@ -1042,6 +1042,15 @@
   flex-wrap: wrap;
 }
 
+.product-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .product-part-select {
   max-width: 300px;
   flex: 1 1 200px;
