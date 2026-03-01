@@ -16,8 +16,17 @@ builder.Services.AddScoped<IConfigurationService, ConfigurationService>();
 builder.Services.AddScoped<ISyncService, SyncService>();
 builder.Services.AddSingleton<IToastService, ToastService>();
 builder.Services.AddSingleton<LoadingService>();
+builder.Services.AddSingleton<TemplateModalService>();
 builder.Services.AddScoped<DemoPlansService>();
 builder.Services.AddScoped<IFactoryCommonService, FactoryCommonService>();
 builder.Services.AddScoped<IFactoryCalculationService, FactoryCalculationService>();
+
+// Handle unobserved task exceptions to prevent the Blazor error UI from appearing
+// for non-critical background task failures (e.g. localStorage saves).
+TaskScheduler.UnobservedTaskException += (sender, e) =>
+{
+    Console.Error.WriteLine($"Unobserved task exception: {e.Exception.Message}");
+    e.SetObserved();
+};
 
 await builder.Build().RunAsync();
