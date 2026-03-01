@@ -1234,3 +1234,130 @@
   font-size: 0.7rem;
   padding: 2px 6px;
 }
+
+/* Statistics Panel */
+.statistics-panel {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.statistics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-md);
+}
+
+.statistics-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.statistics-body {
+  /* no extra styles needed */
+}
+
+.statistics-section {
+  padding: 8px 0;
+}
+
+.statistics-section h5 {
+  margin-bottom: 8px;
+}
+
+/* Tasks & Notes Two-Column Layout */
+.tasks-notes-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+}
+
+@media (max-width: 768px) {
+  .tasks-notes-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sub-panel {
+  background-color: rgba(50, 50, 50, 0.5);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+}
+
+/* Task table */
+.task-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.task-table td {
+  padding: 4px 4px;
+  vertical-align: middle;
+}
+
+.task-table tr:not(:last-child) td {
+  border-bottom: 1px solid rgba(80, 80, 80, 0.5);
+}
+
+.task-title-cell {
+  width: 100%;
+}
+
+.task-actions-cell {
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 8px;
+}
+
+.task-done {
+  text-decoration: line-through;
+  color: #4caf50;
+  font-size: 0.9375rem;
+  padding: 4px 0;
+  display: block;
+}
+
+.task-input-row {
+  display: flex;
+  align-items: center;
+}
+
+/* Notes textarea */
+.notes-textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Factory chips row */
+.factory-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Copy/warning button outline style */
+.btn-outline-warning {
+  background: transparent;
+  border: 1px solid #f57c00;
+  color: #f57c00;
+}
+
+.btn-outline-warning:hover {
+  background: rgba(245, 124, 0, 0.12);
+}
+
+.btn-outline-info {
+  background: transparent;
+  border: 1px solid #0288d1;
+  color: #0288d1;
+}
+
+.btn-outline-info:hover {
+  background: rgba(2, 136, 209, 0.12);
+}

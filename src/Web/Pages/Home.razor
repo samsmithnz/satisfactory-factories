@@ -79,6 +79,98 @@
                     }
                     else
                     {
+                        <!-- Statistics Section -->
+                        <div class="statistics-panel @(_statisticsHidden ? "statistics-collapsed" : "")">
+                            <div class="statistics-header">
+                                <h4 class="statistics-title">
+                                    <i class="fas fa-list mr-2"></i>Statistics
+                                </h4>
+                                <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleStatistics">
+                                    <i class="fas @(_statisticsHidden ? "fa-eye" : "fa-eye-slash") mr-1"></i>
+                                    @(_statisticsHidden ? "Show" : "Hide")
+                                </button>
+                            </div>
+                            @if (!_statisticsHidden)
+                            {
+                                <div class="statistics-body">
+                                    <!-- Raw Resources -->
+                                    <div class="statistics-section">
+                                        <h5 class="text-h5"><i class="fas fa-globe mr-2"></i>Raw Resources</h5>
+                                        @{ List<StatRawResource> rawResources = GetTotalRawResources(); }
+                                        @if (rawResources.Count > 0)
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (StatRawResource res in rawResources)
+                                                {
+                                                    <span class="sf-chip cyan">
+                                                        <GameAsset Subject="@res.Id" Type="item" Height="24" Width="24" />
+                                                        <span class="ml-2"><b>@GameDataService.GetPartDisplayName(res.Id)</b>: @FormatNumber(res.TotalAmount)/min</span>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-grey">Awaiting Resource Consumption</p>
+                                        }
+                                    </div>
+                                    <hr class="factory-divider" />
+                                    <!-- Building Summary -->
+                                    <div class="statistics-section">
+                                        <h5 class="text-h5"><i class="fas fa-building mr-2"></i>Building Summary</h5>
+                                        @{ List<StatBuilding> buildings = GetTotalBuildings(); }
+                                        @if (buildings.Count > 0)
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (StatBuilding bldg in buildings)
+                                                {
+                                                    <span class="sf-chip orange">
+                                                        <GameAsset Subject="@bldg.Name" Type="building" Height="24" Width="24" />
+                                                        <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Name)</b>: @FormatNumber(bldg.TotalAmount)x</span>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-grey">Awaiting Building Construction</p>
+                                        }
+                                    </div>
+                                    <hr class="factory-divider" />
+                                    <!-- Power -->
+                                    <div class="statistics-section">
+                                        <h5 class="text-h5"><i class="fas fa-power-off mr-2"></i>Power Consumption and Generation</h5>
+                                        @{ (double consumed, double produced, double diff) = GetTotalPower(); }
+                                        <span class="sf-chip yellow"><i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i><span>@FormatPower(consumed) consumed</span></span>
+                                        <span class="sf-chip yellow"><i class="fas fa-bolt mr-1"></i><i class="fas fa-plus mr-1"></i><span>@FormatPower(produced) generated</span></span>
+                                        <span class="sf-chip @(diff > 0 ? "green" : diff < 0 ? "red" : "")"><i class="fas fa-plug mr-2"></i><span>@FormatPower(diff) difference</span></span>
+                                    </div>
+                                    <hr class="factory-divider" />
+                                    <!-- Product Surplus & Deficit -->
+                                    <div class="statistics-section">
+                                        <h5 class="text-h5"><i class="fas fa-warehouse mr-2"></i>Product Surplus &amp; Deficit</h5>
+                                        @{ List<StatPartDifference> diffs = GetProductSurplusDeficit(); }
+                                        @if (diffs.Count > 0)
+                                        {
+                                            <div class="d-flex flex-wrap gap-2">
+                                                @foreach (StatPartDifference pd in diffs)
+                                                {
+                                                    <span class="sf-chip @(pd.AmountRemaining > 0 ? "green" : "red")">
+                                                        <GameAsset Subject="@pd.Id" Type="item" Height="24" Width="24" />
+                                                        <span class="ml-2"><b>@GameDataService.GetPartDisplayName(pd.Id)</b>: @FormatNumber(pd.AmountRemaining)/min</span>
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <p class="text-grey">No Product Surplus or Deficit</p>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
                         <div class="factories-content">
                             @foreach (Factory factory in _factories)
                             {
@@ -92,6 +184,28 @@
                                                    placeholder="Factory Name"
                                                    aria-label="Factory name"
                                                    @onchange="(e) => RenameFactory(factory, e.Value?.ToString() ?? string.Empty)" />
+                                            <!-- Notes/Tasks chips -->
+                                            @{
+                                                string tasksAnchorId = $"tasks-{factory.Id}";
+                                                string notesAnchorId = $"notes-{factory.Id}";
+                                                int activeTaskCount = factory.Tasks.Count(t => !t.Completed);
+                                            }
+                                            <div class="factory-chips ml-2">
+                                                @if (activeTaskCount > 0)
+                                                {
+                                                    <span class="sf-chip yellow small no-margin mr-1" role="button" title="View tasks" @onclick="() => ScrollToSection(factory, tasksAnchorId)">
+                                                        <i class="fas fa-tasks"></i>
+                                                        <span class="ml-1">Tasks: @activeTaskCount</span>
+                                                    </span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(factory.Notes))
+                                                {
+                                                    <span class="sf-chip yellow small no-margin" role="button" title="View notes" @onclick="() => ScrollToSection(factory, notesAnchorId)">
+                                                        <i class="fas fa-sticky-note"></i>
+                                                        <span class="ml-1">See notes</span>
+                                                    </span>
+                                                }
+                                            </div>
                                         </div>
                                         <!-- Sync status chips -->
                                         <div class="factory-sync-status">
@@ -144,6 +258,9 @@
                                                     title="@(factory.Hidden ? "Expand" : "Collapse")"
                                                     @onclick="() => ToggleFactory(factory)">
                                                 <i class="fas @(factory.Hidden ? "fa-expand-alt" : "fa-compress-alt")"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning" title="Copy Factory" @onclick="() => CopyFactory(factory)">
+                                                <i class="fas fa-copy"></i>
                                             </button>
                                             <button class="btn btn-sm btn-danger" title="Delete" @onclick="() => DeleteFactory(factory)">
                                                 <i class="fas fa-trash"></i>
@@ -540,6 +657,96 @@
                                                     </div>
                                                 }
                                             </div>
+
+                                            <hr class="factory-divider" />
+
+                                            <!-- Tasks & Notes Row -->
+                                            <div class="tasks-notes-row">
+                                                <!-- Tasks -->
+                                                <div class="sub-panel" id="tasks-@factory.Id">
+                                                    <h5 class="section-heading">
+                                                        <i class="fas fa-tasks mr-2"></i>Tasks
+                                                    </h5>
+                                                    <div class="task-input-row mb-2">
+                                                        <input type="text"
+                                                               class="form-control"
+                                                               placeholder="Add a task..."
+                                                               maxlength="200"
+                                                               value="@GetNewTaskText(factory.Id)"
+                                                               @onchange="(e) => SetNewTaskText(factory.Id, e.Value?.ToString() ?? string.Empty)"
+                                                               @onkeydown="(e) => HandleTaskKeyDown(e, factory)" />
+                                                        <button class="btn btn-sm btn-primary ml-2" @onclick="() => AddTask(factory)" title="Add task">
+                                                            <i class="fas fa-plus"></i>
+                                                        </button>
+                                                    </div>
+                                                    @if (factory.Tasks.Count >= 40)
+                                                    {
+                                                        <p class="text-red">You are only allowed up to 50 tasks.</p>
+                                                    }
+                                                    @if (factory.Tasks.Count > 0)
+                                                    {
+                                                        <table class="task-table">
+                                                            <tbody>
+                                                                @for (int ti = 0; ti < factory.Tasks.Count; ti++)
+                                                                {
+                                                                    int taskIndex = ti;
+                                                                    FactoryTask task = factory.Tasks[taskIndex];
+                                                                    <tr>
+                                                                        <td class="task-title-cell">
+                                                                            @if (task.Completed)
+                                                                            {
+                                                                                <span class="task-done">@task.Title</span>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <input type="text"
+                                                                                       class="form-control form-control-sm"
+                                                                                       maxlength="200"
+                                                                                       value="@task.Title"
+                                                                                       @onchange="(e) => UpdateTaskTitle(factory, taskIndex, e.Value?.ToString() ?? string.Empty)" />
+                                                                            }
+                                                                        </td>
+                                                                        <td class="task-actions-cell">
+                                                                            @if (!task.Completed)
+                                                                            {
+                                                                                <button class="btn btn-sm btn-outline-info mr-1" title="Mark complete" @onclick="() => ToggleTask(factory, taskIndex)">
+                                                                                    <i class="fas fa-check-square"></i>
+                                                                                </button>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <button class="btn btn-sm btn-outline-secondary mr-1" title="Mark incomplete" @onclick="() => ToggleTask(factory, taskIndex)">
+                                                                                    <i class="fas fa-times"></i>
+                                                                                </button>
+                                                                            }
+                                                                            <button class="btn btn-sm btn-danger" title="Delete task" @onclick="() => RemoveTask(factory, taskIndex)">
+                                                                                <i class="fas fa-trash"></i>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            </tbody>
+                                                        </table>
+                                                    }
+                                                </div>
+
+                                                <!-- Notes -->
+                                                <div class="sub-panel" id="notes-@factory.Id">
+                                                    <h5 class="section-heading">
+                                                        <i class="fas fa-sticky-note mr-2"></i>Notes
+                                                    </h5>
+                                                    <textarea class="form-control notes-textarea"
+                                                              placeholder="Add some notes!"
+                                                              maxlength="1000"
+                                                              rows="4"
+                                                              value="@factory.Notes"
+                                                              @onchange="(e) => UpdateNotes(factory, e.Value?.ToString() ?? string.Empty)"></textarea>
+                                                    @if (!string.IsNullOrEmpty(factory.Notes))
+                                                    {
+                                                        <button class="btn btn-sm btn-primary mt-2" @onclick="() => UpdateNotes(factory, string.Empty)">Clear Notes</button>
+                                                    }
+                                                </div>
+                                            </div>
                                         </div>
                                     }
                                     else
@@ -586,6 +793,13 @@
     private List<Factory> _factories = new List<Factory>();
     private GameData? _gameData;
     private int _nextFactoryId = 1;
+    private bool _statisticsHidden = false;
+    private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
+
+    // Simple statistics record types for aggregation
+    private record StatRawResource(string Id, double TotalAmount);
+    private record StatBuilding(string Name, double TotalAmount);
+    private record StatPartDifference(string Id, double AmountRemaining);
 
     protected override async Task OnInitializedAsync()
     {
@@ -1141,6 +1355,207 @@
         }
 
         return factory.Parts.TryGetValue(product.Id, out PartMetrics? part) && part.AmountRequired <= 0;
+    }
+
+    private void CopyFactory(Factory original)
+    {
+        Factory copy = new Factory
+        {
+            Id = _nextFactoryId++,
+            Name = $"{original.Name} (copy)",
+            DisplayOrder = original.DisplayOrder + 1,
+            Hidden = false,
+            Products = original.Products.Select(p => new FactoryItem
+            {
+                Id = p.Id,
+                Recipe = p.Recipe,
+                Amount = p.Amount,
+                DisplayOrder = p.DisplayOrder,
+                Requirements = new Dictionary<string, RequirementAmount>(),
+                BuildingRequirements = new BuildingRequirement()
+            }).ToList(),
+            Inputs = new List<FactoryInput>(),
+            Parts = new Dictionary<string, PartMetrics>(),
+            BuildingRequirements = new Dictionary<string, BuildingRequirement>(),
+            PowerProducers = original.PowerProducers.Select(pp => new FactoryPowerProducer
+            {
+                Building = pp.Building,
+                Recipe = pp.Recipe,
+                IngredientAmount = pp.IngredientAmount,
+                PowerAmount = pp.PowerAmount,
+                BuildingAmount = pp.BuildingAmount,
+                BuildingCount = pp.BuildingCount,
+                Ingredients = pp.Ingredients.Select(i => new Web.Models.Factory.PowerItem { Part = i.Part, PerMin = i.PerMin }).ToList(),
+                DisplayOrder = pp.DisplayOrder,
+                Updated = null
+            }).ToList(),
+            Power = new FactoryPower(),
+            Tasks = new List<FactoryTask>(),
+            Notes = string.Empty,
+            Dependencies = new FactoryDependency(),
+            SyncState = new Dictionary<string, FactorySyncState>(),
+            SyncStatePower = new Dictionary<string, FactoryPowerSyncState>(),
+            InSync = null
+        };
+
+        // Shift display orders of factories after the insertion point
+        foreach (Factory f in _factories.Where(f => f.DisplayOrder >= copy.DisplayOrder))
+        {
+            f.DisplayOrder += 1;
+        }
+
+        AppState.AddFactory(copy);
+        _factories = AppState.GetFactories();
+        _factories.Sort((a, b) => a.DisplayOrder.CompareTo(b.DisplayOrder));
+
+        if (_gameData != null)
+        {
+            FactoryCalcService.CalculateFactories(_factories, _gameData);
+        }
+
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    // ===== Tasks =====
+
+    private string GetNewTaskText(int factoryId) => _newTaskText.GetValueOrDefault(factoryId, string.Empty);
+
+    private void SetNewTaskText(int factoryId, string text) => _newTaskText[factoryId] = text;
+
+    private void AddTask(Factory factory)
+    {
+        if (!_newTaskText.TryGetValue(factory.Id, out string? text) || string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        if (factory.Tasks.Count >= 50)
+        {
+            ToastService.ShowToast("You have reached the maximum number of tasks allowed (50).", ToastType.Error);
+            return;
+        }
+
+        factory.Tasks.Add(new FactoryTask { Title = text.Length > 200 ? text[..200] : text, Completed = false });
+        _newTaskText[factory.Id] = string.Empty;
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void HandleTaskKeyDown(KeyboardEventArgs e, Factory factory)
+    {
+        if (e.Key == "Enter")
+        {
+            AddTask(factory);
+        }
+    }
+
+    private void ToggleTask(Factory factory, int index)
+    {
+        if (index < 0 || index >= factory.Tasks.Count) return;
+        factory.Tasks[index].Completed = !factory.Tasks[index].Completed;
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void RemoveTask(Factory factory, int index)
+    {
+        if (index < 0 || index >= factory.Tasks.Count) return;
+        factory.Tasks.RemoveAt(index);
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    private void UpdateTaskTitle(Factory factory, int index, string title)
+    {
+        if (index < 0 || index >= factory.Tasks.Count) return;
+        factory.Tasks[index].Title = title.Length > 200 ? title[..200] : title;
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    // ===== Notes =====
+
+    private void UpdateNotes(Factory factory, string notes)
+    {
+        factory.Notes = notes.Length > 1000 ? notes[..1000] : notes;
+        _ = AppState.SaveFactoriesAsync();
+    }
+
+    // ===== Navigation helpers =====
+
+    private async Task ScrollToSection(Factory factory, string elementId)
+    {
+        if (factory.Hidden)
+        {
+            factory.Hidden = false;
+            StateHasChanged();
+            await Task.Delay(50);
+        }
+
+        await JSRuntime.InvokeVoidAsync("scrollToElement", elementId);
+    }
+
+    // ===== Statistics =====
+
+    private void ToggleStatistics()
+    {
+        _statisticsHidden = !_statisticsHidden;
+    }
+
+    private List<StatRawResource> GetTotalRawResources()
+    {
+        Dictionary<string, double> totals = new Dictionary<string, double>();
+        foreach (Factory factory in _factories)
+        {
+            foreach (KeyValuePair<string, WorldRawResource> kv in factory.RawResources)
+            {
+                totals[kv.Key] = totals.GetValueOrDefault(kv.Key) + kv.Value.Amount;
+            }
+        }
+
+        return totals
+            .Select(kv => new StatRawResource(kv.Key, kv.Value))
+            .OrderBy(r => GameDataService.GetPartDisplayName(r.Id))
+            .ToList();
+    }
+
+    private List<StatBuilding> GetTotalBuildings()
+    {
+        Dictionary<string, double> totals = new Dictionary<string, double>();
+        foreach (Factory factory in _factories)
+        {
+            foreach (KeyValuePair<string, BuildingRequirement> kv in factory.BuildingRequirements)
+            {
+                totals[kv.Key] = totals.GetValueOrDefault(kv.Key) + kv.Value.Amount;
+            }
+        }
+
+        return totals
+            .Select(kv => new StatBuilding(kv.Key, kv.Value))
+            .OrderBy(b => b.Name)
+            .ToList();
+    }
+
+    private (double consumed, double produced, double diff) GetTotalPower()
+    {
+        double consumed = _factories.Sum(f => f.Power.Consumed);
+        double produced = _factories.Sum(f => f.Power.Produced);
+        return (consumed, produced, produced - consumed);
+    }
+
+    private List<StatPartDifference> GetProductSurplusDeficit()
+    {
+        Dictionary<string, double> totals = new Dictionary<string, double>();
+        foreach (Factory factory in _factories)
+        {
+            foreach (KeyValuePair<string, PartMetrics> kv in factory.Parts)
+            {
+                if (kv.Value.IsRaw) continue;
+                totals[kv.Key] = totals.GetValueOrDefault(kv.Key) + kv.Value.AmountRemaining;
+            }
+        }
+
+        return totals
+            .Where(kv => kv.Value != 0)
+            .Select(kv => new StatPartDifference(kv.Key, kv.Value))
+            .OrderBy(p => GameDataService.GetPartDisplayName(p.Id))
+            .ToList();
     }
 
     public void Dispose()
