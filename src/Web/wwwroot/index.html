@@ -75,6 +75,14 @@
         });
     </script>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script>
+        window.scrollToFactory = function (factoryId) {
+            const el = document.getElementById('factory-' + factoryId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+    </script>
 </body>
 
 </html>
