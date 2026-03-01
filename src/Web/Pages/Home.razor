@@ -15,6 +15,8 @@
 
 <PageTitle>Satisfactory Factories - Production Planner</PageTitle>
 
+<Introduction Source="planner" ForceShow="@_showIntroDialog" OnClosed="HandleIntroClosed" />
+
 <div class="planner-page">
     @if (!_isLoaded)
     {
@@ -48,6 +50,17 @@
                                 <i class="fas fa-plus"></i> Add Factory
                             </button>
                             <TemplatesDialog OnTemplateLoaded="HandleTemplateLoaded" />
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-info flex-1" @onclick="ShowIntro" title="Show introduction">
+                                    <i class="fas fa-info-circle"></i> Show Intro
+                                </button>
+                                <button class="btn btn-warning flex-1"
+                                        disabled="@(_factories.Count == 0 || _disableRecalc)"
+                                        @onclick="ForceRecalculate"
+                                        title="Force recalculate all factories">
+                                    <i class="fas fa-calculator-alt"></i> Recalculate
+                                </button>
+                            </div>
                             @if (_factories.Count > 0)
                             {
                                 <div class="d-flex gap-2 mt-2">
@@ -924,6 +937,8 @@
     private bool _statisticsProductsHidden = true;
     private bool _summarySectionHidden = false;
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
+    private bool _showIntroDialog = false;
+    private bool _disableRecalc = false;
 
     // Simple statistics record types for aggregation
     private record StatRawResource(string Id, double TotalAmount);
@@ -999,6 +1014,37 @@
         {
             Console.Error.WriteLine($"RecalculateAll: Error during factory calculation: {ex}");
             ToastService.ShowToast($"An error occurred while calculating factories: {ex.Message}", ToastType.Error);
+        }
+    }
+
+    private void ShowIntro()
+    {
+        _showIntroDialog = true;
+    }
+
+    private void HandleIntroClosed()
+    {
+        _showIntroDialog = false;
+    }
+
+    private async Task ForceRecalculate()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "WARNING: Forcing a recalculation takes a LONG time for large plans. Your browser will lag and will likely complain about stalling. Are you sure?");
+        if (!confirmed) return;
+
+        ToastService.ShowToast("Forcing recalculation of all factories. This may take a while for large plans.", ToastType.Info);
+        _disableRecalc = true;
+        StateHasChanged();
+
+        try
+        {
+            RecalculateAll();
+            ToastService.ShowToast("Recalculations completed.", ToastType.Success);
+        }
+        finally
+        {
+            _disableRecalc = false;
+            StateHasChanged();
         }
     }
 

@@ -1,6 +1,7 @@
 @using Web.Services
 @inject ISyncService SyncService
 @inject IAppStateService AppState
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 <div class="sync-container my-4">
@@ -110,8 +111,7 @@
 
     private async Task ConfirmForceDownload()
     {
-        // TODO: Replace with proper dialog component when available
-        bool confirmed = await Task.FromResult(true); // Placeholder
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "This will delete your local data and pull it from the server. Continue?");
         
         if (confirmed)
         {
