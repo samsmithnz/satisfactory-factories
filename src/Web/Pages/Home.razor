@@ -685,8 +685,8 @@
                                                         <div class="d-flex flex-wrap gap-2">
                                                             @foreach (KeyValuePair<string, WorldRawResource> resource in factory.RawResources)
                                                             {
-                                                                <span class="sf-chip cyan">
-                                                                    <GameAsset Subject="@resource.Key" Type="item" Height="24" Width="24" />
+                                                                <span class="sf-chip small cyan">
+                                                                    <GameAsset Subject="@resource.Key" Type="item" Height="20" Width="20" />
                                                                     <span class="ml-2"><b>@resource.Value.Name</b>: @FormatNumber(resource.Value.Amount)/min</span>
                                                                 </span>
                                                             }
@@ -778,18 +778,18 @@
                                                             <i class="fas fa-building mr-2"></i>Power &amp; Buildings
                                                         </h6>
                                                         <div class="d-flex flex-wrap gap-2">
-                                                            <span class="sf-chip yellow">
+                                                            <span class="sf-chip small yellow">
                                                                 <i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i>
                                                                 Consumes: @FormatPower(factory.Power.Consumed)
                                                             </span>
-                                                            <span class="sf-chip yellow">
+                                                            <span class="sf-chip small yellow">
                                                                 <i class="fas fa-bolt mr-1"></i><i class="fas fa-plus mr-1"></i>
                                                                 Produces: @FormatPower(factory.Power.Produced)
                                                             </span>
                                                             @foreach (KeyValuePair<string, BuildingRequirement> bldg in factory.BuildingRequirements)
                                                             {
-                                                                <span class="sf-chip orange">
-                                                                    <GameAsset Subject="@bldg.Value.Name" Type="building" Height="24" Width="24" />
+                                                                <span class="sf-chip small orange">
+                                                                    <GameAsset Subject="@bldg.Value.Name" Type="building" Height="20" Width="20" />
                                                                     <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Value.Name)</b>: @FormatNumber(bldg.Value.Amount)x</span>
                                                                 </span>
                                                             }
