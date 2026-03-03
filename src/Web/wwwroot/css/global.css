@@ -11,6 +11,7 @@
 .sf-chip {
   display: inline-flex !important;
   align-items: center !important;
+  vertical-align: middle;
   padding: 2px 8px !important;
   border: 2px solid #7f7f7f !important;
   border-radius: 4px !important;
