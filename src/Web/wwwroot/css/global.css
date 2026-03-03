@@ -9,22 +9,29 @@
 
 /* Chip Component Styles */
 .sf-chip {
-  padding: 20px 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 2px 8px !important;
   border: 2px solid #7f7f7f !important;
+  border-radius: 4px !important;
   margin-right: 8px;
   margin-bottom: 4px;
   margin-top: 4px;
   color: white !important;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
+/* .small is the canonical chip size; kept as an alias for backward compatibility */
 .sf-chip.small {
-  padding: 12px 10px !important;
+  padding: 2px 8px !important;
 }
 
 .sf-chip.x-small {
-  height: 26px !important;
-  padding: 0 8px !important;
-  font-size: 12px !important;
+  height: 22px !important;
+  padding: 0 6px !important;
+  font-size: 0.75rem !important;
 }
 
 .sf-chip.no-margin {
@@ -59,6 +66,11 @@
 .sf-chip.green {
   color: #4caf50 !important;
   border-color: #4caf50 !important;
+}
+
+.sf-chip.grey {
+  color: #9e9e9e !important;
+  border-color: #757575 !important;
 }
 
 .sf-chip.no-border {
