@@ -131,7 +131,7 @@
                                             <div class="d-flex flex-wrap gap-2">
                                                 @foreach (StatRawResource res in rawResources)
                                                 {
-                                                    <span class="sf-chip cyan">
+                                                    <span class="sf-chip small cyan">
                                                         <GameAsset Subject="@res.Id" Type="item" Height="24" Width="24" />
                                                         <span class="ml-2"><b>@GameDataService.GetPartDisplayName(res.Id)</b>: @FormatNumber(res.TotalAmount)/min</span>
                                                     </span>
@@ -153,7 +153,7 @@
                                             <div class="d-flex flex-wrap gap-2">
                                                 @foreach (StatBuilding bldg in buildings)
                                                 {
-                                                    <span class="sf-chip orange">
+                                                    <span class="sf-chip small orange">
                                                         <GameAsset Subject="@bldg.Name" Type="building" Height="24" Width="24" />
                                                         <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Name)</b>: @FormatNumber(bldg.TotalAmount)x</span>
                                                     </span>
@@ -170,9 +170,9 @@
                                     <div class="statistics-section">
                                         <h5 class="text-h5"><i class="fas fa-power-off mr-2"></i>Power Consumption and Generation</h5>
                                         @{ (double consumed, double produced, double diff) = GetTotalPower(); }
-                                        <span class="sf-chip yellow"><i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i><span>@FormatPower(consumed) consumed</span></span>
-                                        <span class="sf-chip yellow"><i class="fas fa-bolt mr-1"></i><i class="fas fa-plus mr-1"></i><span>@FormatPower(produced) generated</span></span>
-                                        <span class="sf-chip @(diff > 0 ? "green" : diff < 0 ? "red" : "")"><i class="fas fa-plug mr-2"></i><span>@FormatPower(diff) difference</span></span>
+                                        <span class="sf-chip small yellow"><i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i><span>@FormatPower(consumed) consumed</span></span>
+                                        <span class="sf-chip small yellow"><i class="fas fa-bolt mr-1"></i><i class="fas fa-plus mr-1"></i><span>@FormatPower(produced) generated</span></span>
+                                        <span class="sf-chip small @(diff > 0 ? "green" : diff < 0 ? "red" : "")"><i class="fas fa-plug mr-2"></i><span>@FormatPower(diff) difference</span></span>
                                     </div>
                                     <hr class="factory-divider" />
                                     <!-- Product Surplus & Deficit -->
@@ -184,7 +184,7 @@
                                             <div class="d-flex flex-wrap gap-2">
                                                 @foreach (StatPartDifference pd in diffs)
                                                 {
-                                                    <span class="sf-chip @(pd.AmountRemaining > 0 ? "green" : "red")">
+                                                    <span class="sf-chip small @(pd.AmountRemaining > 0 ? "green" : "red")">
                                                         <GameAsset Subject="@pd.Id" Type="item" Height="24" Width="24" />
                                                         <span class="ml-2"><b>@GameDataService.GetPartDisplayName(pd.Id)</b>: @FormatNumber(pd.AmountRemaining)/min</span>
                                                     </span>
@@ -216,7 +216,7 @@
                                                 <div class="d-flex flex-wrap gap-2">
                                                     @foreach (StatProducedItem item in producedItems)
                                                     {
-                                                        <span class="sf-chip blue">
+                                                        <span class="sf-chip small blue">
                                                             <GameAsset Subject="@item.Id" Type="item" Height="24" Width="24" />
                                                             <span class="ml-2"><b>@GameDataService.GetPartDisplayName(item.Id)</b>: @FormatNumber(item.AmountSupplied)/min</span>
                                                         </span>

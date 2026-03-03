@@ -1272,25 +1272,6 @@
   gap: 6px;
 }
 
-/* sf-chip colour variants */
-.sf-chip.yellow {
-  border-color: #f9a825;
-}
-
-.sf-chip.orange {
-  border-color: #e65100;
-}
-
-.sf-chip.cyan {
-  border-color: #00bcd4;
-  color: #00bcd4;
-}
-
-.sf-chip.x-small {
-  font-size: 0.7rem;
-  padding: 2px 6px;
-}
-
 /* Statistics Panel */
 .statistics-panel {
   background-color: var(--bg-card);
@@ -1448,6 +1429,8 @@
   padding: 8px 12px;
   border-bottom: 1px solid #333;
   vertical-align: middle;
+  max-width: 300px;
+  white-space: normal;
 }
 
 .factories-summary-table tbody tr:last-child td {
