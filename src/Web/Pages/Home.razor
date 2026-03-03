@@ -457,6 +457,18 @@
                                                                    min="1"
                                                                    @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
                                                         }
+                                                        @if (ShouldShowFix(product, factory) == "deficit")
+                                                        {
+                                                            <button class="btn btn-sm btn-success mr-1" title="Satisfy - increase amount to meet requirements" @onclick="() => FixProduct(product, factory)">
+                                                                <i class="fas fa-arrow-up mr-1"></i>Satisfy
+                                                            </button>
+                                                        }
+                                                        @if (ShouldShowFix(product, factory) == "surplus")
+                                                        {
+                                                            <button class="btn btn-sm btn-warning mr-1" title="Trim - reduce amount to match requirements" @onclick="() => FixProduct(product, factory)">
+                                                                <i class="fas fa-arrow-down mr-1"></i>Trim
+                                                            </button>
+                                                        }
                                                         <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemoveProduct(factory, product)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
@@ -1533,6 +1545,34 @@
         }
 
         return factory.Parts.TryGetValue(product.Id, out PartMetrics? part) && part.AmountRequired <= 0;
+    }
+
+    /// <summary>
+    /// Returns "deficit", "surplus", or null to indicate Satisfy/Trim button visibility.
+    /// Mirrors Vue's shouldShowFix.
+    /// </summary>
+    private static string? ShouldShowFix(FactoryItem product, Factory factory)
+    {
+        if (string.IsNullOrEmpty(product.Id)) return null;
+        if (!factory.Parts.TryGetValue(product.Id, out PartMetrics? part)) return null;
+        if (product.Amount == 0 || product.Amount == 1) return null;
+        if (part.AmountRemaining < 0) return "deficit";
+        if (part.AmountRequired == 0) return null;
+        if (part.AmountRemaining > 0) return "surplus";
+        return null;
+    }
+
+    /// <summary>
+    /// Adjusts a product's amount to exactly satisfy or trim to factory demand.
+    /// Mirrors Vue's fixProduct.
+    /// </summary>
+    private void FixProduct(FactoryItem product, Factory factory)
+    {
+        if (string.IsNullOrEmpty(product.Id)) return;
+        if (!factory.Parts.TryGetValue(product.Id, out PartMetrics? partData)) return;
+        double diff = partData.AmountRequired - partData.AmountSuppliedViaProduction;
+        product.Amount = product.Amount + diff;
+        RecalculateAll();
     }
 
     private void CopyFactory(Factory original)
