@@ -3,6 +3,9 @@
 }
 
 .sf-chip {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
   padding: 20px 12px !important;
   border: 2px solid #7f7f7f !important;
   margin-right: 8px;
