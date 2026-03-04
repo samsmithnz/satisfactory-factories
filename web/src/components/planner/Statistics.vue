@@ -75,12 +75,12 @@
   }>()
 
   // Default to not showing the stats on first ever load
-  const statisticsHidden = localStorage.getItem('statisticsHidden') ?? 'false'
-  const statisticsProductsHidden = localStorage.getItem('statisticsProductsHidden') ?? 'false'
+  const statisticsHidden = localStorage.getItem('statisticsHidden') ?? 'true'
+  const statisticsProductsHidden = localStorage.getItem('statisticsProductsHidden') ?? 'true'
 
   // Initialize the 'hidden' refs based on the value in localStorage
-  const hidden = ref<boolean>(Boolean(statisticsHidden))
-  const hiddenProducts = ref<boolean>(Boolean(statisticsProductsHidden))
+  const hidden = ref<boolean>(statisticsHidden !== 'false')
+  const hiddenProducts = ref<boolean>(statisticsProductsHidden !== 'false')
 
   // Watch the 'hidden' ref and update localStorage whenever it changes
   watch(hidden, newValue => {
