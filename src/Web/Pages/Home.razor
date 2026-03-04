@@ -957,6 +957,7 @@
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
     private bool _showIntroDialog = false;
     private bool _disableRecalc = false;
+    private int _renderCount = 0;
 
     // Simple statistics record types for aggregation
     private record StatRawResource(string Id, double TotalAmount);
@@ -965,6 +966,12 @@
     private record StatProducedItem(string Id, double AmountSupplied);
     private record SummaryImport(string PartId, double Amount);
     private record SummaryExport(string PartId, double Amount);
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        _renderCount++;
+        Console.WriteLine($"Home: OnAfterRender #{_renderCount} (firstRender={firstRender}), factories={_factories.Count}, isLoaded={_isLoaded}");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -1044,12 +1051,14 @@
 
     private void RecalculateAll()
     {
+        Console.WriteLine($"Home: RecalculateAll start (renderCount={_renderCount}, factories={_factories.Count})");
         try
         {
             if (_gameData != null)
             {
                 FactoryCalcService.CalculateFactories(_factories, _gameData);
             }
+            Console.WriteLine($"Home: RecalculateAll complete (renderCount={_renderCount})");
             _ = AppState.SaveFactoriesAsync();
         }
         catch (Exception ex)
@@ -1204,6 +1213,8 @@
 
     private async Task OnPartSelected(FactoryItem product, Factory factory, string partId)
     {
+        Console.WriteLine($"Home: OnPartSelected start — factory='{factory.Name}', partId='{partId}', product.Id was='{product.Id}', renderCount={_renderCount}");
+
         product.Id = partId;
 
         if (!string.IsNullOrEmpty(partId))
@@ -1213,18 +1224,24 @@
             product.Recipe = !string.IsNullOrEmpty(defaultRecipe) && recipes.Count > 0
                 ? defaultRecipe
                 : (recipes.Count > 0 ? recipes[0].Id : string.Empty);
+            Console.WriteLine($"Home: OnPartSelected — set recipe='{product.Recipe}', {recipes.Count} recipes available");
         }
         else
         {
             product.Recipe = string.Empty;
         }
 
+        Console.WriteLine($"Home: OnPartSelected — awaiting Task.Yield() to allow first render pass (renderCount={_renderCount})");
+
         // Yield to let Blazor render the product-row structural changes (icon, recipe/amount
         // controls) before RecalculateAll triggers the satisfaction-section and raw-resources
         // changes.  Running both structural groups in the same render pass causes Blazor's
         // DOM reconciliation to call removeChild on a null parent reference.
         await Task.Yield();
+
+        Console.WriteLine($"Home: OnPartSelected — resumed after Task.Yield(), renderCount={_renderCount}, calling RecalculateAll");
         RecalculateAll();
+        Console.WriteLine($"Home: OnPartSelected — complete, renderCount={_renderCount}");
     }
 
     private void OnRecipeSelected(FactoryItem product, Factory factory, string recipeId)
