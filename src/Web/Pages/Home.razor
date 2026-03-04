@@ -972,7 +972,15 @@
         // Run initial calculations for loaded factories
         if (_gameData != null && _factories.Count > 0)
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
+            try
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Home: Error during initial factory calculation: {ex}");
+                ToastService.ShowToast("An error occurred while loading your factories. Some data may be in an inconsistent state.", ToastType.Error);
+            }
         }
 
         string currentUrl = NavManager.Uri;
@@ -991,7 +999,15 @@
         _factories = AppState.GetFactories();
         if (_gameData != null)
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
+            try
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Home: Error during demo plan factory calculation: {ex}");
+                ToastService.ShowToast("An error occurred while loading the demo plan.", ToastType.Error);
+            }
         }
         Console.WriteLine("Demo plan loaded successfully");
     }
@@ -1003,8 +1019,16 @@
         Console.WriteLine($"Home: Retrieved {_factories.Count} factories from AppState");
         if (_gameData != null)
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
-            Console.WriteLine("Home: Recalculated all factories after template load");
+            try
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+                Console.WriteLine("Home: Recalculated all factories after template load");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Home: HandleTemplateLoaded - Error during factory calculation: {ex}");
+                ToastService.ShowToast("An error occurred while loading the template.", ToastType.Error);
+            }
         }
         else
         {
@@ -1025,7 +1049,16 @@
         catch (Exception ex)
         {
             Console.Error.WriteLine($"RecalculateAll: Error during factory calculation: {ex}");
-            ToastService.ShowToast($"An error occurred while calculating factories: {ex.Message}", ToastType.Error);
+            string errorMessage;
+            if (string.IsNullOrEmpty(ex.Message))
+            {
+                errorMessage = $"An unexpected error occurred ({ex.GetType().Name}). Please check the browser console for details.";
+            }
+            else
+            {
+                errorMessage = ex.Message;
+            }
+            ToastService.ShowToast($"An error occurred while calculating factories: {errorMessage}", ToastType.Error);
         }
     }
 
