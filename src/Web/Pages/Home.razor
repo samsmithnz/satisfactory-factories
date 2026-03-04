@@ -265,7 +265,7 @@
                                                     <td>
                                                         @foreach (KeyValuePair<string, BuildingRequirement> bldg in factory.BuildingRequirements.OrderBy(b => GameDataService.GetBuildingDisplayName(b.Key)))
                                                         {
-                                                            <span class="sf-chip small orange no-margin mr-1">
+                                                            <span class="sf-chip small orange no-margin mr-1" @key="bldg.Key">
                                                                 <GameAsset Subject="@bldg.Key" Type="building" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Key)</b>: @FormatNumber(bldg.Value.Amount)x</span>
                                                             </span>
@@ -276,7 +276,7 @@
                                                         {
                                                             @if (!string.IsNullOrEmpty(product.Id))
                                                             {
-                                                                <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")">
+                                                                <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")" @key="product.Id">
                                                                     <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
                                                                     <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
                                                                 </span>
@@ -287,7 +287,7 @@
                                                         @{ List<SummaryImport> imports = GetSummaryImports(factory); }
                                                         @foreach (SummaryImport imp in imports)
                                                         {
-                                                            <span class="sf-chip small blue no-margin mr-1">
+                                                            <span class="sf-chip small blue no-margin mr-1" @key="imp.PartId">
                                                                 <GameAsset Subject="@imp.PartId" Type="item" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(imp.PartId)</b>: @FormatNumber(imp.Amount)/min</span>
                                                             </span>
@@ -297,7 +297,7 @@
                                                         @{ List<SummaryExport> exports = GetSummaryExports(factory); }
                                                         @foreach (SummaryExport exp in exports)
                                                         {
-                                                            <span class="sf-chip small blue no-margin mr-1">
+                                                            <span class="sf-chip small blue no-margin mr-1" @key="exp.PartId">
                                                                 <GameAsset Subject="@exp.PartId" Type="item" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(exp.PartId)</b>: @FormatNumber(exp.Amount)/min</span>
                                                             </span>
@@ -434,7 +434,7 @@
                                                             }
                                                             <select class="form-control product-part-select"
                                                                     value="@product.Id"
-                                                                    @onchange="(e) => OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                    @onchange="async (e) => await OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
                                                                 <option value="">-- Select Part --</option>
                                                                 @foreach (KeyValuePair<string, Part> partEntry in GetSortedParts())
                                                                 {
@@ -1198,7 +1198,7 @@
         _ = AppState.SaveFactoriesAsync();
     }
 
-    private void OnPartSelected(FactoryItem product, Factory factory, string partId)
+    private async Task OnPartSelected(FactoryItem product, Factory factory, string partId)
     {
         product.Id = partId;
 
@@ -1215,6 +1215,11 @@
             product.Recipe = string.Empty;
         }
 
+        // Yield to let Blazor render the product-row structural changes (icon, recipe/amount
+        // controls) before RecalculateAll triggers the satisfaction-section and raw-resources
+        // changes.  Running both structural groups in the same render pass causes Blazor's
+        // DOM reconciliation to call removeChild on a null parent reference.
+        await Task.Yield();
         RecalculateAll();
     }
 
