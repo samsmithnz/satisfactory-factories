@@ -424,14 +424,16 @@
                                                 {
                                                     <div @key="product" class="product-iteration">
                                                         <div class="product-row">
-                                                            @if (string.IsNullOrEmpty(product.Id))
-                                                            {
-                                                                <i class="fas fa-cube product-icon"></i>
-                                                            }
-                                                            else
-                                                            {
-                                                                <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" />
-                                                            }
+                                                            <span class="product-icon-slot">
+                                                                @if (string.IsNullOrEmpty(product.Id))
+                                                                {
+                                                                    <i class="fas fa-cube product-icon"></i>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" />
+                                                                }
+                                                            </span>
                                                             <select class="form-control product-part-select"
                                                                     value="@product.Id"
                                                                     @onchange="async (e) => await OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
@@ -441,23 +443,25 @@
                                                                     <option value="@partEntry.Key">@partEntry.Value.Name</option>
                                                                 }
                                                             </select>
-                                                            @if (!string.IsNullOrEmpty(product.Id))
-                                                            {
-                                                                <i class="fas fa-hat-chef product-icon"></i>
-                                                                <select class="form-control product-recipe-select"
-                                                                        value="@product.Recipe"
-                                                                        @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
-                                                                    @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
-                                                                    {
-                                                                        <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
-                                                                    }
-                                                                </select>
-                                                                <input type="number"
-                                                                       class="form-control product-amount-input"
-                                                                       value="@product.Amount"
-                                                                       min="1"
-                                                                       @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
-                                                            }
+                                                            <span class="product-recipe-slot">
+                                                                @if (!string.IsNullOrEmpty(product.Id))
+                                                                {
+                                                                    <i class="fas fa-hat-chef product-icon"></i>
+                                                                    <select class="form-control product-recipe-select"
+                                                                            value="@product.Recipe"
+                                                                            @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                        @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
+                                                                        {
+                                                                            <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
+                                                                        }
+                                                                    </select>
+                                                                    <input type="number"
+                                                                           class="form-control product-amount-input"
+                                                                           value="@product.Amount"
+                                                                           min="1"
+                                                                           @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                                }
+                                                            </span>
                                                             @if (ShouldShowFix(product, factory) == "deficit")
                                                             {
                                                                 <button class="btn btn-sm btn-success mr-1" title="Satisfy - increase amount to meet requirements" @onclick="() => FixProduct(product, factory)">

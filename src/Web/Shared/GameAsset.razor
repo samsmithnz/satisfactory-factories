@@ -61,6 +61,8 @@ else if (_isUnknown)
 
     protected override void OnParametersSet()
     {
+        _isUnknown = false;
+        _isFicsmas = false;
         _widthPx = Width ?? 32;
         _heightPx = Height ?? 32;
 

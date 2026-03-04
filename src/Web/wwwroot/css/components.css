@@ -1094,6 +1094,13 @@
   display: block;
 }
 
+/* Stable wrapper slots inside product-row: display:contents makes them transparent
+   to the flex layout so children participate directly in the flex container */
+.product-icon-slot,
+.product-recipe-slot {
+  display: contents;
+}
+
 /* Inline product editing row */
 .product-row {
   display: flex;
