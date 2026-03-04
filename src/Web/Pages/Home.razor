@@ -237,7 +237,7 @@
                         <div class="statistics-panel @(_summarySectionHidden ? "statistics-collapsed" : "")">
                             <div class="statistics-header">
                                 <h4 class="statistics-title">
-                                    <i class="fas fa-list mr-2"></i>Factories Summary
+                                    <i class="fas fa-list mr-2"></i>Factory Summary
                                 </h4>
                                 <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleSummary">
                                     <i class="fas @(_summarySectionHidden ? "fa-eye" : "fa-eye-slash") mr-1"></i>
@@ -945,9 +945,9 @@
     private List<Factory> _factories = new List<Factory>();
     private GameData? _gameData;
     private int _nextFactoryId = 1;
-    private bool _statisticsHidden = false;
+    private bool _statisticsHidden = true;
     private bool _statisticsProductsHidden = true;
-    private bool _summarySectionHidden = false;
+    private bool _summarySectionHidden = true;
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
     private bool _showIntroDialog = false;
     private bool _disableRecalc = false;
