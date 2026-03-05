@@ -272,14 +272,18 @@
                                                         }
                                                     </td>
                                                     <td>
-                                                        @* Filter out empty products to prevent Blazor reorder+update crash.
-                                                           Without filtering, OrderBy reorders the keyed chip AND updates its
-                                                           GameAsset contents in the same render batch, causing insertBefore(null).
-                                                           With filtering, a new product.Id is a clean insertion—not a move. *@
-                                                        @foreach (FactoryItem product in factory.Products.Where(p => !string.IsNullOrEmpty(p.Id)).OrderBy(p => GameDataService.GetPartDisplayName(p.Id)))
+                                                        @* Always render all product chips (even empty ones) to prevent structural
+                                                           DOM insertions. Inserting a new chip in the same render pass as the
+                                                           product-icon GameAsset's internal element-type change corrupts Blazor's
+                                                           element store causing insertBefore(null). The chip is always present;
+                                                           only its display style changes when product.Id is set.
+                                                           GameAsset's stable wrapper ensures its internal branch switches
+                                                           (placeholder→img) are safe element-type swaps in a stable parent. *@
+                                                        @foreach (FactoryItem product in factory.Products)
                                                         {
                                                             <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")"
-                                                                  @key="product">
+                                                                  @key="product"
+                                                                  style="@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
                                                                 <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
                                                             </span>
@@ -951,6 +955,7 @@
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
     private bool _showIntroDialog = false;
     private bool _disableRecalc = false;
+    private int _renderCount = 0;
 
     // Simple statistics record types for aggregation
     private record StatRawResource(string Id, double TotalAmount);
@@ -962,6 +967,8 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
+        _renderCount++;
+        Console.WriteLine($"Home: OnAfterRender #{_renderCount} (firstRender={firstRender}), factories={_factories.Count}, isLoaded={_isLoaded}");
     }
 
     protected override async Task OnInitializedAsync()
@@ -1197,6 +1204,7 @@
 
     private async Task OnPartSelected(FactoryItem product, Factory factory, string partId)
     {
+        Console.WriteLine($"Home: OnPartSelected start — factory='{factory.Name}', partId='{partId}', product.Id was='{product.Id}', renderCount={_renderCount}");
         product.Id = partId;
 
         if (!string.IsNullOrEmpty(partId))
@@ -1206,19 +1214,23 @@
             product.Recipe = !string.IsNullOrEmpty(defaultRecipe) && recipes.Count > 0
                 ? defaultRecipe
                 : (recipes.Count > 0 ? recipes[0].Id : string.Empty);
+            Console.WriteLine($"Home: OnPartSelected — set recipe='{product.Recipe}', {recipes.Count} recipes available");
         }
         else
         {
             product.Recipe = string.Empty;
         }
 
+        Console.WriteLine($"Home: OnPartSelected — awaiting Task.Yield() to allow first render pass (renderCount={_renderCount})");
         // Yield to let Blazor render the product-row structural changes (icon, recipe/amount
         // controls) before RecalculateAll triggers the satisfaction-section and raw-resources
         // changes.  Running both structural groups in the same render pass causes Blazor's
         // DOM reconciliation to call removeChild on a null parent reference.
         await Task.Yield();
 
+        Console.WriteLine($"Home: OnPartSelected — resumed after Task.Yield(), renderCount={_renderCount}, calling RecalculateAll");
         RecalculateAll();
+        Console.WriteLine($"Home: OnPartSelected — complete, renderCount={_renderCount}");
     }
 
     private void OnRecipeSelected(FactoryItem product, Factory factory, string recipeId)
