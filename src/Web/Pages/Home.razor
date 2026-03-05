@@ -273,18 +273,18 @@
                                                     </td>
                                                     <td>
                                                         @* Always render all product chips (even empty ones) to prevent structural
-                                                           DOM insertions. Inserting a new chip in the same render pass as the
-                                                           product-icon GameAsset's internal element-type change corrupts Blazor's
-                                                           element store causing insertBefore(null). The chip is always present;
-                                                           only its display style changes when product.Id is set.
-                                                           GameAsset's stable wrapper ensures its internal branch switches
-                                                           (placeholder→img) are safe element-type swaps in a stable parent. *@
+                                                           DOM insertions. The icon uses a direct <img> (not GameAsset) so that when
+                                                           product.Id changes from "" to a part ID, only src/style attributes are
+                                                           updated — no element-type swap, no removeChild/insertBefore needed. *@
                                                         @foreach (FactoryItem product in factory.Products)
                                                         {
                                                             <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")"
                                                                   @key="product"
                                                                   style="@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
-                                                                <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
+                                                                <img src="@GetPartIconUrl(product.Id)"
+                                                                     width="20" height="20"
+                                                                     style="vertical-align:middle;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"
+                                                                     loading="lazy" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
                                                             </span>
                                                         }
@@ -431,7 +431,17 @@
                                                     <div @key="product" class="product-iteration">
                                                         <div class="product-row">
                                                             <span class="product-icon-slot">
-                                                                <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" ShowDefaultIcon="true" />
+                                                                @* Use always-rendered <i> + <img> instead of <GameAsset> to eliminate
+                                                                   element-type changes when product.Id transitions from "" to a part ID.
+                                                                   GameAsset's @if branches (cube→img) caused insertBefore(null) crashes
+                                                                   in Blazor's batch renderer. With always-rendered elements only
+                                                                   style/src attributes change — no DOM structural operations. *@
+                                                                <i class="fas fa-cube product-icon"
+                                                                   style="@(!string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"></i>
+                                                                <img src="@GetPartIconUrl(product.Id)"
+                                                                     width="32" height="32"
+                                                                     style="vertical-align:middle;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"
+                                                                     loading="lazy" />
                                                             </span>
                                                             <select class="form-control product-part-select"
                                                                     value="@product.Id"
@@ -1522,6 +1532,51 @@
     private static string RecipeSlotDisplayStyle(string productId)
     {
         return string.IsNullOrEmpty(productId) ? HiddenStyle : string.Empty;
+    }
+
+    /// <summary>
+    /// Returns the URL for a part's icon image (64px), or empty string if not available.
+    /// Uses only attribute/style changes when the src is set, avoiding element-type swaps
+    /// that crash Blazor's batch renderer with insertBefore(null).
+    /// </summary>
+    private string GetPartIconUrl(string partId)
+    {
+        if (string.IsNullOrEmpty(partId))
+        {
+            return string.Empty;
+        }
+
+        GameData gameData = GameDataService.GetGameData();
+
+        if (gameData.Items.Parts.TryGetValue(partId, out Part? partItem))
+        {
+            if (partItem.IsFicsmas)
+            {
+                return string.Empty; // ficsmas — no image available
+            }
+            string slug = SlugifyPartName(partItem.Name);
+            return $"/assets/game/item/{slug}_64.png";
+        }
+
+        if (gameData.Items.RawResources.TryGetValue(partId, out RawResource? rawItem))
+        {
+            string slug = SlugifyPartName(rawItem.Name);
+            return $"/assets/game/item/{slug}_64.png";
+        }
+
+        return string.Empty; // unknown part — no icon
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex SlugifyLowerToUpperRegex =
+        new System.Text.RegularExpressions.Regex(@"([a-z0-9])([A-Z])", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly System.Text.RegularExpressions.Regex SlugifySpacesRegex =
+        new System.Text.RegularExpressions.Regex(@"\s+", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static string SlugifyPartName(string name)
+    {
+        string result = SlugifyLowerToUpperRegex.Replace(name, "$1-$2");
+        result = SlugifySpacesRegex.Replace(result, "-");
+        return result.ToLower();
     }
 
     private static string FormatPower(double mw)
