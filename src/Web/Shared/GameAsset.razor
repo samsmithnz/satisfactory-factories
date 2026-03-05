@@ -43,6 +43,15 @@ else if (ShowDefaultIcon)
 {
     <i class="fas fa-cube product-icon" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
 }
+else
+{
+    @* Placeholder: ensures the wrapper span ALWAYS has exactly one child.
+       Without this, the wrapper has 0 children when Subject="" and ShowDefaultIcon=false
+       (e.g. summary chip). A later Subject change causes a 0→1 child insertion inside the
+       wrapper, which crashes Blazor's batch renderer with insertBefore(parent=null).
+       With the placeholder, the transition is a safe element-type swap (span→img). *@
+    <span style="display:none;"></span>
+}
 </span>
 
 @code {
