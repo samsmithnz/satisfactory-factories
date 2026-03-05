@@ -272,11 +272,14 @@
                                                         }
                                                     </td>
                                                     <td>
-                                                        @foreach (FactoryItem product in factory.Products.OrderBy(p => GameDataService.GetPartDisplayName(p.Id)))
+                                                        @* Filter out empty products to prevent Blazor reorder+update crash.
+                                                           Without filtering, OrderBy reorders the keyed chip AND updates its
+                                                           GameAsset contents in the same render batch, causing insertBefore(null).
+                                                           With filtering, a new product.Id is a clean insertion—not a move. *@
+                                                        @foreach (FactoryItem product in factory.Products.Where(p => !string.IsNullOrEmpty(p.Id)).OrderBy(p => GameDataService.GetPartDisplayName(p.Id)))
                                                         {
                                                             <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")"
-                                                                  @key="product"
-                                                                  style="@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
+                                                                  @key="product">
                                                                 <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
                                                             </span>
@@ -948,7 +951,6 @@
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
     private bool _showIntroDialog = false;
     private bool _disableRecalc = false;
-    private int _renderCount = 0;
 
     // Simple statistics record types for aggregation
     private record StatRawResource(string Id, double TotalAmount);
@@ -960,8 +962,6 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        _renderCount++;
-        Console.WriteLine($"Home: OnAfterRender #{_renderCount} (firstRender={firstRender}), factories={_factories.Count}, isLoaded={_isLoaded}");
     }
 
     protected override async Task OnInitializedAsync()
@@ -998,7 +998,6 @@
 
     private async Task LoadDemoPlan()
     {
-        Console.WriteLine("Loading demo plan from query parameter");
         await DemoPlansService.LoadDemoPlanAsync("Simple");
         _factories = AppState.GetFactories();
         if (_gameData != null)
@@ -1013,20 +1012,16 @@
                 ToastService.ShowToast("An error occurred while loading the demo plan.", ToastType.Error);
             }
         }
-        Console.WriteLine("Demo plan loaded successfully");
     }
 
     private void HandleTemplateLoaded()
     {
-        Console.WriteLine("Home: HandleTemplateLoaded called");
         _factories = AppState.GetFactories();
-        Console.WriteLine($"Home: Retrieved {_factories.Count} factories from AppState");
         if (_gameData != null)
         {
             try
             {
                 FactoryCalcService.CalculateFactories(_factories, _gameData);
-                Console.WriteLine("Home: Recalculated all factories after template load");
             }
             catch (Exception ex)
             {
@@ -1042,14 +1037,12 @@
 
     private void RecalculateAll()
     {
-        Console.WriteLine($"Home: RecalculateAll start (renderCount={_renderCount}, factories={_factories.Count})");
         try
         {
             if (_gameData != null)
             {
                 FactoryCalcService.CalculateFactories(_factories, _gameData);
             }
-            Console.WriteLine($"Home: RecalculateAll complete (renderCount={_renderCount})");
             _ = AppState.SaveFactoriesAsync();
         }
         catch (Exception ex)
@@ -1204,8 +1197,6 @@
 
     private async Task OnPartSelected(FactoryItem product, Factory factory, string partId)
     {
-        Console.WriteLine($"Home: OnPartSelected start — factory='{factory.Name}', partId='{partId}', product.Id was='{product.Id}', renderCount={_renderCount}");
-
         product.Id = partId;
 
         if (!string.IsNullOrEmpty(partId))
@@ -1215,14 +1206,11 @@
             product.Recipe = !string.IsNullOrEmpty(defaultRecipe) && recipes.Count > 0
                 ? defaultRecipe
                 : (recipes.Count > 0 ? recipes[0].Id : string.Empty);
-            Console.WriteLine($"Home: OnPartSelected — set recipe='{product.Recipe}', {recipes.Count} recipes available");
         }
         else
         {
             product.Recipe = string.Empty;
         }
-
-        Console.WriteLine($"Home: OnPartSelected — awaiting Task.Yield() to allow first render pass (renderCount={_renderCount})");
 
         // Yield to let Blazor render the product-row structural changes (icon, recipe/amount
         // controls) before RecalculateAll triggers the satisfaction-section and raw-resources
@@ -1230,9 +1218,7 @@
         // DOM reconciliation to call removeChild on a null parent reference.
         await Task.Yield();
 
-        Console.WriteLine($"Home: OnPartSelected — resumed after Task.Yield(), renderCount={_renderCount}, calling RecalculateAll");
         RecalculateAll();
-        Console.WriteLine($"Home: OnPartSelected — complete, renderCount={_renderCount}");
     }
 
     private void OnRecipeSelected(FactoryItem product, Factory factory, string recipeId)
