@@ -2,6 +2,11 @@
 @using Web.Services
 @inject GameDataService GameDataService
 
+@* Stable wrapper: GameAsset always emits exactly one <span> at its root.
+   Element-type changes (e.g. <i> → <img>) happen INSIDE this wrapper,
+   never at the component boundary where they corrupt sibling references
+   in the same Blazor render batch. *@
+<span style="display:inline-block;width:@(_widthPx)px;height:@(_heightPx)px;vertical-align:middle;">
 @if (!string.IsNullOrEmpty(_imageUrl))
 {
     if (Clickable && (Type == "item" || Type == "item_id" || Type == "building"))
@@ -38,11 +43,7 @@ else if (ShowDefaultIcon)
 {
     <i class="fas fa-cube product-icon" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
 }
-else
-{
-    @* Always emit exactly one element so Blazor never does a 0→1 structural insertion *@
-    <span style="display:none;width:0;height:0;"></span>
-}
+</span>
 
 @code {
     [Parameter]
