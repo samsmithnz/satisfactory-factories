@@ -425,14 +425,7 @@
                                                     <div @key="product" class="product-iteration">
                                                         <div class="product-row">
                                                             <span class="product-icon-slot">
-                                                                @if (string.IsNullOrEmpty(product.Id))
-                                                                {
-                                                                    <i class="fas fa-cube product-icon"></i>
-                                                                }
-                                                                else
-                                                                {
-                                                                    <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" />
-                                                                }
+                                                                <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" ShowDefaultIcon="true" />
                                                             </span>
                                                             <select class="form-control product-part-select"
                                                                     value="@product.Id"

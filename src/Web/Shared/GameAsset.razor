@@ -34,6 +34,10 @@ else if (_isUnknown)
 {
     <i class="fas fa-question" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
 }
+else if (ShowDefaultIcon)
+{
+    <i class="fas fa-cube product-icon" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
+}
 
 @code {
     [Parameter]
@@ -50,6 +54,9 @@ else if (_isUnknown)
 
     [Parameter]
     public bool Clickable { get; set; } = false;
+
+    [Parameter]
+    public bool ShowDefaultIcon { get; set; } = false;
 
     private int _widthPx;
     private int _heightPx;
