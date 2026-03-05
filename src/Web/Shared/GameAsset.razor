@@ -38,6 +38,11 @@ else if (ShowDefaultIcon)
 {
     <i class="fas fa-cube product-icon" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
 }
+else
+{
+    @* Always emit exactly one element so Blazor never does a 0→1 structural insertion *@
+    <span style="display:none;width:0;height:0;"></span>
+}
 
 @code {
     [Parameter]
@@ -68,6 +73,8 @@ else if (ShowDefaultIcon)
 
     protected override void OnParametersSet()
     {
+        string oldBranch = GetRenderBranch();
+        
         _isUnknown = false;
         _isFicsmas = false;
         _widthPx = Width ?? 32;
@@ -78,6 +85,21 @@ else if (ShowDefaultIcon)
         
         string imgSize = (_widthPx > 64 || _heightPx > 64) ? "big" : "small";
         _imageUrl = GetIcon(Subject, Type, imgSize);
+        
+        string newBranch = GetRenderBranch();
+        if (oldBranch != newBranch)
+        {
+            Console.WriteLine($"GameAsset: branch change '{oldBranch}'→'{newBranch}' for Subject='{Subject}', Type='{Type}', ShowDefaultIcon={ShowDefaultIcon}");
+        }
+    }
+
+    private string GetRenderBranch()
+    {
+        if (!string.IsNullOrEmpty(_imageUrl)) return "img";
+        if (_isFicsmas) return "ficsmas";
+        if (_isUnknown) return "unknown";
+        if (ShowDefaultIcon) return "cube";
+        return "placeholder";
     }
 
     private string GetDisplayName()
