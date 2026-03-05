@@ -437,23 +437,22 @@
                                                                 }
                                                             </select>
                                                             <span class="product-recipe-slot">
-                                                                @if (!string.IsNullOrEmpty(product.Id))
-                                                                {
-                                                                    <i class="fas fa-hat-chef product-icon"></i>
-                                                                    <select class="form-control product-recipe-select"
-                                                                            value="@product.Recipe"
-                                                                            @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
-                                                                        @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
-                                                                        {
-                                                                            <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
-                                                                        }
-                                                                    </select>
-                                                                    <input type="number"
-                                                                           class="form-control product-amount-input"
-                                                                           value="@product.Amount"
-                                                                           min="1"
-                                                                           @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
-                                                                }
+                                                                <i class="fas fa-hat-chef product-icon" style="@RecipeSlotDisplayStyle(product.Id)"></i>
+                                                                <select class="form-control product-recipe-select"
+                                                                        style="@RecipeSlotDisplayStyle(product.Id)"
+                                                                        value="@product.Recipe"
+                                                                        @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                    @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
+                                                                    {
+                                                                        <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
+                                                                    }
+                                                                </select>
+                                                                <input type="number"
+                                                                       style="@RecipeSlotDisplayStyle(product.Id)"
+                                                                       class="form-control product-amount-input"
+                                                                       value="@product.Amount"
+                                                                       min="1"
+                                                                       @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
                                                             </span>
                                                             @if (ShouldShowFix(product, factory) == "deficit")
                                                             {
@@ -1519,6 +1518,13 @@
     private static string FormatNumber(double value)
     {
         return value % 1 == 0 ? ((int)value).ToString() : value.ToString("0.###");
+    }
+
+    private const string HiddenStyle = "display:none;";
+
+    private static string RecipeSlotDisplayStyle(string productId)
+    {
+        return string.IsNullOrEmpty(productId) ? HiddenStyle : string.Empty;
     }
 
     private static string FormatPower(double mw)
