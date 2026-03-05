@@ -2,7 +2,6 @@
 @using Web.Services
 @inject GameDataService GameDataService
 
-<span style="display: contents;">
 @if (!string.IsNullOrEmpty(_imageUrl))
 {
     if (Clickable && (Type == "item" || Type == "item_id" || Type == "building"))
@@ -39,7 +38,6 @@ else if (ShowDefaultIcon)
 {
     <i class="fas fa-cube product-icon" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
 }
-</span>
 
 @code {
     [Parameter]

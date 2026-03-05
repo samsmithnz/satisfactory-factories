@@ -274,13 +274,12 @@
                                                     <td>
                                                         @foreach (FactoryItem product in factory.Products.OrderBy(p => GameDataService.GetPartDisplayName(p.Id)))
                                                         {
-                                                            @if (!string.IsNullOrEmpty(product.Id))
-                                                            {
-                                                                <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")" @key="product.Id">
-                                                                    <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
-                                                                    <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
-                                                                </span>
-                                                            }
+                                                            <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")"
+                                                                  @key="product"
+                                                                  style="@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
+                                                                <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
+                                                                <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
+                                                            </span>
                                                         }
                                                     </td>
                                                     <td>
