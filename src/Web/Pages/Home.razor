@@ -991,6 +991,7 @@
 
         await AppState.LoadFactoriesAsync();
         _factories = AppState.GetFactories();
+        SyncNextFactoryId();
 
         // Run initial calculations for loaded factories
         if (_gameData != null && _factories.Count > 0)
@@ -1019,6 +1020,7 @@
     {
         await DemoPlansService.LoadDemoPlanAsync("Simple");
         _factories = AppState.GetFactories();
+        SyncNextFactoryId();
         if (_gameData != null)
         {
             try
@@ -1036,6 +1038,7 @@
     private void HandleTemplateLoaded()
     {
         _factories = AppState.GetFactories();
+        SyncNextFactoryId();
         if (_gameData != null)
         {
             try
@@ -1749,6 +1752,14 @@
     }
 
     // ===== Tasks =====
+
+    private void SyncNextFactoryId()
+    {
+        if (_factories.Count > 0)
+        {
+            _nextFactoryId = _factories.Max(f => f.Id) + 1;
+        }
+    }
 
     private string GetNewTaskText(int factoryId) => _newTaskText.GetValueOrDefault(factoryId, string.Empty);
 
