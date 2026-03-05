@@ -1,3 +1,7 @@
+---
+name: Orchestrator agent
+description: Coordinate work across specialist agents
+---
 # Orchestrator Agent
 
 ## Role
