@@ -260,34 +260,40 @@
                                         <tbody>
                                             @foreach (Factory factory in _factories)
                                             {
-                                                <tr class="@(factory.HasProblem ? "summary-row-problem" : "")" role="button" @onclick="() => ScrollToFactory(factory)">
+                                                <tr class="@(factory.HasProblem ? "summary-row-problem" : "")" role="button" @onclick="() => ScrollToFactory(factory)" @key="factory.Id">
                                                     <td>@factory.Name</td>
                                                     <td>
                                                         @foreach (KeyValuePair<string, BuildingRequirement> bldg in factory.BuildingRequirements.OrderBy(b => GameDataService.GetBuildingDisplayName(b.Key)))
                                                         {
-                                                            <span class="sf-chip small orange no-margin mr-1">
+                                                            <span class="sf-chip small orange no-margin mr-1" @key="bldg.Key">
                                                                 <GameAsset Subject="@bldg.Key" Type="building" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Key)</b>: @FormatNumber(bldg.Value.Amount)x</span>
                                                             </span>
                                                         }
                                                     </td>
                                                     <td>
-                                                        @foreach (FactoryItem product in factory.Products.OrderBy(p => GameDataService.GetPartDisplayName(p.Id)))
+                                                        @* Always render all product chips (even empty ones) to prevent structural
+                                                           DOM insertions. The icon uses a direct <img> (not GameAsset) so that when
+                                                           product.Id changes from "" to a part ID, only src/style attributes are
+                                                           updated — no element-type swap, no removeChild/insertBefore needed. *@
+                                                        @foreach (FactoryItem product in factory.Products)
                                                         {
-                                                            @if (!string.IsNullOrEmpty(product.Id))
-                                                            {
-                                                                <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")">
-                                                                    <GameAsset Subject="@product.Id" Type="item" Height="20" Width="20" />
-                                                                    <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
-                                                                </span>
-                                                            }
+                                                            <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")"
+                                                                  @key="product"
+                                                                  style="@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
+                                                                <img src="@GetPartIconUrl(product.Id)"
+                                                                     width="20" height="20"
+                                                                     style="vertical-align:middle;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"
+                                                                     loading="lazy" />
+                                                                <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
+                                                            </span>
                                                         }
                                                     </td>
                                                     <td>
                                                         @{ List<SummaryImport> imports = GetSummaryImports(factory); }
                                                         @foreach (SummaryImport imp in imports)
                                                         {
-                                                            <span class="sf-chip small blue no-margin mr-1">
+                                                            <span class="sf-chip small blue no-margin mr-1" @key="imp.PartId">
                                                                 <GameAsset Subject="@imp.PartId" Type="item" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(imp.PartId)</b>: @FormatNumber(imp.Amount)/min</span>
                                                             </span>
@@ -297,7 +303,7 @@
                                                         @{ List<SummaryExport> exports = GetSummaryExports(factory); }
                                                         @foreach (SummaryExport exp in exports)
                                                         {
-                                                            <span class="sf-chip small blue no-margin mr-1">
+                                                            <span class="sf-chip small blue no-margin mr-1" @key="exp.PartId">
                                                                 <GameAsset Subject="@exp.PartId" Type="item" Height="20" Width="20" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(exp.PartId)</b>: @FormatNumber(exp.Amount)/min</span>
                                                             </span>
@@ -314,7 +320,7 @@
                         <div class="factories-content">
                             @foreach (Factory factory in _factories)
                             {
-                                <div class="factory-card @(factory.HasProblem ? "factory-card-problem" : "")" id="factory-@factory.Id">
+                                <div class="factory-card @(factory.HasProblem ? "factory-card-problem" : "")" id="factory-@factory.Id" @key="factory.Id">
                                     <!-- Factory Header -->
                                     <div class="factory-header">
                                         <div class="factory-header-left">
@@ -422,86 +428,94 @@
                                                 }
                                                 @foreach (FactoryItem product in factory.Products)
                                                 {
-                                                    <div class="product-row">
-                                                        @if (string.IsNullOrEmpty(product.Id))
-                                                        {
-                                                            <i class="fas fa-cube product-icon"></i>
-                                                        }
-                                                        else
-                                                        {
-                                                            <GameAsset Subject="@product.Id" Type="item" Height="32" Width="32" />
-                                                        }
-                                                        <select class="form-control product-part-select"
-                                                                value="@product.Id"
-                                                                @onchange="(e) => OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
-                                                            <option value="">-- Select Part --</option>
-                                                            @foreach (KeyValuePair<string, Part> partEntry in GetSortedParts())
-                                                            {
-                                                                <option value="@partEntry.Key">@partEntry.Value.Name</option>
-                                                            }
-                                                        </select>
-                                                        @if (!string.IsNullOrEmpty(product.Id))
-                                                        {
-                                                            <i class="fas fa-hat-chef product-icon"></i>
-                                                            <select class="form-control product-recipe-select"
-                                                                    value="@product.Recipe"
-                                                                    @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
-                                                                @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
+                                                    <div @key="product" class="product-iteration">
+                                                        <div class="product-row">
+                                                            <span class="product-icon-slot">
+                                                                @* Use always-rendered <i> + <img> instead of <GameAsset> to eliminate
+                                                                   element-type changes when product.Id transitions from "" to a part ID.
+                                                                   GameAsset's @if branches (cube→img) caused insertBefore(null) crashes
+                                                                   in Blazor's batch renderer. With always-rendered elements only
+                                                                   style/src attributes change — no DOM structural operations. *@
+                                                                <i class="fas fa-cube product-icon"
+                                                                   style="@(!string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"></i>
+                                                                <img src="@GetPartIconUrl(product.Id)"
+                                                                     width="32" height="32"
+                                                                     style="vertical-align:middle;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"
+                                                                     loading="lazy" />
+                                                            </span>
+                                                            <select class="form-control product-part-select"
+                                                                    value="@product.Id"
+                                                                    @onchange="async (e) => await OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                <option value="">-- Select Part --</option>
+                                                                @foreach (KeyValuePair<string, Part> partEntry in GetSortedParts())
                                                                 {
-                                                                    <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
+                                                                    <option value="@partEntry.Key">@partEntry.Value.Name</option>
                                                                 }
                                                             </select>
-                                                            <input type="number"
-                                                                   class="form-control product-amount-input"
-                                                                   value="@product.Amount"
-                                                                   min="1"
-                                                                   @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
-                                                        }
-                                                        @if (ShouldShowFix(product, factory) == "deficit")
-                                                        {
-                                                            <button class="btn btn-sm btn-success mr-1" title="Satisfy - increase amount to meet requirements" @onclick="() => FixProduct(product, factory)">
-                                                                <i class="fas fa-arrow-up mr-1"></i>Satisfy
-                                                            </button>
-                                                        }
-                                                        @if (ShouldShowFix(product, factory) == "surplus")
-                                                        {
-                                                            <button class="btn btn-sm btn-warning mr-1" title="Trim - reduce amount to match requirements" @onclick="() => FixProduct(product, factory)">
-                                                                <i class="fas fa-arrow-down mr-1"></i>Trim
-                                                            </button>
-                                                        }
-                                                        <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemoveProduct(factory, product)">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                        @if (ShouldShowNotInDemand(product, factory))
-                                                        {
-                                                            <span class="sf-chip orange small ml-2">No demand!</span>
-                                                        }
-                                                    </div>
-                                                    @if (!string.IsNullOrEmpty(product.Recipe) && (product.Requirements.Count > 0 || !string.IsNullOrEmpty(product.BuildingRequirements.Name)))
-                                                    {
-                                                        <div class="product-requires-row">
-                                                            <span class="requires-label">Requires:</span>
-                                                            @foreach (KeyValuePair<string, RequirementAmount> req in product.Requirements)
+                                                            <span class="product-recipe-slot">
+                                                                <i class="fas fa-hat-chef product-icon" style="@RecipeSlotDisplayStyle(product.Id)"></i>
+                                                                <select class="form-control product-recipe-select"
+                                                                        style="@RecipeSlotDisplayStyle(product.Id)"
+                                                                        value="@product.Recipe"
+                                                                        @onchange="(e) => OnRecipeSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
+                                                                    @foreach (Recipe recipe in GameDataService.GetRecipesForPart(product.Id))
+                                                                    {
+                                                                        <option value="@recipe.Id">@recipe.DisplayName@(recipe.IsAlternate ? " (Alt)" : "")</option>
+                                                                    }
+                                                                </select>
+                                                                <input type="number"
+                                                                       style="@RecipeSlotDisplayStyle(product.Id)"
+                                                                       class="form-control product-amount-input"
+                                                                       value="@product.Amount"
+                                                                       min="1"
+                                                                       @onchange="(e) => OnAmountChanged(product, factory, e.Value?.ToString() ?? string.Empty)" />
+                                                            </span>
+                                                            @if (ShouldShowFix(product, factory) == "deficit")
                                                             {
-                                                                bool isRaw = factory.Parts.TryGetValue(req.Key, out PartMetrics? pm) && pm.IsRaw;
-                                                                <span class="sf-chip small @(isRaw ? "cyan" : "blue")">
-                                                                    <GameAsset Subject="@req.Key" Type="item" Height="20" Width="20" />
-                                                                    <span class="ml-1"><b>@GameDataService.GetPartDisplayName(req.Key)</b>: @FormatNumber(req.Value.Amount)/min</span>
-                                                                </span>
+                                                                <button class="btn btn-sm btn-success mr-1" title="Satisfy - increase amount to meet requirements" @onclick="() => FixProduct(product, factory)">
+                                                                    <i class="fas fa-arrow-up mr-1"></i>Satisfy
+                                                                </button>
                                                             }
-                                                            @if (!string.IsNullOrEmpty(product.BuildingRequirements.Name))
+                                                            @if (ShouldShowFix(product, factory) == "surplus")
                                                             {
-                                                                <span class="sf-chip small orange">
-                                                                    <GameAsset Subject="@product.BuildingRequirements.Name" Type="building" Height="20" Width="20" />
-                                                                    <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(product.BuildingRequirements.Name)</b>: @FormatNumber(product.BuildingRequirements.Amount)x</span>
-                                                                </span>
-                                                                <span class="sf-chip small yellow">
-                                                                    <i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i>
-                                                                    <span>@FormatPower(product.BuildingRequirements.PowerConsumed ?? 0)</span>
-                                                                </span>
+                                                                <button class="btn btn-sm btn-warning mr-1" title="Trim - reduce amount to match requirements" @onclick="() => FixProduct(product, factory)">
+                                                                    <i class="fas fa-arrow-down mr-1"></i>Trim
+                                                                </button>
+                                                            }
+                                                            <button class="btn btn-sm btn-danger" title="Remove" @onclick="() => RemoveProduct(factory, product)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                            @if (ShouldShowNotInDemand(product, factory))
+                                                            {
+                                                                <span class="sf-chip orange small ml-2">No demand!</span>
                                                             }
                                                         </div>
-                                                    }
+                                                        @if (!string.IsNullOrEmpty(product.Recipe) && (product.Requirements.Count > 0 || !string.IsNullOrEmpty(product.BuildingRequirements.Name)))
+                                                        {
+                                                            <div class="product-requires-row">
+                                                                <span class="requires-label">Requires:</span>
+                                                                @foreach (KeyValuePair<string, RequirementAmount> req in product.Requirements)
+                                                                {
+                                                                    bool isRaw = factory.Parts.TryGetValue(req.Key, out PartMetrics? pm) && pm.IsRaw;
+                                                                    <span class="sf-chip small @(isRaw ? "cyan" : "blue")">
+                                                                        <GameAsset Subject="@req.Key" Type="item" Height="20" Width="20" />
+                                                                        <span class="ml-1"><b>@GameDataService.GetPartDisplayName(req.Key)</b>: @FormatNumber(req.Value.Amount)/min</span>
+                                                                    </span>
+                                                                }
+                                                                @if (!string.IsNullOrEmpty(product.BuildingRequirements.Name))
+                                                                {
+                                                                    <span class="sf-chip small orange">
+                                                                        <GameAsset Subject="@product.BuildingRequirements.Name" Type="building" Height="20" Width="20" />
+                                                                        <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(product.BuildingRequirements.Name)</b>: @FormatNumber(product.BuildingRequirements.Amount)x</span>
+                                                                    </span>
+                                                                    <span class="sf-chip small yellow">
+                                                                        <i class="fas fa-bolt mr-1"></i><i class="fas fa-minus mr-1"></i>
+                                                                        <span>@FormatPower(product.BuildingRequirements.PowerConsumed ?? 0)</span>
+                                                                    </span>
+                                                                }
+                                                            </div>
+                                                        }
+                                                    </div>
                                                 }
                                                 <div class="factory-add-part mt-2">
                                                     <button class="btn btn-sm btn-primary" @onclick="() => AddEmptyProduct(factory)">
@@ -512,7 +526,7 @@
                                                 <!-- Power Producers -->
                                                 @foreach (FactoryPowerProducer producer in factory.PowerProducers)
                                                 {
-                                                    <div class="product-row mt-2">
+                                                    <div class="product-row mt-2" @key="producer">
                                                         <select class="form-control product-part-select"
                                                                 value="@producer.Building"
                                                                 @onchange="(e) => OnPowerProducerBuildingChanged(producer, factory, e.Value?.ToString() ?? string.Empty)">
@@ -605,7 +619,7 @@
                                                 </h5>
                                                 @foreach (FactoryInput input in factory.Inputs)
                                                 {
-                                                    <div class="product-row mb-2">
+                                                    <div class="product-row mb-2" @key="input">
                                                         <i class="fas fa-industry mr-2"></i>
                                                         <select class="form-control product-part-select"
                                                                 value="@(input.FactoryId?.ToString() ?? string.Empty)"
@@ -732,7 +746,7 @@
                                                             <tbody>
                                                                 @foreach (KeyValuePair<string, PartMetrics> partEntry in factory.Parts)
                                                                 {
-                                                                    <tr class="@(partEntry.Value.Satisfied ? "sat-row-ok" : "sat-row-fail")">
+                                                                    <tr class="@(partEntry.Value.Satisfied ? "sat-row-ok" : "sat-row-fail")" @key="partEntry.Key">
                                                                         <td class="sat-col-item">
                                                                             <div class="d-flex align-items-center">
                                                                                 <GameAsset Subject="@partEntry.Key" Type="item" Height="32" Width="32" />
@@ -951,6 +965,7 @@
     private Dictionary<int, string> _newTaskText = new Dictionary<int, string>();
     private bool _showIntroDialog = false;
     private bool _disableRecalc = false;
+    private int _renderCount = 0;
 
     // Simple statistics record types for aggregation
     private record StatRawResource(string Id, double TotalAmount);
@@ -959,6 +974,12 @@
     private record StatProducedItem(string Id, double AmountSupplied);
     private record SummaryImport(string PartId, double Amount);
     private record SummaryExport(string PartId, double Amount);
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        _renderCount++;
+        Console.WriteLine($"Home: OnAfterRender #{_renderCount} (firstRender={firstRender}), factories={_factories.Count}, isLoaded={_isLoaded}");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -972,7 +993,15 @@
         // Run initial calculations for loaded factories
         if (_gameData != null && _factories.Count > 0)
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
+            try
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Home: Error during initial factory calculation: {ex}");
+                ToastService.ShowToast("An error occurred while loading your factories. Some data may be in an inconsistent state.", ToastType.Error);
+            }
         }
 
         string currentUrl = NavManager.Uri;
@@ -986,25 +1015,36 @@
 
     private async Task LoadDemoPlan()
     {
-        Console.WriteLine("Loading demo plan from query parameter");
         await DemoPlansService.LoadDemoPlanAsync("Simple");
         _factories = AppState.GetFactories();
         if (_gameData != null)
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
+            try
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Home: Error during demo plan factory calculation: {ex}");
+                ToastService.ShowToast("An error occurred while loading the demo plan.", ToastType.Error);
+            }
         }
-        Console.WriteLine("Demo plan loaded successfully");
     }
 
     private void HandleTemplateLoaded()
     {
-        Console.WriteLine("Home: HandleTemplateLoaded called");
         _factories = AppState.GetFactories();
-        Console.WriteLine($"Home: Retrieved {_factories.Count} factories from AppState");
         if (_gameData != null)
         {
-            FactoryCalcService.CalculateFactories(_factories, _gameData);
-            Console.WriteLine("Home: Recalculated all factories after template load");
+            try
+            {
+                FactoryCalcService.CalculateFactories(_factories, _gameData);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine($"Home: HandleTemplateLoaded - Error during factory calculation: {ex}");
+                ToastService.ShowToast("An error occurred while loading the template.", ToastType.Error);
+            }
         }
         else
         {
@@ -1025,7 +1065,16 @@
         catch (Exception ex)
         {
             Console.Error.WriteLine($"RecalculateAll: Error during factory calculation: {ex}");
-            ToastService.ShowToast($"An error occurred while calculating factories: {ex.Message}", ToastType.Error);
+            string errorMessage;
+            if (string.IsNullOrEmpty(ex.Message))
+            {
+                errorMessage = $"An unexpected error occurred ({ex.GetType().Name}). Please check the browser console for details.";
+            }
+            else
+            {
+                errorMessage = ex.Message;
+            }
+            ToastService.ShowToast($"An error occurred while calculating factories: {errorMessage}", ToastType.Error);
         }
     }
 
@@ -1163,8 +1212,9 @@
         _ = AppState.SaveFactoriesAsync();
     }
 
-    private void OnPartSelected(FactoryItem product, Factory factory, string partId)
+    private async Task OnPartSelected(FactoryItem product, Factory factory, string partId)
     {
+        Console.WriteLine($"Home: OnPartSelected start — factory='{factory.Name}', partId='{partId}', product.Id was='{product.Id}', renderCount={_renderCount}");
         product.Id = partId;
 
         if (!string.IsNullOrEmpty(partId))
@@ -1174,13 +1224,23 @@
             product.Recipe = !string.IsNullOrEmpty(defaultRecipe) && recipes.Count > 0
                 ? defaultRecipe
                 : (recipes.Count > 0 ? recipes[0].Id : string.Empty);
+            Console.WriteLine($"Home: OnPartSelected — set recipe='{product.Recipe}', {recipes.Count} recipes available");
         }
         else
         {
             product.Recipe = string.Empty;
         }
 
+        Console.WriteLine($"Home: OnPartSelected — awaiting Task.Yield() to allow first render pass (renderCount={_renderCount})");
+        // Yield to let Blazor render the product-row structural changes (icon, recipe/amount
+        // controls) before RecalculateAll triggers the satisfaction-section and raw-resources
+        // changes.  Running both structural groups in the same render pass causes Blazor's
+        // DOM reconciliation to call removeChild on a null parent reference.
+        await Task.Yield();
+
+        Console.WriteLine($"Home: OnPartSelected — resumed after Task.Yield(), renderCount={_renderCount}, calling RecalculateAll");
         RecalculateAll();
+        Console.WriteLine($"Home: OnPartSelected — complete, renderCount={_renderCount}");
     }
 
     private void OnRecipeSelected(FactoryItem product, Factory factory, string recipeId)
@@ -1465,6 +1525,58 @@
     private static string FormatNumber(double value)
     {
         return value % 1 == 0 ? ((int)value).ToString() : value.ToString("0.###");
+    }
+
+    private const string HiddenStyle = "display:none;";
+
+    private static string RecipeSlotDisplayStyle(string productId)
+    {
+        return string.IsNullOrEmpty(productId) ? HiddenStyle : string.Empty;
+    }
+
+    /// <summary>
+    /// Returns the URL for a part's icon image (64px), or empty string if not available.
+    /// Uses only attribute/style changes when the src is set, avoiding element-type swaps
+    /// that crash Blazor's batch renderer with insertBefore(null).
+    /// </summary>
+    private string GetPartIconUrl(string partId)
+    {
+        if (string.IsNullOrEmpty(partId))
+        {
+            return string.Empty;
+        }
+
+        GameData gameData = GameDataService.GetGameData();
+
+        if (gameData.Items.Parts.TryGetValue(partId, out Part? partItem))
+        {
+            if (partItem.IsFicsmas)
+            {
+                return string.Empty; // ficsmas — no image available
+            }
+            string slug = SlugifyPartName(partItem.Name);
+            return $"/assets/game/item/{slug}_64.png";
+        }
+
+        if (gameData.Items.RawResources.TryGetValue(partId, out RawResource? rawItem))
+        {
+            string slug = SlugifyPartName(rawItem.Name);
+            return $"/assets/game/item/{slug}_64.png";
+        }
+
+        return string.Empty; // unknown part — no icon
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex SlugifyLowerToUpperRegex =
+        new System.Text.RegularExpressions.Regex(@"([a-z0-9])([A-Z])", System.Text.RegularExpressions.RegexOptions.Compiled);
+    private static readonly System.Text.RegularExpressions.Regex SlugifySpacesRegex =
+        new System.Text.RegularExpressions.Regex(@"\s+", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    private static string SlugifyPartName(string name)
+    {
+        string result = SlugifyLowerToUpperRegex.Replace(name, "$1-$2");
+        result = SlugifySpacesRegex.Replace(result, "-");
+        return result.ToLower();
     }
 
     private static string FormatPower(double mw)

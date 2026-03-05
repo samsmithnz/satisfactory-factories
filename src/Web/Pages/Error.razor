@@ -11,9 +11,18 @@
             <p class="mb-4">
                 Unfortunately it appears that your data is somehow corrupted.
             </p>
-            <p class="mb-4">
-                The error is: <span class="text-red">@_errorMessage</span>.
-            </p>
+            @if (string.IsNullOrEmpty(_errorMessage))
+            {
+                <p class="mb-4">
+                    <span class="text-orange">No error details were captured. Please check the browser console for more information.</span>
+                </p>
+            }
+            else
+            {
+                <p class="mb-4">
+                    The error is: <span class="text-red">@_errorMessage</span>.
+                </p>
+            }
             <p class="mb-4">
                 Please press: 
                 @if (!_copied)

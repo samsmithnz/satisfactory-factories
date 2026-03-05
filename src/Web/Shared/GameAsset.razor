@@ -2,6 +2,11 @@
 @using Web.Services
 @inject GameDataService GameDataService
 
+@* Stable wrapper: GameAsset always emits exactly one <span> at its root.
+   Element-type changes (e.g. <i> → <img>) happen INSIDE this wrapper,
+   never at the component boundary where they corrupt sibling references
+   in the same Blazor render batch. *@
+<span style="display:inline-block;width:@(_widthPx)px;height:@(_heightPx)px;vertical-align:middle;">
 @if (!string.IsNullOrEmpty(_imageUrl))
 {
     if (Clickable && (Type == "item" || Type == "item_id" || Type == "building"))
@@ -34,6 +39,20 @@ else if (_isUnknown)
 {
     <i class="fas fa-question" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
 }
+else if (ShowDefaultIcon)
+{
+    <i class="fas fa-cube product-icon" style="width: @(_widthPx)px; height: @(_heightPx)px; display: inline-block; text-align: center; line-height: @(_heightPx)px;"></i>
+}
+else
+{
+    @* Placeholder: ensures the wrapper span ALWAYS has exactly one child.
+       Without this, the wrapper has 0 children when Subject="" and ShowDefaultIcon=false
+       (e.g. summary chip). A later Subject change causes a 0→1 child insertion inside the
+       wrapper, which crashes Blazor's batch renderer with insertBefore(parent=null).
+       With the placeholder, the transition is a safe element-type swap (span→img). *@
+    <span style="display:none;"></span>
+}
+</span>
 
 @code {
     [Parameter]
@@ -51,6 +70,9 @@ else if (_isUnknown)
     [Parameter]
     public bool Clickable { get; set; } = false;
 
+    [Parameter]
+    public bool ShowDefaultIcon { get; set; } = false;
+
     private int _widthPx;
     private int _heightPx;
     private string _imageUrl = string.Empty;
@@ -61,6 +83,10 @@ else if (_isUnknown)
 
     protected override void OnParametersSet()
     {
+        string oldBranch = GetRenderBranch();
+
+        _isUnknown = false;
+        _isFicsmas = false;
         _widthPx = Width ?? 32;
         _heightPx = Height ?? 32;
 
@@ -69,6 +95,21 @@ else if (_isUnknown)
         
         string imgSize = (_widthPx > 64 || _heightPx > 64) ? "big" : "small";
         _imageUrl = GetIcon(Subject, Type, imgSize);
+
+        string newBranch = GetRenderBranch();
+        if (oldBranch != newBranch)
+        {
+            Console.WriteLine($"GameAsset: branch change '{oldBranch}'→'{newBranch}' for Subject='{Subject}', Type='{Type}', ShowDefaultIcon={ShowDefaultIcon}");
+        }
+    }
+
+    private string GetRenderBranch()
+    {
+        if (!string.IsNullOrEmpty(_imageUrl)) return "img";
+        if (_isFicsmas) return "ficsmas";
+        if (_isUnknown) return "unknown";
+        if (ShowDefaultIcon) return "cube";
+        return "placeholder";
     }
 
     private string GetDisplayName()

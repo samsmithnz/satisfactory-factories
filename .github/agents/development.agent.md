@@ -1,3 +1,7 @@
+---
+name: Development agent
+description: Implement features, fix bugs, and maintain the codebase
+---
 # Development Agent
 
 ## Role

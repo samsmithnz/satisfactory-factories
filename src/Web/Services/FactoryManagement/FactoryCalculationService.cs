@@ -160,14 +160,21 @@ public class FactoryCalculationService : IFactoryCalculationService
             Recipe? recipe = _common.GetRecipe(product.Recipe, gameData);
             if (recipe == null)
             {
-                Console.WriteLine($"calculateProductRequirements: Recipe with ID {product.Recipe} not found. It could be the user has not yet selected one.");
+                Console.WriteLine($"CalculateProducts: Recipe with ID {product.Recipe} not found. It could be the user has not yet selected one.");
+                continue;
+            }
+
+            RecipeItem? mainProductItem = recipe.Products.FirstOrDefault(p => p.IsByProduct != true);
+            if (mainProductItem == null || mainProductItem.PerMin <= 0)
+            {
+                Console.Error.WriteLine($"CalculateProducts: Recipe {recipe.Id} has no valid main product or zero PerMin. Skipping.");
                 continue;
             }
 
             if (product.Amount <= 0)
             {
                 product.Amount = 1;
-                Console.WriteLine("products: CalculateProducts: Product amount is <= 0, force setting to 1 to prevent calculation errors.");
+                Console.WriteLine("CalculateProducts: Product amount is <= 0, force setting to 1 to prevent calculation errors.");
             }
 
             foreach (RecipeItem ingredient in recipe.Ingredients)
@@ -179,7 +186,7 @@ public class FactoryCalculationService : IFactoryCalculationService
                 }
 
                 // Calculate parts required per minute to make the product
-                double productIngredientRatio = product.Amount / recipe.Products[0].PerMin;
+                double productIngredientRatio = product.Amount / mainProductItem.PerMin;
                 double ingredientRequired = ingredient.PerMin * productIngredientRatio;
                 ingredientRequired = Math.Round(ingredientRequired * 1000) / 1000;
 
@@ -217,9 +224,16 @@ public class FactoryCalculationService : IFactoryCalculationService
                 continue;
             }
 
+            RecipeItem? mainProduct = recipe.Products.FirstOrDefault(p => p.IsByProduct != true);
+            if (mainProduct == null || mainProduct.Amount <= 0)
+            {
+                Console.Error.WriteLine($"CalculateByProducts: Recipe {recipe.Id} has no valid main product. Skipping byproducts.");
+                continue;
+            }
+
             foreach (RecipeItem byProduct in byProducts)
             {
-                double byProductRatio = byProduct.Amount / recipe.Products[0].Amount;
+                double byProductRatio = byProduct.Amount / mainProduct.Amount;
                 double byProductAmount = product.Amount * byProductRatio;
 
                 product.ByProducts!.Add(new ByProductItem
@@ -507,7 +521,7 @@ public class FactoryCalculationService : IFactoryCalculationService
             }
 
             RecipeItem? productInRecipe = recipe.Products.FirstOrDefault(p => p.Part == product.Id);
-            if (productInRecipe == null)
+            if (productInRecipe == null || productInRecipe.PerMin <= 0)
             {
                 product.BuildingRequirements = new BuildingRequirement();
                 continue;

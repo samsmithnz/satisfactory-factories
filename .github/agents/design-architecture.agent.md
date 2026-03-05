@@ -1,3 +1,7 @@
+---
+name: Architecture agent
+description: Design and implement system architecture
+---
 # Design & Architecture Agent
 
 ## Role

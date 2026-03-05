@@ -1,3 +1,7 @@
+---
+name: Quality agent
+description: Ensure code quality and reliability
+---
 # Quality Agent
 
 ## Role
