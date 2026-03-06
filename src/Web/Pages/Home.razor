@@ -635,14 +635,9 @@
                                                         @if (input.FactoryId.HasValue)
                                                         {
                                                             <span class="mr-2">
-                                                                @if (!string.IsNullOrEmpty(input.OutputPart))
-                                                                {
-                                                                    <GameAsset Subject="@input.OutputPart" Type="item" Height="32" Width="32" />
-                                                                }
-                                                                else
-                                                                {
-                                                                    <i class="fas fa-cube" style="width: 32px; height: 32px"></i>
-                                                                }
+                                                                @* Always-rendered GameAsset avoids element↔component switch when OutputPart changes
+                                                                   from null to a value (which caused removeChild(null) crash in Blazor's diff). *@
+                                                                <GameAsset Subject="@(input.OutputPart ?? string.Empty)" Type="item" Height="32" Width="32" ShowDefaultIcon="true" />
                                                             </span>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@(input.OutputPart ?? string.Empty)"
