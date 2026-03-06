@@ -132,7 +132,7 @@
                                                 @foreach (StatRawResource res in rawResources)
                                                 {
                                                     <span class="sf-chip small cyan">
-                                                        <GameAsset Subject="@res.Id" Type="item" Height="24" Width="24" />
+                                                        <GameAsset Subject="@res.Id" Type="item" Height="24" Width="24" Clickable="true" />
                                                         <span class="ml-2"><b>@GameDataService.GetPartDisplayName(res.Id)</b>: @FormatNumber(res.TotalAmount)/min</span>
                                                     </span>
                                                 }
@@ -154,7 +154,7 @@
                                                 @foreach (StatBuilding bldg in buildings)
                                                 {
                                                     <span class="sf-chip small orange">
-                                                        <GameAsset Subject="@bldg.Name" Type="building" Height="24" Width="24" />
+                                                        <GameAsset Subject="@bldg.Name" Type="building" Height="24" Width="24" Clickable="true" />
                                                         <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Name)</b>: @FormatNumber(bldg.TotalAmount)x</span>
                                                     </span>
                                                 }
@@ -185,7 +185,7 @@
                                                 @foreach (StatPartDifference pd in diffs)
                                                 {
                                                     <span class="sf-chip small @(pd.AmountRemaining > 0 ? "green" : "red")">
-                                                        <GameAsset Subject="@pd.Id" Type="item" Height="24" Width="24" />
+                                                        <GameAsset Subject="@pd.Id" Type="item" Height="24" Width="24" Clickable="true" />
                                                         <span class="ml-2"><b>@GameDataService.GetPartDisplayName(pd.Id)</b>: @FormatNumber(pd.AmountRemaining)/min</span>
                                                     </span>
                                                 }
@@ -217,7 +217,7 @@
                                                     @foreach (StatProducedItem item in producedItems)
                                                     {
                                                         <span class="sf-chip small blue">
-                                                            <GameAsset Subject="@item.Id" Type="item" Height="24" Width="24" />
+                                                            <GameAsset Subject="@item.Id" Type="item" Height="24" Width="24" Clickable="true" />
                                                             <span class="ml-2"><b>@GameDataService.GetPartDisplayName(item.Id)</b>: @FormatNumber(item.AmountSupplied)/min</span>
                                                         </span>
                                                     }
@@ -266,7 +266,7 @@
                                                         @foreach (KeyValuePair<string, BuildingRequirement> bldg in factory.BuildingRequirements.OrderBy(b => GameDataService.GetBuildingDisplayName(b.Key)))
                                                         {
                                                             <span class="sf-chip small orange no-margin mr-1" @key="bldg.Key">
-                                                                <GameAsset Subject="@bldg.Key" Type="building" Height="20" Width="20" />
+                                                                <GameAsset Subject="@bldg.Key" Type="building" Height="20" Width="20" Clickable="true" />
                                                                 <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Key)</b>: @FormatNumber(bldg.Value.Amount)x</span>
                                                             </span>
                                                         }
@@ -281,10 +281,16 @@
                                                             <span class="sf-chip small no-margin mr-1 @(factory.Parts.TryGetValue(product.Id, out PartMetrics? pm) && pm.AmountRemaining < 0 ? "red" : "")"
                                                                   @key="product"
                                                                   style="@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
-                                                                <img src="@GetPartIconUrl(product.Id)"
-                                                                     width="20" height="20"
-                                                                     style="vertical-align:middle;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"
-                                                                     loading="lazy" />
+                                                                <a href="@GetPartWikiUrl(product.Id)"
+                                                                   target="_blank"
+                                                                   rel="noopener noreferrer"
+                                                                   class="game-asset-clickable"
+                                                                   style="display:inline-block;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
+                                                                    <img src="@GetPartIconUrl(product.Id)"
+                                                                         width="20" height="20"
+                                                                         style="vertical-align:middle;"
+                                                                         loading="lazy" />
+                                                                </a>
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
                                                             </span>
                                                         }
@@ -294,7 +300,7 @@
                                                         @foreach (SummaryImport imp in imports)
                                                         {
                                                             <span class="sf-chip small blue no-margin mr-1" @key="imp.PartId">
-                                                                <GameAsset Subject="@imp.PartId" Type="item" Height="20" Width="20" />
+                                                                <GameAsset Subject="@imp.PartId" Type="item" Height="20" Width="20" Clickable="true" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(imp.PartId)</b>: @FormatNumber(imp.Amount)/min</span>
                                                             </span>
                                                         }
@@ -304,7 +310,7 @@
                                                         @foreach (SummaryExport exp in exports)
                                                         {
                                                             <span class="sf-chip small blue no-margin mr-1" @key="exp.PartId">
-                                                                <GameAsset Subject="@exp.PartId" Type="item" Height="20" Width="20" />
+                                                                <GameAsset Subject="@exp.PartId" Type="item" Height="20" Width="20" Clickable="true" />
                                                                 <span class="ml-1"><b>@GameDataService.GetPartDisplayName(exp.PartId)</b>: @FormatNumber(exp.Amount)/min</span>
                                                             </span>
                                                         }
@@ -433,17 +439,23 @@
                                                     <div @key="product" class="product-iteration">
                                                         <div class="product-row">
                                                             <span class="product-icon-slot">
-                                                                @* Use always-rendered <i> + <img> instead of <GameAsset> to eliminate
+                                                                @* Use always-rendered <i> + <a><img></a> instead of <GameAsset> to eliminate
                                                                    element-type changes when product.Id transitions from "" to a part ID.
                                                                    GameAsset's @if branches (cube→img) caused insertBefore(null) crashes
                                                                    in Blazor's batch renderer. With always-rendered elements only
                                                                    style/src attributes change — no DOM structural operations. *@
                                                                 <i class="fas fa-cube product-icon"
                                                                    style="@(!string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"></i>
-                                                                <img src="@GetPartIconUrl(product.Id)"
-                                                                     width="32" height="32"
-                                                                     style="vertical-align:middle;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)"
-                                                                     loading="lazy" />
+                                                                <a href="@GetPartWikiUrl(product.Id)"
+                                                                   target="_blank"
+                                                                   rel="noopener noreferrer"
+                                                                   class="game-asset-clickable"
+                                                                   style="display:inline-block;@(string.IsNullOrEmpty(product.Id) ? HiddenStyle : string.Empty)">
+                                                                    <img src="@GetPartIconUrl(product.Id)"
+                                                                         width="32" height="32"
+                                                                         style="vertical-align:middle;"
+                                                                         loading="lazy" />
+                                                                </a>
                                                             </span>
                                                             <select class="form-control product-part-select"
                                                                     value="@product.Id"
@@ -500,14 +512,14 @@
                                                                 {
                                                                     bool isRaw = factory.Parts.TryGetValue(req.Key, out PartMetrics? pm) && pm.IsRaw;
                                                                     <span class="sf-chip small @(isRaw ? "cyan" : "blue")">
-                                                                        <GameAsset Subject="@req.Key" Type="item" Height="20" Width="20" />
+                                                                        <GameAsset Subject="@req.Key" Type="item" Height="20" Width="20" Clickable="true" />
                                                                         <span class="ml-1"><b>@GameDataService.GetPartDisplayName(req.Key)</b>: @FormatNumber(req.Value.Amount)/min</span>
                                                                     </span>
                                                                 }
                                                                 @if (!string.IsNullOrEmpty(product.BuildingRequirements.Name))
                                                                 {
                                                                     <span class="sf-chip small orange">
-                                                                        <GameAsset Subject="@product.BuildingRequirements.Name" Type="building" Height="20" Width="20" />
+                                                                        <GameAsset Subject="@product.BuildingRequirements.Name" Type="building" Height="20" Width="20" Clickable="true" />
                                                                         <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(product.BuildingRequirements.Name)</b>: @FormatNumber(product.BuildingRequirements.Amount)x</span>
                                                                     </span>
                                                                     <span class="sf-chip small yellow">
@@ -594,12 +606,12 @@
                                                                 {
                                                                     Web.Models.Factory.PowerItem supplementalIngredient = producer.Ingredients[1];
                                                                     <span class="sf-chip small blue">
-                                                                        <GameAsset Subject="@supplementalIngredient.Part" Type="item" Height="20" Width="20" />
+                                                                        <GameAsset Subject="@supplementalIngredient.Part" Type="item" Height="20" Width="20" Clickable="true" />
                                                                         <span class="ml-1"><b>@GameDataService.GetPartDisplayName(supplementalIngredient.Part)</b>: @FormatNumber(supplementalIngredient.PerMin)/min</span>
                                                                     </span>
                                                                 }
                                                                 <span class="sf-chip small orange">
-                                                                    <GameAsset Subject="@producer.Building" Type="building" Height="20" Width="20" />
+                                                                    <GameAsset Subject="@producer.Building" Type="building" Height="20" Width="20" Clickable="true" />
                                                                     <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(producer.Building)</b>: @FormatNumber(producer.BuildingAmount)x</span>
                                                                 </span>
                                                                 <span class="sf-chip small yellow">
@@ -637,7 +649,7 @@
                                                             <span class="mr-2">
                                                                 @* Always-rendered GameAsset avoids element↔component switch when OutputPart changes
                                                                    from null to a value (which caused removeChild(null) crash in Blazor's diff). *@
-                                                                <GameAsset Subject="@(input.OutputPart ?? string.Empty)" Type="item" Height="32" Width="32" ShowDefaultIcon="true" />
+                                                                <GameAsset Subject="@(input.OutputPart ?? string.Empty)" Type="item" Height="32" Width="32" ShowDefaultIcon="true" Clickable="true" />
                                                             </span>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@(input.OutputPart ?? string.Empty)"
@@ -709,7 +721,7 @@
                                                             @foreach (KeyValuePair<string, WorldRawResource> resource in factory.RawResources)
                                                             {
                                                                 <span class="sf-chip small cyan">
-                                                                    <GameAsset Subject="@resource.Key" Type="item" Height="20" Width="20" />
+                                                                    <GameAsset Subject="@resource.Key" Type="item" Height="20" Width="20" Clickable="true" />
                                                                     <span class="ml-2"><b>@resource.Value.Name</b>: @FormatNumber(resource.Value.Amount)/min</span>
                                                                 </span>
                                                             }
@@ -746,7 +758,7 @@
                                                                     <tr class="@(partEntry.Value.Satisfied ? "sat-row-ok" : "sat-row-fail")" @key="partEntry.Key">
                                                                         <td class="sat-col-item">
                                                                             <div class="d-flex align-items-center">
-                                                                                <GameAsset Subject="@partEntry.Key" Type="item" Height="32" Width="32" />
+                                                                                <GameAsset Subject="@partEntry.Key" Type="item" Height="32" Width="32" Clickable="true" />
                                                                                 <span class="ml-2 @(partEntry.Value.Satisfied ? "text-green" : "text-red")">
                                                                                     <i class="fas @(partEntry.Value.Satisfied ? "fa-check" : "fa-times") mr-1"></i>
                                                                                     <b>@GameDataService.GetPartDisplayName(partEntry.Key)</b>
@@ -812,7 +824,7 @@
                                                             @foreach (KeyValuePair<string, BuildingRequirement> bldg in factory.BuildingRequirements)
                                                             {
                                                                 <span class="sf-chip small orange">
-                                                                    <GameAsset Subject="@bldg.Value.Name" Type="building" Height="20" Width="20" />
+                                                                    <GameAsset Subject="@bldg.Value.Name" Type="building" Height="20" Width="20" Clickable="true" />
                                                                     <span class="ml-1"><b>@GameDataService.GetBuildingDisplayName(bldg.Value.Name)</b>: @FormatNumber(bldg.Value.Amount)x</span>
                                                                 </span>
                                                             }
@@ -928,7 +940,7 @@
                                                     @if (!string.IsNullOrEmpty(product.Id))
                                                     {
                                                         <span class="sf-chip @CollapsedProductChipClass(factory, product.Id)">
-                                                            <GameAsset Subject="@product.Id" Type="item" Height="24" Width="24" />
+                                                            <GameAsset Subject="@product.Id" Type="item" Height="24" Width="24" Clickable="true" />
                                                             <span class="ml-1"><b>@GameDataService.GetPartDisplayName(product.Id)</b>: @FormatNumber(product.Amount)/min</span>
                                                         </span>
                                                     }
@@ -1539,6 +1551,17 @@
     /// Uses only attribute/style changes when the src is set, avoiding element-type swaps
     /// that crash Blazor's batch renderer with insertBefore(null).
     /// </summary>
+    private string GetPartWikiUrl(string partId)
+    {
+        if (string.IsNullOrEmpty(partId))
+        {
+            return string.Empty;
+        }
+
+        string displayName = GameDataService.GetPartDisplayName(partId);
+        return GameDataService.GetWikiUrl(displayName);
+    }
+
     private string GetPartIconUrl(string partId)
     {
         if (string.IsNullOrEmpty(partId))

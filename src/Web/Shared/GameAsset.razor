@@ -91,7 +91,7 @@ else
         _heightPx = Height ?? 32;
 
         _displayName = GetDisplayName();
-        _wikiUrl = GetWikiUrl(_displayName);
+        _wikiUrl = GameDataService.GetWikiUrl(_displayName);
         
         string imgSize = (_widthPx > 64 || _heightPx > 64) ? "big" : "small";
         _imageUrl = GetIcon(Subject, Type, imgSize);
@@ -123,17 +123,6 @@ else
             return GameDataService.GetBuildingDisplayName(Subject);
         }
         return Subject;
-    }
-
-    private string GetWikiUrl(string displayName)
-    {
-        if (string.IsNullOrEmpty(displayName))
-        {
-            return string.Empty;
-        }
-
-        string wikiName = Uri.EscapeDataString(displayName.Replace(" ", "_"));
-        return $"https://satisfactory.wiki.gg/wiki/{wikiName}";
     }
 
     private string GetIcon(string subject, string type, string size)
