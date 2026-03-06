@@ -388,15 +388,15 @@ public class FactoryCalculationService : IFactoryCalculationService
         // Supply from inputs
         foreach (FactoryInput input in factory.Inputs)
         {
+            // Skip incomplete inputs - user may still be selecting factory/part.
             if (string.IsNullOrEmpty(input.OutputPart))
             {
-                Console.Error.WriteLine("CalculatePartSupply - inputs: Output part is missing from input!");
                 continue;
             }
             _common.CreateNewPart(factory, input.OutputPart);
             if (input.Amount == 0)
             {
-                Console.Error.WriteLine("CalculatePartSupply - inputs: Amount is missing from input!");
+                // Amount may be 0 while user is still configuring the import.
                 continue;
             }
             factory.Parts[input.OutputPart].AmountSuppliedViaInput += input.Amount;
@@ -407,7 +407,7 @@ public class FactoryCalculationService : IFactoryCalculationService
         {
             if (product.Amount == 0)
             {
-                Console.Error.WriteLine("CalculatePartSupply - products: Amount is missing from product!");
+                // Amount may be 0 while user is still configuring the product.
                 continue;
             }
 

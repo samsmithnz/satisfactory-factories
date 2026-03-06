@@ -422,10 +422,12 @@
                                                 <h5 class="section-heading">
                                                     <i class="fas fa-conveyor-belt-alt mr-2"></i>Products &amp; Power Generators
                                                 </h5>
-                                                @if (factory.Products.Count == 0)
-                                                {
-                                                    <p class="text-grey">No products. Add a product to this factory.</p>
-                                                }
+                                                @* Always render this paragraph so its removal never coincides with
+                                                   the first product-row insertion in the same render batch.
+                                                   Simultaneous structural removal + insertion in the same parent
+                                                   corrupts Blazor's element store and causes insertBefore(null) when
+                                                   OnPartSelected later adds options to the recipe <select>. *@
+                                                <p class="text-grey" style="@(factory.Products.Count > 0 ? HiddenStyle : string.Empty)">No products. Add a product to this factory.</p>
                                                 @foreach (FactoryItem product in factory.Products)
                                                 {
                                                     <div @key="product" class="product-iteration">
@@ -633,14 +635,9 @@
                                                         @if (input.FactoryId.HasValue)
                                                         {
                                                             <span class="mr-2">
-                                                                @if (!string.IsNullOrEmpty(input.OutputPart))
-                                                                {
-                                                                    <GameAsset Subject="@input.OutputPart" Type="item" Height="32" Width="32" />
-                                                                }
-                                                                else
-                                                                {
-                                                                    <i class="fas fa-cube" style="width: 32px; height: 32px"></i>
-                                                                }
+                                                                @* Always-rendered GameAsset avoids element↔component switch when OutputPart changes
+                                                                   from null to a value (which caused removeChild(null) crash in Blazor's diff). *@
+                                                                <GameAsset Subject="@(input.OutputPart ?? string.Empty)" Type="item" Height="32" Width="32" ShowDefaultIcon="true" />
                                                             </span>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@(input.OutputPart ?? string.Empty)"
@@ -989,6 +986,7 @@
 
         await AppState.LoadFactoriesAsync();
         _factories = AppState.GetFactories();
+        SyncNextFactoryId();
 
         // Run initial calculations for loaded factories
         if (_gameData != null && _factories.Count > 0)
@@ -1017,6 +1015,7 @@
     {
         await DemoPlansService.LoadDemoPlanAsync("Simple");
         _factories = AppState.GetFactories();
+        SyncNextFactoryId();
         if (_gameData != null)
         {
             try
@@ -1034,6 +1033,7 @@
     private void HandleTemplateLoaded()
     {
         _factories = AppState.GetFactories();
+        SyncNextFactoryId();
         if (_gameData != null)
         {
             try
@@ -1747,6 +1747,14 @@
     }
 
     // ===== Tasks =====
+
+    private void SyncNextFactoryId()
+    {
+        if (_factories.Count > 0)
+        {
+            _nextFactoryId = _factories.Max(f => f.Id) + 1;
+        }
+    }
 
     private string GetNewTaskText(int factoryId) => _newTaskText.GetValueOrDefault(factoryId, string.Empty);
 
