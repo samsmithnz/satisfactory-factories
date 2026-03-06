@@ -219,4 +219,15 @@ public class GameDataService
 
         return $"UNKNOWN BUILDING: {building}";
     }
+
+    public static string GetWikiUrl(string displayName)
+    {
+        if (string.IsNullOrEmpty(displayName))
+        {
+            return string.Empty;
+        }
+
+        string wikiName = Uri.EscapeDataString(displayName.Replace(" ", "_"));
+        return $"https://satisfactory.wiki.gg/wiki/{wikiName}";
+    }
 }
