@@ -80,9 +80,7 @@
                                                 }
                                             </div>
                                             <div class="sidebar-factory-status @SidebarSyncStateClass(factory)" title="@SidebarSyncStateTitle(factory)">
-                                                <i class="fas fa-check" style="@(factory.InSync == true ? "" : HiddenStyle)"></i>
-                                                <i class="fas fa-times" style="@(factory.InSync == false ? "" : HiddenStyle)"></i>
-                                                <i class="fas fa-question" style="@(factory.InSync == null ? "" : HiddenStyle)"></i>
+                                                <i class="@SidebarSyncIconClass(factory)"></i>
                                             </div>
                                         </div>
                                     </li>
@@ -2136,6 +2134,19 @@
             return "sidebar-status-out-of-sync";
         }
         return "sidebar-status-unknown";
+    }
+
+    private static string SidebarSyncIconClass(Factory factory)
+    {
+        if (factory.InSync == true)
+        {
+            return "fas fa-check";
+        }
+        if (factory.InSync == false)
+        {
+            return "fas fa-times";
+        }
+        return "fas fa-question";
     }
 
     private static string SidebarSyncStateTitle(Factory factory)
