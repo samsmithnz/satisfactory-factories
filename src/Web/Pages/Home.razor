@@ -637,7 +637,7 @@
                                                         <i class="fas fa-industry mr-2"></i>
                                                         <select class="form-control product-part-select"
                                                                 value="@(input.FactoryId?.ToString() ?? string.Empty)"
-                                                                @onchange="(e) => OnInputFactoryChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
+                                                                @onchange="async (e) => await OnInputFactoryChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
                                                             <option value="">-- Select Factory --</option>
                                                             @foreach (Factory supplierFactory in GetImportableFactories(factory))
                                                             {
@@ -653,7 +653,7 @@
                                                             </span>
                                                             <select class="form-control product-recipe-select"
                                                                     value="@(input.OutputPart ?? string.Empty)"
-                                                                    @onchange="(e) => OnInputPartChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
+                                                                    @onchange="async (e) => await OnInputPartChanged(factory, input, e.Value?.ToString() ?? string.Empty)">
                                                                 <option value="">-- Select Part --</option>
                                                                 @foreach (KeyValuePair<string, PartMetrics> partEntry in GetExportablePartsForFactory(input.FactoryId.Value))
                                                                 {
@@ -661,26 +661,27 @@
                                                                 }
                                                             </select>
                                                         }
-                                                        @if (!string.IsNullOrEmpty(input.OutputPart))
-                                                        {
-                                                            <input type="number"
-                                                                   class="form-control product-amount-input"
-                                                                   value="@input.Amount"
-                                                                   min="0"
-                                                                   @onchange="(e) => OnInputAmountChanged(factory, input, e.Value?.ToString() ?? string.Empty)" />
-                                                        }
-                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && !RequirementSatisfied(factory, input.OutputPart))
-                                                        {
-                                                            <button class="btn btn-sm btn-success mr-1" title="Satisfy - set amount to meet requirements" @onclick="() => SatisfyImport(factory, input)">
-                                                                <i class="fas fa-arrow-up mr-1"></i>Satisfy
-                                                            </button>
-                                                        }
-                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && RequirementSatisfied(factory, input.OutputPart) && ShowInputOverflow(factory, input.OutputPart))
-                                                        {
-                                                            <button class="btn btn-sm btn-warning mr-1" title="Trim - reduce amount to match requirements" @onclick="() => SatisfyImport(factory, input)">
-                                                                <i class="fas fa-arrow-down mr-1"></i>Trim
-                                                            </button>
-                                                        }
+                                                        @* Always-rendered elements with style toggling prevent simultaneous DOM insertions
+                                                           in the same render batch as the GameAsset branch change (cube→img), which caused
+                                                           insertBefore(null) in Blazor's batch renderer. *@
+                                                        <input type="number"
+                                                               class="form-control product-amount-input"
+                                                               style="@(string.IsNullOrEmpty(input.OutputPart) ? HiddenStyle : string.Empty)"
+                                                               value="@input.Amount"
+                                                               min="0"
+                                                               @onchange="(e) => OnInputAmountChanged(factory, input, e.Value?.ToString() ?? string.Empty)" />
+                                                        <button class="btn btn-sm btn-success mr-1"
+                                                                style="@(!string.IsNullOrEmpty(input.OutputPart) && !RequirementSatisfied(factory, input.OutputPart) ? string.Empty : HiddenStyle)"
+                                                                title="Satisfy - set amount to meet requirements"
+                                                                @onclick="() => SatisfyImport(factory, input)">
+                                                            <i class="fas fa-arrow-up mr-1"></i>Satisfy
+                                                        </button>
+                                                        <button class="btn btn-sm btn-warning mr-1"
+                                                                style="@(!string.IsNullOrEmpty(input.OutputPart) && RequirementSatisfied(factory, input.OutputPart) && ShowInputOverflow(factory, input.OutputPart) ? string.Empty : HiddenStyle)"
+                                                                title="Trim - reduce amount to match requirements"
+                                                                @onclick="() => SatisfyImport(factory, input)">
+                                                            <i class="fas fa-arrow-down mr-1"></i>Trim
+                                                        </button>
                                                         <button class="btn btn-sm btn-outline-primary mr-1"
                                                                 title="View Factory"
                                                                 disabled="@(!input.FactoryId.HasValue)"
@@ -690,10 +691,10 @@
                                                         <button class="btn btn-sm btn-danger" title="Remove Import" @onclick="() => RemoveInput(factory, input)">
                                                             <i class="fas fa-trash"></i>
                                                         </button>
-                                                        @if (!string.IsNullOrEmpty(input.OutputPart) && input.Amount == 0)
-                                                        {
-                                                            <span class="sf-chip red small"><i class="fas fa-exclamation-triangle"></i><span class="ml-2">No amount set!</span></span>
-                                                        }
+                                                        <span class="sf-chip red small"
+                                                              style="@(!string.IsNullOrEmpty(input.OutputPart) && input.Amount == 0 ? string.Empty : HiddenStyle)">
+                                                            <i class="fas fa-exclamation-triangle"></i><span class="ml-2">No amount set!</span>
+                                                        </span>
                                                     </div>
                                                 }
                                                 <div class="factory-add-part mt-2">
@@ -1436,7 +1437,7 @@
         RecalculateAll();
     }
 
-    private void OnInputFactoryChanged(Factory factory, FactoryInput input, string factoryIdStr)
+    private async Task OnInputFactoryChanged(Factory factory, FactoryInput input, string factoryIdStr)
     {
         if (int.TryParse(factoryIdStr, out int factoryId) && factoryId > 0)
         {
@@ -1449,12 +1450,22 @@
 
         input.OutputPart = null;
         input.Amount = 0;
+
+        // Yield to let Blazor render the @if (input.FactoryId.HasValue) structural insertion
+        // before RecalculateAll triggers satisfaction-section changes. Running both in the
+        // same render pass causes insertBefore(null) in Blazor's batch renderer.
+        await Task.Yield();
         RecalculateAll();
     }
 
-    private void OnInputPartChanged(Factory factory, FactoryInput input, string partId)
+    private async Task OnInputPartChanged(Factory factory, FactoryInput input, string partId)
     {
         input.OutputPart = !string.IsNullOrEmpty(partId) ? partId : null;
+
+        // Yield to let Blazor render the GameAsset branch change (cube→img) and element
+        // visibility updates before RecalculateAll triggers satisfaction-section changes.
+        // Running both in the same render pass causes insertBefore(null) in Blazor's renderer.
+        await Task.Yield();
         RecalculateAll();
     }
 
