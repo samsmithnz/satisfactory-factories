@@ -1597,7 +1597,7 @@
         return value % 1 == 0 ? ((int)value).ToString() : value.ToString("0.###");
     }
 
-    private const string HiddenStyle = "display:none;";
+    private const string HiddenStyle = "display:none !important;";
 
     private static string RecipeSlotDisplayStyle(string productId)
     {
