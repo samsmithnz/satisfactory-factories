@@ -107,6 +107,10 @@ public class FactoryCalculationService : IFactoryCalculationService
 
         CalculateProducts(factory, gameData);
         CalculateSyncState(factory);
+
+        // Calculate the generation of power for the factory
+        CalculatePowerProducers(factory, gameData);
+
         CalculateFactoryBuildingsAndPower(factory, gameData);
 
         // Calculate dependencies for this factory (updates provider factories' Requests).
@@ -501,6 +505,99 @@ public class FactoryCalculationService : IFactoryCalculationService
     }
 
     // ── Buildings &amp; power (buildings.ts) ───────────────────────────────────────
+
+    /// <inheritdoc/>
+    public void CalculatePowerProducers(Factory factory, GameData gameData)
+    {
+        foreach (FactoryPowerProducer producer in factory.PowerProducers)
+        {
+            PowerRecipe? recipe = _common.GetPowerRecipeById(producer.Recipe, gameData);
+            if (recipe == null)
+            {
+                Console.WriteLine($"CalculatePowerProducers: Recipe with ID {producer.Recipe} not found. It could be the user has not yet selected one.");
+                continue;
+            }
+
+            // Upon initialization or re-selection, the ingredients array is empty, so we need to set it to the recipe ingredients.
+            if (producer.Ingredients.Count == 0)
+            {
+                producer.Ingredients = recipe.Ingredients
+                    .Select(i => new FactoryPowerItem { Part = i.Part, PerMin = 0 })
+                    .ToList();
+            }
+
+            if (producer.Updated == "power")
+            {
+                producer.PowerProduced = producer.PowerAmount;
+                double mwPerItem = recipe.Ingredients.Count > 0 ? (recipe.Ingredients[0].MwPerItem ?? 0) : 0;
+                producer.IngredientAmount = mwPerItem != 0 ? producer.PowerProduced / mwPerItem : 0;
+                if (producer.Ingredients.Count > 0)
+                {
+                    producer.Ingredients[0].PerMin = producer.IngredientAmount;
+                }
+            }
+
+            if (producer.Updated == "ingredient")
+            {
+                if (producer.Ingredients.Count > 0)
+                {
+                    producer.Ingredients[0].PerMin = producer.IngredientAmount;
+                }
+                producer.PowerProduced = CalculatePowerAmount(producer, recipe);
+                producer.PowerAmount = Math.Round(producer.PowerProduced, 3);
+            }
+
+            if (producer.Updated == "building")
+            {
+                producer.BuildingCount = producer.BuildingAmount;
+                if (producer.Ingredients.Count > 0 && recipe.Ingredients.Count > 0)
+                {
+                    producer.Ingredients[0].PerMin = recipe.Ingredients[0].PerMin * producer.BuildingCount;
+                    producer.IngredientAmount = producer.Ingredients[0].PerMin;
+                }
+                producer.PowerProduced = CalculatePowerAmount(producer, recipe);
+                producer.PowerAmount = Math.Round(producer.PowerProduced, 3);
+            }
+
+            // For supplemental fuels, we need to know the power produced in order to calculate them
+            if (producer.Ingredients.Count > 1 && recipe.Ingredients.Count > 1)
+            {
+                producer.Ingredients[1].PerMin = producer.PowerProduced * (recipe.Ingredients[1].SupplementalRatio ?? 0);
+            }
+
+            if (producer.Updated != "building")
+            {
+                double buildingPower = recipe.Building.Power;
+                producer.BuildingCount = buildingPower != 0 ? producer.PowerProduced / buildingPower : 0;
+                producer.BuildingAmount = Math.Round(producer.BuildingCount, 3);
+            }
+
+            // Now add the byproducts
+            if (recipe.Byproduct != null && producer.Ingredients.Count > 0 && recipe.Ingredients.Count > 0)
+            {
+                double recipeIngredientPerMin = recipe.Ingredients[0].PerMin;
+                double byProductRatio = recipeIngredientPerMin != 0
+                    ? recipe.Byproduct.PerMin / recipeIngredientPerMin
+                    : 0;
+                double amount = byProductRatio * producer.Ingredients[0].PerMin;
+                if (double.IsNaN(amount))
+                {
+                    amount = 0;
+                }
+                producer.Byproduct = new PowerByproduct
+                {
+                    Part = recipe.Byproduct.Part,
+                    Amount = amount,
+                };
+            }
+        }
+    }
+
+    private static double CalculatePowerAmount(FactoryPowerProducer producer, PowerRecipe recipe)
+    {
+        double mwPerItem = recipe.Ingredients.Count > 0 ? (recipe.Ingredients[0].MwPerItem ?? 0) : 0;
+        return mwPerItem * producer.IngredientAmount;
+    }
 
     /// <inheritdoc/>
     public void CalculateProductBuildings(Factory factory, GameData gameData)

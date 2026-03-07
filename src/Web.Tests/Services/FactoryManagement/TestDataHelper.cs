@@ -188,12 +188,58 @@ public static class TestDataHelper
                     DisplayName = "Coal Generator",
                     Ingredients = new List<Web.Models.PowerItem>
                     {
-                        new Web.Models.PowerItem { Part = "Coal", PerMin = 15 }
+                        new Web.Models.PowerItem { Part = "Coal", PerMin = 15, MwPerItem = 5 }
                     },
                     Building = new RecipeBuilding { Name = "generatorcoal", Power = 75 }
+                },
+                // Nuclear generator with byproduct — mirrors GeneratorNuclear_NuclearFuelRod
+                new PowerRecipe
+                {
+                    Id = "GeneratorNuclear_NuclearFuelRod",
+                    DisplayName = "Nuclear Power Plant (Uranium Fuel Rod)",
+                    Ingredients = new List<Web.Models.PowerItem>
+                    {
+                        new Web.Models.PowerItem { Part = "NuclearFuelRod", PerMin = 0.2, MwPerItem = 12500 },
+                        new Web.Models.PowerItem { Part = "Water", PerMin = 240, SupplementalRatio = 0.096 }
+                    },
+                    Byproduct = new Web.Models.PowerItem { Part = "NuclearWaste", PerMin = 10 },
+                    Building = new RecipeBuilding { Name = "generatornuclear", Power = 2500 }
+                },
+                // Fuel generator — mirrors GeneratorFuel_LiquidFuel
+                new PowerRecipe
+                {
+                    Id = "GeneratorFuel_LiquidFuel",
+                    DisplayName = "Fuel Generator (Liquid Fuel)",
+                    Ingredients = new List<Web.Models.PowerItem>
+                    {
+                        new Web.Models.PowerItem { Part = "LiquidFuel", PerMin = 12, MwPerItem = 150.0 / 12.0 }
+                    },
+                    Building = new RecipeBuilding { Name = "generatorfuel", Power = 150 }
                 }
             }
         };
+    }
+
+    /// <summary>
+    /// Adds a power producer to a factory.
+    /// </summary>
+    public static void AddPowerProducerToFactory(Factory factory, string building, string recipe,
+        double ingredientAmount = 0, double powerAmount = 0, string? updated = null)
+    {
+        factory.PowerProducers.Add(new FactoryPowerProducer
+        {
+            Building = building,
+            BuildingAmount = 0,
+            BuildingCount = 0,
+            Ingredients = new List<Web.Models.Factory.PowerItem>(),
+            IngredientAmount = ingredientAmount,
+            PowerAmount = powerAmount,
+            PowerProduced = 0,
+            Recipe = recipe,
+            DisplayOrder = factory.PowerProducers.Count,
+            Updated = updated,
+            Byproduct = null,
+        });
     }
 
     /// <summary>
