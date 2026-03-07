@@ -67,11 +67,15 @@
                     return null;
                 }
 
+                // Use PropertyNameCaseInsensitive to support data saved by the Vue app (camelCase keys
+                // like "amount") as well as data saved by this Blazor app (PascalCase "Amount").
+                JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
                 // Check if data is an array (legacy format) or an object (new format)
                 if (dataElement.ValueKind == JsonValueKind.Array)
                 {
                     // Legacy format: array of factories
-                    List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(dataElement.GetRawText());
+                    List<Factory>? factories = JsonSerializer.Deserialize<List<Factory>>(dataElement.GetRawText(), options);
                     if (factories != null)
                     {
                         return new FactoryTab
@@ -85,7 +89,7 @@
                 else if (dataElement.ValueKind == JsonValueKind.Object)
                 {
                     // New format: FactoryTab object
-                    FactoryTab? factoryTab = JsonSerializer.Deserialize<FactoryTab>(dataElement.GetRawText());
+                    FactoryTab? factoryTab = JsonSerializer.Deserialize<FactoryTab>(dataElement.GetRawText(), options);
                     return factoryTab;
                 }
 
