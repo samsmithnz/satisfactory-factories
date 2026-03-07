@@ -401,39 +401,33 @@
                                                 }
                                             </div>
                                         </div>
-                                        <!-- Sync status chips -->
+                                        <!-- Sync status chips - always-rendered to avoid Blazor DOM reconciliation issues -->
                                         <div class="factory-sync-status">
-                                            @if (factory.InSync == true)
-                                            {
-                                                <span class="sf-chip green small" role="button" title="Click to re-sync" @onclick="() => HandleSetSyncState(factory)">
-                                                    <i class="fas fa-check-square"></i>
-                                                    <span class="ml-2">In sync with game</span>
-                                                    <button class="btn btn-link btn-sm p-0 ml-2" title="Reset sync status" @onclick:stopPropagation="true" @onclick="() => HandleResetSyncState(factory)">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </span>
-                                            }
-                                            else if (factory.InSync == false)
-                                            {
-                                                <span class="sf-chip orange small" role="button" title="Click to re-sync" @onclick="() => HandleSetSyncState(factory)">
-                                                    <i class="fas fa-times-square"></i>
-                                                    <span class="ml-2">Out of sync with game</span>
-                                                    <button class="btn btn-link btn-sm p-0 ml-2" title="Reset sync status" @onclick:stopPropagation="true" @onclick="() => HandleResetSyncState(factory)">
-                                                        <i class="fas fa-times"></i>
-                                                    </button>
-                                                </span>
-                                            }
-                                            else
-                                            {
-                                                bool validForSync = FactoryCalcService.ValidForGameSync(factory);
-                                                <span class="sf-chip small @(validForSync ? "" : "disabled")"
-                                                      role="button"
-                                                      title="@(validForSync ? "Mark as in sync with game" : "Add products or power producers first")"
-                                                      @onclick="() => HandleSetSyncState(factory)">
-                                                    <i class="fas fa-question"></i>
-                                                    <span class="ml-2">Mark as in sync with game</span>
-                                                </span>
-                                            }
+                                            @{ bool validForSync = FactoryCalcService.ValidForGameSync(factory); }
+                                            <span class="sf-chip green small" role="button" title="Click to re-sync" @onclick="() => HandleSetSyncState(factory)"
+                                                  style="@(factory.InSync == true ? string.Empty : HiddenStyle)">
+                                                <i class="fas fa-check-square"></i>
+                                                <span class="ml-2">In sync with game</span>
+                                                <button class="btn btn-link btn-sm p-0 ml-2" title="Reset sync status" @onclick:stopPropagation="true" @onclick="() => HandleResetSyncState(factory)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </span>
+                                            <span class="sf-chip orange small" role="button" title="Click to re-sync" @onclick="() => HandleSetSyncState(factory)"
+                                                  style="@(factory.InSync == false ? string.Empty : HiddenStyle)">
+                                                <i class="fas fa-times-square"></i>
+                                                <span class="ml-2">Out of sync with game</span>
+                                                <button class="btn btn-link btn-sm p-0 ml-2" title="Reset sync status" @onclick:stopPropagation="true" @onclick="() => HandleResetSyncState(factory)">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </span>
+                                            <span class="sf-chip small @(validForSync ? string.Empty : "disabled")"
+                                                  role="button"
+                                                  title="@(validForSync ? "Mark as in sync with game" : "Add products or power producers first")"
+                                                  @onclick="() => HandleSetSyncState(factory)"
+                                                  style="@(factory.InSync == null ? string.Empty : HiddenStyle)">
+                                                <i class="fas fa-question"></i>
+                                                <span class="ml-2">Mark as in sync with game</span>
+                                            </span>
                                         </div>
                                         <div class="factory-actions">
                                             <button class="btn btn-sm btn-outline-secondary"
@@ -1240,8 +1234,19 @@
     private void DeleteFactory(Factory factory)
     {
         _factories.Remove(factory);
+
+        // Reset InSync to null for any remaining factory that was in sync, since the game
+        // plan has changed and sync states should be re-verified.
+        foreach (Factory remaining in _factories)
+        {
+            if (remaining.InSync == true)
+            {
+                FactoryCalcService.ResetSyncState(remaining);
+            }
+        }
+
         AppState.SetFactories(_factories);
-        _ = AppState.SaveFactoriesAsync();
+        RecalculateAll();
     }
 
     private void ClearAll()
