@@ -1247,6 +1247,55 @@
   flex: 1 1 200px;
 }
 
+/* Typeahead / autocomplete dropdown */
+.typeahead-container {
+  position: relative;
+  max-width: 300px;
+  flex: 1 1 200px;
+}
+
+.typeahead-input {
+  width: 100%;
+}
+
+.typeahead-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: #2b2b2b;
+  border: 1px solid #555;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.typeahead-item {
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #e0e0e0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.typeahead-item:hover,
+.typeahead-item-highlighted {
+  background-color: #3a3a4a;
+  color: #ffffff;
+}
+
+.typeahead-no-results {
+  padding: 8px 10px;
+  color: #999;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
 .product-recipe-select {
   max-width: 280px;
   flex: 1 1 180px;

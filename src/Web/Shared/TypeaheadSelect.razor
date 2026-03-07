@@ -1,0 +1,165 @@
+@using Web.Models
+
+<div class="typeahead-container @(_isOpen ? "typeahead-open" : "")">
+    <input type="text"
+           class="form-control typeahead-input"
+           placeholder="@Placeholder"
+           value="@_inputText"
+           autocomplete="off"
+           @oninput="OnInput"
+           @onfocus="OpenDropdown"
+           @onblur="OnBlur"
+           @onkeydown="OnKeyDown" />
+    <div class="typeahead-dropdown" style="@(_isOpen ? "" : HiddenStyle)">
+        @if (_filtered.Count == 0)
+        {
+            <div class="typeahead-no-results">No results found</div>
+        }
+        else
+        {
+            @foreach (KeyValuePair<string, string> item in _filtered)
+            {
+                string itemKey = item.Key;
+                int idx = _filtered.IndexOf(item);
+                <div class="typeahead-item @(idx == _highlightedIndex ? "typeahead-item-highlighted" : "")"
+                     @onmousedown="() => SelectItem(itemKey)"
+                     @onmouseover="() => _highlightedIndex = idx">
+                    @item.Value
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Value { get; set; } = string.Empty;
+
+    [Parameter, EditorRequired]
+    public EventCallback<string> ValueChanged { get; set; }
+
+    [Parameter, EditorRequired]
+    public List<KeyValuePair<string, string>> Items { get; set; } = new List<KeyValuePair<string, string>>();
+
+    [Parameter]
+    public string Placeholder { get; set; } = "-- Select Part --";
+
+    private const string HiddenStyle = "display:none !important;";
+    private bool _isOpen = false;
+    private string _inputText = string.Empty;
+    private List<KeyValuePair<string, string>> _filtered = new List<KeyValuePair<string, string>>();
+    private int _highlightedIndex = -1;
+
+    protected override void OnParametersSet()
+    {
+        // When Value changes externally, update the displayed text
+        if (!_isOpen)
+        {
+            _inputText = GetDisplayText(Value);
+            _filtered = Items.ToList();
+        }
+    }
+
+    private string GetDisplayText(string key)
+    {
+        if (string.IsNullOrEmpty(key))
+        {
+            return string.Empty;
+        }
+        KeyValuePair<string, string>? match = Items.FirstOrDefault(i => i.Key == key);
+        return match.HasValue ? match.Value.Value : string.Empty;
+    }
+
+    private void OpenDropdown()
+    {
+        _isOpen = true;
+        // Show all items initially, filtered by current text
+        FilterItems(_inputText);
+        _highlightedIndex = -1;
+    }
+
+    private void OnInput(ChangeEventArgs e)
+    {
+        _inputText = e.Value?.ToString() ?? string.Empty;
+        _isOpen = true;
+        FilterItems(_inputText);
+        _highlightedIndex = _filtered.Count > 0 ? 0 : -1;
+    }
+
+    private void FilterItems(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            _filtered = Items.ToList();
+        }
+        else
+        {
+            _filtered = Items
+                .Where(i => i.Value.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private async Task SelectItem(string key)
+    {
+        _isOpen = false;
+        _inputText = GetDisplayText(key);
+        _highlightedIndex = -1;
+        _filtered = Items.ToList();
+        await ValueChanged.InvokeAsync(key);
+    }
+
+    private async Task ClearSelection()
+    {
+        _isOpen = false;
+        _inputText = string.Empty;
+        _highlightedIndex = -1;
+        FilterItems(string.Empty);
+        await ValueChanged.InvokeAsync(string.Empty);
+    }
+
+    private const int BlurDelayMilliseconds = 200;
+
+    private async Task OnBlur()
+    {
+        // Small delay to allow onmousedown on dropdown items to fire first
+        await Task.Delay(BlurDelayMilliseconds);
+        if (_isOpen)
+        {
+            _isOpen = false;
+            // Restore display text for current value
+            _inputText = GetDisplayText(Value);
+            _filtered = Items.ToList();
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (!_isOpen)
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                _highlightedIndex = Math.Min(_highlightedIndex + 1, _filtered.Count - 1);
+                break;
+            case "ArrowUp":
+                _highlightedIndex = Math.Max(_highlightedIndex - 1, 0);
+                break;
+            case "Enter":
+                if (_highlightedIndex >= 0 && _highlightedIndex < _filtered.Count)
+                {
+                    await SelectItem(_filtered[_highlightedIndex].Key);
+                }
+                break;
+            case "Escape":
+                _isOpen = false;
+                _inputText = GetDisplayText(Value);
+                _filtered = Items.ToList();
+                _highlightedIndex = -1;
+                break;
+        }
+    }
+}
