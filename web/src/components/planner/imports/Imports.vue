@@ -98,7 +98,7 @@
           />
         </div>
         <div class="input-row d-flex align-center">
-          <v-chip v-if="input.amount === 0" class="sf-chip red small">
+          <v-chip v-if="input.outputPart && input.amount === 0" class="sf-chip red small">
             <i class="fas fa-exclamation-triangle" />
             <span class="ml-2">No amount set!</span>
           </v-chip>
