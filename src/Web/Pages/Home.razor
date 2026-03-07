@@ -1504,6 +1504,16 @@
     {
         input.OutputPart = !string.IsNullOrEmpty(partId) ? partId : null;
 
+        // When a part is first selected for an import (amount is still 0), set a minimum
+        // default of 1 before recalculating. This mirrors Vue's validateInput behaviour
+        // which forces amount >= 1 after part selection, preventing the "No amount set!"
+        // badge from showing for a newly configured import. The user can then use the
+        // "Satisfy" button to set the exact required amount.
+        if (!string.IsNullOrEmpty(input.OutputPart) && input.Amount == 0)
+        {
+            input.Amount = 1;
+        }
+
         // Yield to let Blazor render the GameAsset branch change (cube→img) and element
         // visibility updates before RecalculateAll triggers satisfaction-section changes.
         // Running both in the same render pass causes insertBefore(null) in Blazor's renderer.
