@@ -65,7 +65,10 @@ public class AppStateService : IAppStateService
             string? json = await _jsRuntime.InvokeAsync<string?>("localStorage.getItem", LocalStorageKey);
             if (!string.IsNullOrEmpty(json))
             {
-                List<Factory>? loaded = JsonSerializer.Deserialize<List<Factory>>(json);
+                // Use PropertyNameCaseInsensitive to support loading data saved by the Vue app
+                // (camelCase keys like "amount") as well as data saved by this app (PascalCase "Amount").
+                JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                List<Factory>? loaded = JsonSerializer.Deserialize<List<Factory>>(json, options);
                 if (loaded != null)
                 {
                     _factories = loaded;
