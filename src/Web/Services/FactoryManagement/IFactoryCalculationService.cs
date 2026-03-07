@@ -89,6 +89,12 @@ public interface IFactoryCalculationService
     // ── Buildings &amp; power (buildings.ts) ───────────────────────────────────────
 
     /// <summary>
+    /// Calculates and updates power producer ingredients, byproducts, and building amounts.
+    /// Mirrors the Vue calculatePowerProducers in power.ts.
+    /// </summary>
+    void CalculatePowerProducers(Factory factory, GameData gameData);
+
+    /// <summary>
     /// Calculates building requirements for all products in the factory.
     /// </summary>
     void CalculateProductBuildings(Factory factory, GameData gameData);

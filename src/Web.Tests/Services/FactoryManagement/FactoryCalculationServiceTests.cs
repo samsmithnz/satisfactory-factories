@@ -377,6 +377,146 @@ public sealed class FactoryCalculationServiceTests
         Assert.IsTrue(factory.Parts["IronIngot"].Exportable);
     }
 
+    // ── CalculatePowerProducers (power.ts: calculatePowerProducers) ──────────────
+
+    [TestMethod]
+    public void CalculatePowerProducers_IngredientMode_SetsIngredientPerMinAndPower()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0.5, updated: "ingredient");
+
+        _service.CalculatePowerProducers(factory, gameData);
+
+        FactoryPowerProducer producer = factory.PowerProducers[0];
+        // Mirrors Vue power.spec.ts: ingredientAmount=0.5, mwPerItem=12500 => powerProduced=6250
+        Assert.AreEqual(0.5, producer.Ingredients[0].PerMin, 0.001);
+        Assert.AreEqual(6250, producer.PowerProduced, 0.001);
+        Assert.AreEqual(6250, producer.PowerAmount, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_IngredientMode_CalculatesBuildingAmount()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        // 0.5 rods/min => 6250 MW / 2500 MW per building = 2.5 buildings
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0.5, updated: "ingredient");
+
+        _service.CalculatePowerProducers(factory, gameData);
+
+        FactoryPowerProducer producer = factory.PowerProducers[0];
+        Assert.AreEqual(2.5, producer.BuildingCount, 0.001);
+        Assert.AreEqual(2.5, producer.BuildingAmount, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_IngredientMode_ComputesSupplementalIngredient()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        // 0.5 rods/min => 6250 MW; water = 6250 * 0.096 = 600/min
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0.5, updated: "ingredient");
+
+        _service.CalculatePowerProducers(factory, gameData);
+
+        FactoryPowerProducer producer = factory.PowerProducers[0];
+        Assert.AreEqual(2, producer.Ingredients.Count);
+        Assert.AreEqual("Water", producer.Ingredients[1].Part);
+        Assert.AreEqual(600, producer.Ingredients[1].PerMin, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_IngredientMode_ComputesByproduct()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        // byproduct ratio = 10/0.2 = 50; amount = 50 * 0.5 = 25 NuclearWaste/min
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0.5, updated: "ingredient");
+
+        _service.CalculatePowerProducers(factory, gameData);
+
+        FactoryPowerProducer producer = factory.PowerProducers[0];
+        Assert.IsNotNull(producer.Byproduct);
+        Assert.AreEqual("NuclearWaste", producer.Byproduct.Part);
+        Assert.AreEqual(25, producer.Byproduct.Amount, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_PowerMode_CalculatesIngredientAmount()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        // powerAmount=2500 MW; mwPerItem=12500 => ingredientAmount = 2500/12500 = 0.2 rods/min
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", powerAmount: 2500, updated: "power");
+
+        _service.CalculatePowerProducers(factory, gameData);
+
+        FactoryPowerProducer producer = factory.PowerProducers[0];
+        Assert.AreEqual(0.2, producer.IngredientAmount, 0.001);
+        Assert.AreEqual(0.2, producer.Ingredients[0].PerMin, 0.001);
+        Assert.AreEqual(2500, producer.PowerProduced, 0.001);
+        Assert.AreEqual(1, producer.BuildingCount, 0.001);
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_IngredientsPopulatedFromRecipeWhenEmpty()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0, updated: null);
+
+        _service.CalculatePowerProducers(factory, gameData);
+
+        FactoryPowerProducer producer = factory.PowerProducers[0];
+        Assert.AreEqual(2, producer.Ingredients.Count);
+        Assert.AreEqual("NuclearFuelRod", producer.Ingredients[0].Part);
+        Assert.AreEqual("Water", producer.Ingredients[1].Part);
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_IngredientsCountedAsRequirements()
+    {
+        // This is the core regression test for the reported bug:
+        // Power generator ingredients must appear as requirements, not be ignored.
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        // 0.2 rods/min = 1 full nuclear building
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0.2, updated: "ingredient");
+
+        _service.CalculatePowerProducers(factory, gameData);
+        _service.CalculatePartMetrics(factory, gameData);
+
+        Assert.IsTrue(factory.Parts.ContainsKey("NuclearFuelRod"), "NuclearFuelRod should be tracked as a part requirement");
+        Assert.AreEqual(0.2, factory.Parts["NuclearFuelRod"].AmountRequiredPower, 0.001);
+        Assert.AreEqual(0, factory.Parts["NuclearFuelRod"].AmountSupplied, 0.001);
+        // AmountRemaining is negative => part is unsatisfied (needs to be imported)
+        Assert.IsTrue(factory.Parts["NuclearFuelRod"].AmountRemaining < 0, "NuclearFuelRod should be unsatisfied — it must be imported, not generated");
+    }
+
+    [TestMethod]
+    public void CalculatePowerProducers_ByproductCountedAsSupply()
+    {
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Nuclear Plant");
+        // 0.2 rods => 10 NuclearWaste
+        TestDataHelper.AddPowerProducerToFactory(factory, "generatornuclear",
+            "GeneratorNuclear_NuclearFuelRod", ingredientAmount: 0.2, updated: "ingredient");
+
+        _service.CalculatePowerProducers(factory, gameData);
+        _service.CalculatePartMetrics(factory, gameData);
+
+        Assert.IsTrue(factory.Parts.ContainsKey("NuclearWaste"), "NuclearWaste byproduct should be tracked");
+        Assert.AreEqual(10, factory.Parts["NuclearWaste"].AmountSuppliedViaProduction, 0.001);
+    }
+
     // ── CalculateProductBuildings (buildings.ts: calculateProductBuildings) ───
 
     [TestMethod]
