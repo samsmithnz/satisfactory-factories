@@ -41,7 +41,60 @@
                             <ul class="factory-list">
                                 @foreach (Factory factory in _factories)
                                 {
-                                    <li><a href="#factory-@factory.Id">@factory.Name</a></li>
+                                    <li class="sidebar-factory-item @(factory.HasProblem ? "sidebar-factory-problem" : (factory.InSync == false ? "sidebar-factory-needs-sync" : ""))" @key="factory.Id">
+                                        <div class="sidebar-factory-row">
+                                            <div class="sidebar-factory-reorder">
+                                                <button class="btn btn-sm sidebar-reorder-btn"
+                                                        title="Move Up"
+                                                        disabled="@(factory.DisplayOrder == 0)"
+                                                        @onclick="() => MoveFactory(factory, -1)">
+                                                    <i class="fas fa-arrow-up"></i>
+                                                </button>
+                                                <button class="btn btn-sm sidebar-reorder-btn"
+                                                        title="Move Down"
+                                                        disabled="@(factory.DisplayOrder == _factories.Count - 1)"
+                                                        @onclick="() => MoveFactory(factory, 1)">
+                                                    <i class="fas fa-arrow-down"></i>
+                                                </button>
+                                            </div>
+                                            <a class="sidebar-factory-link" @onclick="() => ScrollToFactory(factory)" @onclick:preventDefault="true" href="#factory-@factory.Id">
+                                                <i class="fas fa-industry mr-1"></i>
+                                                <span class="sidebar-factory-name">@TruncateFactoryName(factory.Name)</span>
+                                            </a>
+                                            <div class="sidebar-factory-icons">
+                                                @{ int activeTaskCount = factory.Tasks.Count(t => !t.Completed);
+                                                   string sidebarTasksId = $"tasks-{factory.Id}";
+                                                   string sidebarNotesId = $"notes-{factory.Id}"; }
+                                                @if (activeTaskCount > 0)
+                                                {
+                                                    <span class="sidebar-icon-btn" title="Tasks: @activeTaskCount" @onclick="() => ScrollToSection(factory, sidebarTasksId)">
+                                                        <i class="fas fa-tasks"></i>
+                                                        <span class="sidebar-icon-count">@activeTaskCount</span>
+                                                    </span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(factory.Notes))
+                                                {
+                                                    <span class="sidebar-icon-btn" title="See notes" @onclick="() => ScrollToSection(factory, sidebarNotesId)">
+                                                        <i class="fas fa-sticky-note"></i>
+                                                    </span>
+                                                }
+                                            </div>
+                                            <div class="sidebar-factory-status @SidebarSyncStateClass(factory)" title="@SidebarSyncStateTitle(factory)">
+                                                @if (factory.InSync == true)
+                                                {
+                                                    <i class="fas fa-check"></i>
+                                                }
+                                                else if (factory.InSync == false)
+                                                {
+                                                    <i class="fas fa-times"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fas fa-question"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                    </li>
                                 }
                             </ul>
                         }
@@ -2070,6 +2123,41 @@
             await Task.Delay(50);
         }
         await JSRuntime.InvokeVoidAsync("scrollToElement", $"factory-{factory.Id}");
+    }
+
+    private static string TruncateFactoryName(string name, int limit = 20)
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return name;
+        }
+        return name.Length > limit ? name[..limit] + "..." : name;
+    }
+
+    private static string SidebarSyncStateClass(Factory factory)
+    {
+        if (factory.InSync == true)
+        {
+            return "sidebar-status-in-sync";
+        }
+        if (factory.InSync == false)
+        {
+            return "sidebar-status-out-of-sync";
+        }
+        return "sidebar-status-unknown";
+    }
+
+    private static string SidebarSyncStateTitle(Factory factory)
+    {
+        if (factory.InSync == true)
+        {
+            return "In sync with game";
+        }
+        if (factory.InSync == false)
+        {
+            return "Out of sync with game";
+        }
+        return "Game sync unknown";
     }
 
     public void Dispose()

@@ -253,6 +253,129 @@
   color: var(--text-primary);
 }
 
+/* Enhanced sidebar factory items */
+.sidebar-factory-item {
+  padding: var(--spacing-xs) 0;
+  border-radius: var(--radius-sm);
+  transition: background-color 0.2s;
+}
+
+.sidebar-factory-item.sidebar-factory-problem {
+  border-left: 3px solid #f44336;
+}
+
+.sidebar-factory-item.sidebar-factory-needs-sync {
+  border-left: 3px solid #f57f17;
+}
+
+.sidebar-factory-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+}
+
+.sidebar-factory-reorder {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.sidebar-reorder-btn {
+  padding: 1px 4px;
+  font-size: 0.6rem;
+  line-height: 1;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+}
+
+.sidebar-reorder-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-reorder-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sidebar-factory-link {
+  flex: 1;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.sidebar-factory-link:hover {
+  color: var(--text-primary);
+  text-decoration: underline;
+}
+
+.sidebar-factory-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.sidebar-factory-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+.sidebar-icon-btn {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: color 0.2s;
+}
+
+.sidebar-icon-btn:hover {
+  color: var(--text-primary);
+}
+
+.sidebar-icon-count {
+  font-size: 0.7rem;
+}
+
+.sidebar-factory-status {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+}
+
+.sidebar-status-in-sync {
+  background-color: #2e7d32;
+  color: white;
+}
+
+.sidebar-status-out-of-sync {
+  background-color: #e65100;
+  color: white;
+}
+
+.sidebar-status-unknown {
+  background-color: #424242;
+  color: white;
+}
+
 .sidebar-actions {
   display: flex;
   flex-direction: column;
