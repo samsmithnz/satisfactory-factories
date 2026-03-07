@@ -362,6 +362,65 @@ public sealed class FactoryCalculationServiceTests
         Assert.IsTrue(factory.Parts["IronIngot"].Satisfied);
     }
 
+    [TestMethod]
+    public void CalculatePartSupply_ShouldNotAddSupplyForZeroAmountInput()
+    {
+        // Reproduces the "No amount set!" badge issue: when a part is selected for an
+        // import but the amount has not been set yet (Amount == 0), the part IS created
+        // in factory.Parts but AmountSuppliedViaInput must stay 0 (unsatisfied).
+        // The AutoSatisfyImport UI logic then uses AmountRequired to compute the correct amount.
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Test Factory", id: 1);
+        TestDataHelper.AddProductToFactory(factory, "IronPlate", 20, "IronPlate");
+        factory.Inputs.Add(new FactoryInput
+        {
+            FactoryId = 2,
+            OutputPart = "IronIngot",
+            Amount = 0, // Part selected but amount not set yet
+        });
+
+        _service.CalculateProducts(factory, gameData);
+        _service.CalculateParts(factory, gameData);
+
+        // Part exists in dictionary (created by CreateNewPart) but supply is 0
+        Assert.IsTrue(factory.Parts.ContainsKey("IronIngot"), "Part should be created even with zero-amount input");
+        Assert.AreEqual(0, factory.Parts["IronIngot"].AmountSuppliedViaInput, "Zero-amount input must not contribute to supply");
+        Assert.IsFalse(factory.Parts["IronIngot"].Satisfied, "Part should be unsatisfied when input amount is 0");
+
+        // AmountRequired is the value AutoSatisfyImport uses to compute the correct amount.
+        // For 20 IronPlate/min using IronPlate recipe (1.5 ingots per plate), required = 30.
+        Assert.AreEqual(30, factory.Parts["IronIngot"].AmountRequired, 0.001, "AmountRequired must reflect the product's demand so AutoSatisfyImport can calculate the correct import amount");
+    }
+
+    [TestMethod]
+    public void CalculatePartSupply_AutoSatisfyAmount_ShouldEqualRequiredMinusProductionMinusOtherImports()
+    {
+        // Validates the arithmetic used by AutoSatisfyImport in Home.razor:
+        // difference = AmountRequired - AmountSuppliedViaProduction - totalOtherImported
+        // When no other imports exist and production is 0, difference == AmountRequired.
+        GameData gameData = TestDataHelper.CreateTestGameData();
+        Factory factory = TestDataHelper.CreateTestFactory("Iron Plates Factory", id: 1);
+        TestDataHelper.AddProductToFactory(factory, "IronPlate", 20, "IronPlate");
+        factory.Inputs.Add(new FactoryInput
+        {
+            FactoryId = 2,
+            OutputPart = "IronIngot",
+            Amount = 0, // Freshly selected part, no amount yet
+        });
+
+        _service.CalculateProducts(factory, gameData);
+        _service.CalculateParts(factory, gameData);
+
+        PartMetrics ironIngotMetrics = factory.Parts["IronIngot"];
+        double totalOtherImported = 0; // No other imports for IronIngot
+        double expectedAutoSatisfyAmount = ironIngotMetrics.AmountRequired
+            - ironIngotMetrics.AmountSuppliedViaProduction
+            - totalOtherImported;
+
+        // AutoSatisfyImport would set Amount to this value (30), hiding the badge.
+        Assert.AreEqual(30, expectedAutoSatisfyAmount, 0.001, "AutoSatisfyImport should compute 30/min as the required import amount");
+    }
+
     // ── CalculateExportable (parts.ts: calculateExportable) ───────────────────
 
     [TestMethod]

@@ -1037,6 +1037,11 @@
         _factories = AppState.GetFactories();
         SyncNextFactoryId();
 
+        // Validate loaded factories: fix any inputs that have OutputPart set but Amount=0.
+        // This mirrors Vue's validateFactories / validateInput behaviour which enforces
+        // a minimum amount of 1 for any configured import.
+        ValidateInputAmounts(_factories);
+
         // Run initial calculations for loaded factories
         if (_gameData != null && _factories.Count > 0)
         {
@@ -1478,6 +1483,26 @@
         _ = AppState.SaveFactoriesAsync();
     }
 
+    /// <summary>
+    /// Validates all factory inputs and ensures that any input with OutputPart set
+    /// has Amount >= 1. Mirrors Vue's validateInput/validateFactories behaviour.
+    /// Called after loading data to fix any persisted zero amounts.
+    /// </summary>
+    private static void ValidateInputAmounts(List<Factory> factories)
+    {
+        foreach (Factory factory in factories)
+        {
+            foreach (FactoryInput input in factory.Inputs)
+            {
+                if (!string.IsNullOrEmpty(input.OutputPart) && input.Amount <= 0)
+                {
+                    Console.WriteLine($"ValidateInputAmounts: Factory \"{factory.Name}\" input for part \"{input.OutputPart}\" has amount {input.Amount}. Setting to 1.");
+                    input.Amount = 1;
+                }
+            }
+        }
+    }
+
     private void RemoveInput(Factory factory, FactoryInput input)
     {
         factory.Inputs.Remove(input);
@@ -1509,6 +1534,16 @@
     {
         input.OutputPart = !string.IsNullOrEmpty(partId) ? partId : null;
 
+        // When a part is first selected for an import (amount is still 0), set a minimum
+        // default of 1 before recalculating. This mirrors Vue's validateInput behaviour
+        // which forces amount >= 1 after part selection, preventing the "No amount set!"
+        // badge from showing for a newly configured import. The user can then use the
+        // "Satisfy" button to set the exact required amount.
+        if (!string.IsNullOrEmpty(input.OutputPart) && input.Amount == 0)
+        {
+            input.Amount = 1;
+        }
+
         // Yield to let Blazor render the GameAsset branch change (cube→img) and element
         // visibility updates before RecalculateAll triggers satisfaction-section changes.
         // Running both in the same render pass causes insertBefore(null) in Blazor's renderer.
@@ -1518,9 +1553,11 @@
 
     private void OnInputAmountChanged(Factory factory, FactoryInput input, string amountStr)
     {
-        if (double.TryParse(amountStr, out double amount) && amount >= 0)
+        if (double.TryParse(amountStr, out double amount))
         {
-            input.Amount = amount;
+            // Match Vue's validateInput: enforce minimum of 1 when OutputPart is set.
+            // This prevents the "No amount set!" badge from appearing if the user types 0.
+            input.Amount = amount > 0 ? amount : 1;
             RecalculateAll();
         }
     }
@@ -1558,7 +1595,7 @@
         if (!factory.Parts.TryGetValue(input.OutputPart, out PartMetrics? partData)) return;
 
         double difference = partData.AmountRequired - partData.AmountSuppliedViaProduction - totalOtherImported;
-        input.Amount = difference > 0 ? difference : 0;
+        input.Amount = difference > 0 ? difference : 1; // Minimum 1, matching Vue's validateInput
         RecalculateAll();
     }
 
