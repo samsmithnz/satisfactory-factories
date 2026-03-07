@@ -58,7 +58,7 @@
                                                 </button>
                                             </div>
                                             <a class="sidebar-factory-link" @onclick="() => ScrollToFactory(factory)" @onclick:preventDefault="true" href="#factory-@factory.Id">
-                                                <i class="fas fa-industry mr-1"></i>
+                                                <i class="fas fa-industry mr-2"></i>
                                                 <span class="sidebar-factory-name">@TruncateFactoryName(factory.Name)</span>
                                             </a>
                                             <div class="sidebar-factory-icons">
@@ -80,18 +80,9 @@
                                                 }
                                             </div>
                                             <div class="sidebar-factory-status @SidebarSyncStateClass(factory)" title="@SidebarSyncStateTitle(factory)">
-                                                @if (factory.InSync == true)
-                                                {
-                                                    <i class="fas fa-check"></i>
-                                                }
-                                                else if (factory.InSync == false)
-                                                {
-                                                    <i class="fas fa-times"></i>
-                                                }
-                                                else
-                                                {
-                                                    <i class="fas fa-question"></i>
-                                                }
+                                                <i class="fas fa-check" style="@(factory.InSync == true ? "" : HiddenStyle)"></i>
+                                                <i class="fas fa-times" style="@(factory.InSync == false ? "" : HiddenStyle)"></i>
+                                                <i class="fas fa-question" style="@(factory.InSync == null ? "" : HiddenStyle)"></i>
                                             </div>
                                         </div>
                                     </li>
