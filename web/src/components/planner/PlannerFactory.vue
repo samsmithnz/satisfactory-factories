@@ -30,7 +30,7 @@
               </div>
               <!-- sync status chip -->
               <div v-if="factory.inSync">
-                <v-chip class="sf-chip small green no-margin" @click="setSyncState(factory)">
+                <v-chip class="sf-chip small green no-margin" @click="handleSetSyncState(factory)">
                   <i class="fas fa-check-square" />
                   <span class="ml-2">In sync with game</span>
                   <v-btn
@@ -45,7 +45,7 @@
                 </v-chip>
               </div>
               <div v-if="factory.inSync === false">
-                <v-chip class="sf-chip small orange no-margin" @click="setSyncState(factory)">
+                <v-chip class="sf-chip small orange no-margin" @click="handleSetSyncState(factory)">
                   <i class="fas fa-times-square" />
                   <span class="ml-2">Out of sync with game</span>
                   <v-btn
@@ -60,7 +60,7 @@
                 </v-chip>
               </div>
               <div v-if="factory.inSync === null">
-                <v-chip class="border border-gray border-dashed" :disabled="!validForGameSync(factory)" @click="setSyncState(factory)">
+                <v-chip class="border border-gray border-dashed" :disabled="!validForGameSync(factory)" @click="handleSetSyncState(factory)">
                   <i class="fas fa-question" />
                   <span class="ml-2">Mark as in sync with game</span>
                 </v-chip>
@@ -315,6 +315,7 @@
   const deleteFactory = inject('deleteFactory') as (factory: Factory) => void
   const moveFactory = inject('moveFactory') as (factory: Factory, direction: string) => void
   const navigateToFactory = inject('navigateToFactory') as (id: string | number, subsection?: string) => void
+  const updateFactory = inject('updateFactory') as (factory: Factory) => void
 
   defineProps<{
     factory: Factory
@@ -346,8 +347,16 @@
       (factory.powerProducers.length > 0 && factory.powerProducers[0]?.building !== '')
   }
 
+  const handleSetSyncState = (factory: Factory) => {
+    setSyncState(factory)
+    updateFactory(factory)
+  }
+
   const resetSyncState = (factory: Factory) => {
     factory.inSync = null
+    factory.syncState = {}
+    factory.syncStatePower = {}
+    updateFactory(factory)
   }
 </script>
 
