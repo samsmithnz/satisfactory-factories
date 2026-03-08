@@ -1204,12 +1204,14 @@
         }
         FactoryCalcService.SetSyncState(factory);
         _ = AppState.SaveFactoriesAsync();
+        StateHasChanged();
     }
 
     private void HandleResetSyncState(Factory factory)
     {
         FactoryCalcService.ResetSyncState(factory);
         _ = AppState.SaveFactoriesAsync();
+        StateHasChanged();
     }
 
     private void MoveFactory(Factory factory, int direction)
