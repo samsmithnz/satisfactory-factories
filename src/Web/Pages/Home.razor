@@ -493,15 +493,11 @@
                                                                          loading="lazy" />
                                                                 </a>
                                                             </span>
-                                                            <select class="form-control product-part-select"
-                                                                    value="@product.Id"
-                                                                    @onchange="async (e) => await OnPartSelected(product, factory, e.Value?.ToString() ?? string.Empty)">
-                                                                <option value="">-- Select Part --</option>
-                                                                @foreach (KeyValuePair<string, Part> partEntry in GetSortedParts())
-                                                                {
-                                                                    <option value="@partEntry.Key">@partEntry.Value.Name</option>
-                                                                }
-                                                            </select>
+                                                            <TypeaheadSelect
+                                                                Value="@product.Id"
+                                                                ValueChanged="async (value) => await OnPartSelected(product, factory, value)"
+                                                                Items="@GetSortedPartsForTypeahead()"
+                                                                Placeholder="-- Select Part --" />
                                                             <span class="product-recipe-slot">
                                                                 <i class="fas fa-hat-chef product-icon" style="@RecipeSlotDisplayStyle(product.Id)"></i>
                                                                 <select class="form-control product-recipe-select"
@@ -1627,6 +1623,28 @@
         return _gameData.Items.Parts
             .OrderBy(p => p.Value.Name)
             .ToList();
+    }
+
+    private List<KeyValuePair<string, string>>? _sortedPartsForTypeahead;
+
+    private List<KeyValuePair<string, string>> GetSortedPartsForTypeahead()
+    {
+        if (_sortedPartsForTypeahead != null)
+        {
+            return _sortedPartsForTypeahead;
+        }
+
+        if (_gameData == null)
+        {
+            return new List<KeyValuePair<string, string>>();
+        }
+
+        _sortedPartsForTypeahead = _gameData.Items.Parts
+            .OrderBy(p => p.Value.Name)
+            .Select(p => new KeyValuePair<string, string>(p.Key, p.Value.Name))
+            .ToList();
+
+        return _sortedPartsForTypeahead;
     }
 
     private static string FormatNumber(double value)
